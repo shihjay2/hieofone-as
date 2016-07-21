@@ -1,9 +1,17 @@
 {
-    "name": "laravel/laravel",
-    "description": "The Laravel Framework.",
-    "keywords": ["framework", "laravel"],
+    "name": "hieofone-as/hieofone-as",
+    "description": "Health Information Exchange of One Authorization Server.",
+    "keywords": ["hieofone", "laravel", "uma", "oauth2", "oidc", "php", "javascript", "health", "fhir", "medical"],
     "license": "MIT",
     "type": "project",
+	"authors": [
+		{
+			"name": "Michael Shihjay Chen",
+			"email": "shihjay2@gmail.com",
+			"homepage": "http://noshemr.wordpress.com",
+			"role": "Developer"
+		}
+	],
     "require": {
         "php": ">=5.5.9",
         "laravel/framework": "5.2.*",
