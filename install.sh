@@ -6,7 +6,7 @@ set -e
 # Constants and paths
 LOGDIR=/var/log/hieofone-as
 LOG=$LOGDIR/installation_log
-WEB=/var/www
+WEB=/opt
 HIE=$WEB/hieofone-as
 ENV=$HIE/.env
 
@@ -58,40 +58,30 @@ if [[ "$OSTYPE" == "linux-gnu" ]]; then
 			WEB_CONF=/etc/apache2/conf.d
 		fi
 		APACHE="/etc/init.d/apache2 restart"
-		SSH="/etc/init.d/ssh stop"
-		SSH1="/etc/init.d/ssh start"
 	elif [ -f /etc/redhat-release ]; then
 		# CentOS or RHEL
 		WEB_GROUP=apache
 		WEB_GROUP=apache
 		WEB_CONF=/etc/httpd/conf.d
 		APACHE="/etc/init.d/httpd restart"
-		SSH="/etc/init.d/sshd stop"
-		SSH1="/etc/init.d/sshd start"
 	elif [ -f /etc/arch-release ]; then
 		# ARCH
 		WEB_GROUP=http
 		WEB_GROUP=http
 		WEB_CONF=/etc/httpd/conf/extra
 		APACHE="systemctl restart httpd.service"
-		SSH="systemctl stop sshd"
-		SSH1="systemctl start sshd"
 	elif [ -f /etc/gentoo-release ]; then
 		# Gentoo
 		WEB_GROUP=apache
 		WEB_GROUP=apache
 		WEB_CONF=/etc/apache2/modules.d
 		APACHE=/etc/init.d/apache2
-		SSH="/etc/init.d/sshd stop"
-		SSH1="/etc/init.d/sshd start"
 	elif [ -f /etc/fedora-release ]; then
 		# Fedora
 		WEB_GROUP=apache
 		WEB_GROUP=apache
 		WEB_CONF=/etc/httpd/conf.d
 		APACHE="/etc/init.d/httpd restart"
-		SSH="/etc/init.d/sshd stop"
-		SSH1="/etc/init.d/sshd start"
 	fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 	# Mac
@@ -99,8 +89,6 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
 	WEB_GROUP=_www
 	WEB_CONF=/etc/httpd/conf.d
 	APACHE="/usr/sbin/apachectl restart"
-	SSH="launchctl unload com.openssh.sshd"
-	SSH1="launchctl load com.openssh.sshd"
 elif [[ "$OSTYPE" == "cygwin" ]]; then
 	echo "This operating system is not supported by this install script at this time.  Aborting." 1>&2
 	exit 1
@@ -116,8 +104,6 @@ elif [[ "$OSTYPE" == "freebsd"* ]]; then
 	else
 		APACHE="/usr/local/etc/rc.d/apache24.sh restart"
 	fi
-	SSH="/etc/rc.d/sshd stop"
-	SSH1="/etc/rc.d/sshd start"
 else
 	echo "This operating system is not supported by this install script at this time.  Aborting." 1>&2
 	exit 1
@@ -159,36 +145,8 @@ log_only "Installed composer.phar."
 cd $WEB
 composer create-project hieofone-as/hieofone-as --prefer-dist --stability dev
 cd $HIE
-# Create .env file
-touch $ENV
-echo "APP_ENV=local
-APP_DEBUG=true
-APP_KEY=base64:kF2yXMGR9U2tnqJwatRigQLOjZhNDXMCTYXIDwdoXiw=
-APP_URL=http://localhost
-
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=$MYSQL_DATABASE
-DB_USERNAME=$MYSQL_USERNAME
-DB_PASSWORD=$MYSQL_PASSWORD
-
-CACHE_DRIVER=file
-SESSION_DRIVER=file
-QUEUE_DRIVER=sync
-
-REDIS_HOST=127.0.0.1
-REDIS_PASSWORD=null
-REDIS_PORT=6379
-
-MAIL_DRIVER=smtp
-MAIL_HOST=mailtrap.io
-MAIL_PORT=2525
-MAIL_USERNAME=null
-MAIL_PASSWORD=null
-MAIL_ENCRYPTION=null
-
-URI=localhost
+# Edit .env file
+echo "URI=localhost
 
 TWITTER_KEY=yourkeyfortheservice
 TWITTER_SECRET=yoursecretfortheservice
@@ -197,6 +155,9 @@ TWITTER_REDIRECT_URI=https://example.com/login
 GOOGLE_KEY=yourkeyfortheservice
 GOOGLE_SECRET=yoursecretfortheservice
 GOOGLE_REDIRECT_URI=https://example.com/login" >> $ENV
+sed -i '/^DB_DATABASE=/s/=.*/='"$MYSQL_DATABASE"'/' .env
+sed -i '/^DB_USERNAME=/s/=.*/='"$MYSQL_USERNAME"'/' .env
+sed -i '/^DB_PASSWORD=/s/=.*/='"$MYSQL_PASSWORD"'/' .env
 chown -R $WEB_GROUP.$WEB_USER $HIE
 chmod -R 755 $HIE
 chmod -R 777 $HIE/storage
@@ -228,18 +189,45 @@ if [ -e "$WEB_CONF"/hie.conf ]; then
 	rm "$WEB_CONF"/hie.conf
 fi
 touch "$WEB_CONF"/hie.conf
-echo "Alias / $HIE/public
+APACHE_CONF="<VirtualHost _default_:80>
+	DocumentRoot $HIE/public/
+	ErrorLog ${APACHE_LOG_DIR}/error.log
+	CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+<IfModule mod_ssl.c>
+	<VirtualHost _default_:443>
+		DocumentRoot $HIE/public/
+		ErrorLog ${APACHE_LOG_DIR}/error.log
+		CustomLog ${APACHE_LOG_DIR}/access.log combined
+		SSLEngine on
+		SSLProtocol all -SSLv2 -SSLv3
+		SSLCertificateFile /etc/ssl/certs/ssl-cert-snakeoil.pem
+        SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
+		<FilesMatch \"\.(cgi|shtml|phtml|php)$\">
+			SSLOptions +StdEnvVars
+		</FilesMatch>
+		<Directory /usr/lib/cgi-bin>
+			SSLOptions +StdEnvVars
+        </Directory>
+		BrowserMatch \"MSIE [2-6]\" \
+		nokeepalive ssl-unclean-shutdown \
+		downgrade-1.0 force-response-1.0
+		BrowserMatch \"MSIE [17-9]\" ssl-unclean-shutdown
+	</VirtualHost>
+</IfModule>
 <Directory $HIE/public>
 	Options Indexes FollowSymLinks MultiViews
-	AllowOverride All" >> "$WEB_CONF"/hie.conf
+	AllowOverride All"
 if [ "$APACHE_VER" = "4" ]; then
-	echo "	Require all granted" >> "$WEB_CONF"/hie.conf
+	APACHE_CONF="$APACHE_CONF
+	Require all granted"
 else
-	echo "	Order allow,deny
-allow from all" >> "$WEB_CONF"/hie.conf
+	APACHE_CONF="$APACHE_CONF
+	Order allow,deny
+	allow from all"
 fi
-echo "	RewriteEngine On
-	RewriteBase /nosh/
+APACHE_CONF="$APACHE_CONF
+	RewriteEngine On
 	# Redirect Trailing Slashes...
 	RewriteRule ^(.*)/$ /$1 [L,R=301]
 	RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -253,7 +241,8 @@ echo "	RewriteEngine On
 		php_flag magic_quotes_gpc off
 		php_flag register_long_arrays off
 	</IfModule>
-</Directory>" >> "$WEB_CONF"/hie.conf
+</Directory>"
+echo "$APACHE_CONF" >> "$WEB_CONF"/hie.conf
 log_only "HIE of One Authorization Server Apache configuration file set."
 log_only "Restarting Apache service."
 $APACHE >> $LOG 2>&1
