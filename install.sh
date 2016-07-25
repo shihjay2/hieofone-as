@@ -1,5 +1,5 @@
 #!/bin/sh
-# install script for nosh-cs
+# install script for hieofone-as
 
 set -e
 
@@ -166,25 +166,7 @@ log_only "Installed HIE of One Authorization Server core files."
 echo "create database $MYSQL_DATABASE" | mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWORD
 php artisan migrate:install
 php artisan migrate
-
-# Set up SSL and configuration file for Apache server
-if [ -f /etc/debian_version ]; then
-	if [ ! -f /etc/apache2/sites-available/default-ssl.conf ]; then
-		if ! [ -L /etc/apache2/sites-enabled/default-ssl ]; then
-			log_only "Setting up Apache to use SSL using the default-ssl virtual host for Ubuntu/Debian."
-			ln -s /etc/apache2/sites-available/default-ssl /etc/apache2/sites-enabled/default-ssl
-		fi
-	else
-		if ! [ -L /etc/apache2/sites-enabled/default-ssl.conf ]; then
-			log_only "Setting up Apache to use SSL using the default-ssl virtual host for Ubuntu/Debian."
-			ln -s /etc/apache2/sites-available/default-ssl.conf /etc/apache2/sites-enabled/default-ssl.conf
-		fi
-	fi
-	a2enmod ssl
-	a2enmod rewrite
-else
-	log_only "You will need to enable/create a virtual host and the SSL module for Apache before HIE of One Authorization Server will work securely."
-fi
+a2enmod ssl
 if [ -e "$WEB_CONF"/hie.conf ]; then
 	rm "$WEB_CONF"/hie.conf
 fi
