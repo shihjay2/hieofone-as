@@ -5,11 +5,9 @@ HIE of One Authorization Server is a simple User Managed Access ([UMA](https://t
 ## Installation
 Run the following commands to install:
 
-<code>sudo curl -o install.sh https://raw.githubusercontent.com/shihjay2/hieofone-as/master/install.sh</code>
-
-<code> sudo chmod +x install.sh</code>
-
-<code>sudo bash install.sh</code>
+<code>sudo curl -o install.sh<br> https://raw.githubusercontent.com/shihjay2/hieofone-as/master/install.sh<br>
+sudo chmod +x install.sh<br>
+sudo bash install.sh</code>
 
 ## Dependencies
 1. PHP
@@ -18,9 +16,9 @@ Run the following commands to install:
 4. CURL
 
 ## Features
-OAuth2 OpenID Connect compliant server
-OAuth2 OpenID Connect relying party for Google and Twitter
-User Managed Access compliant authentication server
+1. OAuth2 OpenID Connect compliant server
+2. OAuth2 OpenID Connect relying party for Google and Twitter
+3. User Managed Access compliant authentication server
 
 ## How a client registers with the HIE of One Authorization Server
 
