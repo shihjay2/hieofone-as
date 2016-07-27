@@ -5,9 +5,9 @@ HIE of One Authorization Server is a simple User Managed Access ([UMA](https://t
 ## Installation
 Run the following commands to install:
 
-<code>sudo curl -o install.sh<br> https://raw.githubusercontent.com/shihjay2/hieofone-as/master/install.sh<br>
-sudo chmod +x install.sh<br>
-sudo bash install.sh</code>
+```sudo curl -o install.sh https://raw.githubusercontent.com/shihjay2/hieofone-as/master/install.sh
+sudo chmod +x install.sh
+sudo bash install.sh```
 
 ## Dependencies
 1. PHP
