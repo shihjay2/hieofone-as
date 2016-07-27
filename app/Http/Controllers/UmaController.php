@@ -28,13 +28,23 @@ class UmaController extends Controller
 		$redirect_uris_arr = $request->input('redirect_uris');
 		$redirect_uris = implode(' ', $redirect_uris_arr);
 		// grant types with space between entries
-		$grant_types = 'client_credentials authorization_code implicit jwt-bearer redelegate';
+		if ($request->input('grant_types') == '') {
+			$grant_types = 'client_credentials authorization_code implicit jwt-bearer refresh_token';
+		} else {
+			$grant_types_arr = $request->input('grant_types');
+			$grant_types = implode(' ', $grant_types_arr);
+		}
+		$grant_types = 'client_credentials authorization_code implicit jwt-bearer refresh_token';
 		// scopes with space between entries
-		$scopes = 'openid profile email address phone offline_access uma_authorization';
-		//Scope below for servers
-		//$scopes = 'openid profile email address phone offline_access uma_protection';
+		if ($request->input('scope') == '') {
+			$scopes = 'openid profile email address phone offline_access uma_authorization';
+		} else {
+			$scopes = $request->input('scope');
+		}
+		// Scope below for servers
+		// $scopes = 'openid profile email address phone offline_access uma_protection';
 		// username in oauth_users table
-		$user_id = 'mikey';
+		$user_id = '';
 		$client_uri = $request->input('client_uri');
 		$claims_redirect_uris_arr = $request->input('claims_redirect_uris');
 		$claims_redirect_uris = implode(' ', $claims_redirect_uris_arr);

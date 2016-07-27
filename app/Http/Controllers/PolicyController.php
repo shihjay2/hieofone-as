@@ -14,11 +14,42 @@ class PolicyController extends Controller
     /**
      * Display a listing of the resource.
      *
+	 * $request contains resourceId parameter
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $resource_set_id = $request->input('resourceId');
+		$query = DB::table('policy')->where('resource_set_id', '=', $resource_set_id)->get();
+		$return = [];
+		$i = 0;
+		if ($query) {
+			foreach ($query as $row) {
+				$return[$i] = [];
+				$query1 = DB::table('claim_to_policy')->where('policy_id', '=', $row->policy_id)->get();
+				$return[$i]['policy_id'] = $row->policy_id;
+				if ($query1) {
+					foreach ($query1 as $row1) {
+						$query2 = DB::table('claim')->where('claim_id', '=', $row1->claim_id)->first();
+						if ($query2) {
+							$return[$i]['email'] = $query2->claim_value;
+							$query3 = DB::table('oauth_users')->where('email', '=', $query2->claim_value)->first();
+							if ($query3) {
+								$return[$i]['name'] = $$query3->first_name . ' ' . $query3->last_name;
+							} else {
+								$return[$i]['name'] = '';
+							}
+						}
+					}
+				}
+				$query4 = DB::table('policy_scopes')->where('policy_id', '=', $row->policy_id)->get();
+				foreach ($query4 as $scope) {
+					$return[$i]['scopes'][] = $scope->scope;
+				}
+				$i++;
+			}
+		}
+		return $return;
     }
 
     /**

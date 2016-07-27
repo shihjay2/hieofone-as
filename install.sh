@@ -42,6 +42,7 @@ if [ ! -d $LOGDIR ]; then
 	mkdir -p $LOGDIR
 fi
 
+read -e -p "Is this an 1. UMA or 2. OIDC only installation?" -i "1" INSTALL_TYPE
 read -e -p "Enter the name of the MySQL database that HIE of One Authorization Server will use: " -i "oidc" MYSQL_DATABASE
 read -e -p "Enter your MySQL username: " -i "" MYSQL_USERNAME
 read -e -p "Enter your MySQL password: " -i "" MYSQL_PASSWORD
@@ -154,7 +155,9 @@ TWITTER_REDIRECT_URI=https://example.com/login
 
 GOOGLE_KEY=yourkeyfortheservice
 GOOGLE_SECRET=yoursecretfortheservice
-GOOGLE_REDIRECT_URI=https://example.com/login" >> $ENV
+GOOGLE_REDIRECT_URI=https://example.com/login
+INSTALL_TYPE=UMA
+" >> $ENV
 sed -i '/^DB_DATABASE=/s/=.*/='"$MYSQL_DATABASE"'/' .env
 sed -i '/^DB_USERNAME=/s/=.*/='"$MYSQL_USERNAME"'/' .env
 sed -i '/^DB_PASSWORD=/s/=.*/='"$MYSQL_PASSWORD"'/' .env
@@ -211,7 +214,7 @@ fi
 APACHE_CONF="$APACHE_CONF
 	RewriteEngine On
 	# Redirect Trailing Slashes...
-	RewriteRule ^(.*)/$ /$1 [L,R=301]
+	RewriteRule ^(.*)/$ /\$1 [L,R=301]
 	RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 	# Handle Front Controller...
 	RewriteCond %{REQUEST_FILENAME} !-d

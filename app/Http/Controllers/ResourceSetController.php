@@ -13,12 +13,31 @@ class ResourceSetController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
+     * $request contains client_id parameter
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+		$return = [];
+		$token = str_replace('Bearer ', '', $request->header('Authorization'));
+        $query = DB::table('oauth_access_tokens')->where('access_token', '=', $token)->first();
+		$query1 = DB::table('resource_set')->where('client_id', '=', $query1->client_id)->get();
+		$i = 0;
+		if ($query1) {
+			foreach ($query1 as $row) {
+				$return[$i]['resource_set_id'] = $row->resource_set_id;
+				$return[$i]['name'] = $row->name;
+				$return[$i]['icon_uri'] = $row->icon_uri;
+				$query2 = DB::table('resource_set_scopes')->where('resource_set_id', '=', $row->resource_set_id)->get();
+				if ($query2) {
+					foreach ($query2 as $row1) {
+						$return[$i]['scopes'][] = $row1->scope;
+					}
+				}
+				$i++;
+			}
+		}
+		return $return;
     }
 
     /**
@@ -54,14 +73,9 @@ class ResourceSetController extends Controller
           ];
           DB::table('resource_set_scopes')->insert($data1);
         }
-        // Generate policy
-        $policy = [
-          'resource_set_id' => $resource_set_id
-        ];
-        $policy_id = DB::table('policy')->insertGetId($policy);
         $return = [
           '_id' => $resource_set_id,
-          'user_access_policy_uri' => URL::to('policy') . '/' . $policy_id
+          'user_access_policy_uri' => URL::to('policy')
         ];
         return $return;
     }

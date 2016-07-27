@@ -2,6 +2,21 @@
 
 HIE of One Authorization Server is a simple User Managed Access ([UMA](https://tools.ietf.org/html/draft-hardjono-oauth-umacore-14)) Server that incorporates [OAuth2](https://tools.ietf.org/html/rfc6749) and [OpenID Connect](https://openid.net/connect/) protocols to facilitate the ability of an individual to control and authorize access to his or her health information to clients such as physicians, hospitals, caregivers, and third-party applications.
 
+## Installation
+Run the following commands to install:
+
+<code>sudo curl -o install.sh https://raw.githubusercontent.com/shihjay2/hieofone-as/master/install.sh</code>
+
+<code> sudo chmod +x install.sh</code>
+
+<code>sudo bash install.sh</code>
+
+## Dependencies
+1. PHP
+2. MySQL
+3. Apache
+4. CURL
+
 ## Features
 OAuth2 OpenID Connect compliant server
 OAuth2 OpenID Connect relying party for Google and Twitter
