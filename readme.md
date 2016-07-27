@@ -5,9 +5,9 @@ HIE of One Authorization Server is a simple User Managed Access ([UMA](https://t
 ## Installation
 Run the following commands to install:
 
-```sudo curl -o install.sh https://raw.githubusercontent.com/shihjay2/hieofone-as/master/install.sh
-sudo chmod +x install.sh
-sudo bash install.sh```
+	sudo curl -o install.sh https://raw.githubusercontent.com/shihjay2/hieofone-as/master/install.sh  
+	sudo chmod +x install.sh  
+	sudo bash install.sh
 
 ## Dependencies
 1. PHP
@@ -52,34 +52,29 @@ HIE of One authorization server will send an email and/or text to the patient th
 ### Step 1: Physician uses the registered client to access the resource server
 The client makes an initial call to the **resource endpoint**.
 
-<code>
-GET /fhir/Patient/1 HTTP/1.1<br>
-Host: rs.example.com
-</code>
+	GET /fhir/Patient/1 HTTP/1.1
+	Host: rs.example.com
 
 The **resource server** sends a response back with the URI of the **authorization server** (<code>as_uri</code> parameter in the <code>WWW-Authenticate</code> portion of the return header) and a **permission ticket** (<code>ticket</code> in JSON return).
 
 ### Step 2: Client obtains an authorization API token (AAT) from the authorization server
 The client makes a call to the <code>token_endpoint</code> of the **authorizaion server** as such (line breaks below are just for display convenience):
 
-<code>
-GET /token?grant_type=client_credentials<br>
-&client_id=some_client_id<br>
-&client_secret=some_client_secret<br>
-&scope=uma_authorization HTTP/1.1<br>
-Host: as.example.com
-</code>
+	GET /token?grant_type=client_credentials
+	&client_id=some_client_id
+	&client_secret=some_client_secret
+	&scope=uma_authorization HTTP/1.1
+	Host: as.example.com
 
 The **authorization API token** is <code>access_token</code> in the JSON return which will be used in the <code>rpt_endpoint</code>.
 
 ### Step 3: Client makes a call to the authorization server with the permission ticket given by the resource server
 The client makes a call to the <code>requesting_party_claims_endpoint</code> of the **authorization server** and presents the **permission ticket** as such (line breaks below are just for display convenience):
 
-<code>GET /rqp_claims?client_id=some_client_id<br>
-&state=abc<br>&ticket=016f84e8-f9b9-11e0-bd6f-0021cc6004de<br>
-&claims_redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fredirect_claims HTTP/1.1<br>
-Host: as.example.com
-</code>
+	GET /rqp_claims?client_id=some_client_id
+	&state=abc<br>&ticket=016f84e8-f9b9-11e0-bd6f-0021cc6004de
+	&claims_redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fredirect_claims HTTP/1.1
+	Host: as.example.com
 
 The requesting party will then be directed following this call to the authorization server which will determine the identity of the requesting party where a login screen will be presented.  4 choices of login will exist (going in order of most likely to least)
 1.  Login with [MDNosh Gateway](https://noshchartingsystem.com/mdnosh_gateway) (a federated physician single-sign-on solution).
@@ -89,35 +84,29 @@ The requesting party will then be directed following this call to the authorizat
 
 After login, the authorization server checks the login identity email address to the **claim** associated with the resource policy.  If there is a match, the requesting party is redirected by the client supplied redirect URL (<code>claims_redirect_uri</code> in the above example) with the added <code>authorization_state</code> parameter as such (line breaks below are just for display convenience)
 
-<code>
-GET /redirect_claims?&state=abc<br>
-&authorization_state=claims_submitted HTTP/1.1<br>
-Host: client.example.com
-</code>
+	GET /redirect_claims?&state=abc
+	&authorization_state=claims_submitted HTTP/1.1
+	Host: client.example.com
 
 ### Step 3: Client makes a call to the authorization server to get a requesting party token
 Client makes a call to the <code>rpt_endpoint</code> of the **authorization server** supplying the **authorization API token** and the **permission ticket** as such (line breaks below are just for display convenience):
 
-<code>
-POST /authz_request HTTP/1.1<br>
-Host: as.example.com<br>
-Authorization: Bearer some_authorization_API_token<br>
-...<br>
-{
- "ticket": "some_permission_ticket"
-}
-</code>
+	POST /authz_request HTTP/1.1
+	Host: as.example.com
+	Authorization: Bearer some_authorization_API_token
+	...
+	{
+	 "ticket": "some_permission_ticket"
+	}
 
 The **requesting party token** is <code>rpt</code> in the JSON return.
 
 ### Step 4: Client re-accesses resource server
 The client redirects back to the **resource server** with the **requesting party token** attached to the original FHIR **resource endpoint**.
 
-<code>
-GET /fhir/Patient/1 HTTP/1.1<br>
-Host: rs.example.com<br>
-Authorization: Bearer some_requesting party_token
-</code>
+	GET /fhir/Patient/1 HTTP/1.1
+	Host: rs.example.com
+	Authorization: Bearer some_requesting party_token
 
 The **resource server** makes calls to the **authorization server** to validate the **requesting party token** through an introspection call.  If validated, the resource server then presents the requested FHIR resource to the requesting party.
 
