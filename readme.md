@@ -117,4 +117,4 @@ If you discover a security vulnerability within HIE of One Authorization Server,
 
 ## License
 
-The HIE of One Authorization Server is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
+The HIE of One Authorization Server is open-sourced software licensed under the [GNU AGPLv3 license](https://opensource.org/licenses/AGPL-3.0).
