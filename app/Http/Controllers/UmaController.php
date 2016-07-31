@@ -27,6 +27,7 @@ class UmaController extends Controller
 		//$redirect_uris = 'http://test.com';
 		$redirect_uris_arr = $request->input('redirect_uris');
 		$redirect_uris = implode(' ', $redirect_uris_arr);
+		$uma_protection = false;
 		// grant types with space between entries
 		if ($request->input('grant_types') == '') {
 			$grant_types = 'client_credentials authorization_code implicit jwt-bearer refresh_token';
@@ -40,6 +41,11 @@ class UmaController extends Controller
 			$scopes = 'openid profile email address phone offline_access uma_authorization';
 		} else {
 			$scopes = $request->input('scope');
+			$scopes_array = explode(' ', $scopes);
+			// check if this client is a resource server
+			if (in_array('uma_protection', $scopes_array)) {
+				$uma_protection = true;
+			}
 		}
 		// Scope below for servers
 		// $scopes = 'openid profile email address phone offline_access uma_protection';
@@ -69,11 +75,17 @@ class UmaController extends Controller
 			'client_secret' => $clientSecret,
 			'client_id_issued_at' => time()
 		];
-		// Email notification to owner to authorize the client
-		$data1['message_data'] = 'You have a new client awaiting authorization on your HIE of One Authorization Server.  ';
-		$data1['message_data'] .= 'Go to ' . URL::to('authorize_client') . ' to get review and authorize.';
-		$title = 'New Client Registered';
-		$owener = DB::table('owner')->first();
+		// Email notification to owner to authorize the client or resource server
+		if ($uma_protection == true) {
+			$data1['message_data'] = 'You have a new resource server awaiting authorization on your HIE of One Authorization Server.  ';
+			$data1['message_data'] .= 'Go to ' . URL::to('authorize_resource_server') . ' to review and authorize.';
+			$title = 'New Resource server Registered';
+		} else {
+			$data1['message_data'] = 'You have a new client awaiting authorization on your HIE of One Authorization Server.  ';
+			$data1['message_data'] .= 'Go to ' . URL::to('authorize_client') . ' to review and authorize.';
+			$title = 'New Client Registered';
+		}
+		$owner = DB::table('owner')->first();
 		$to = $owner->email;
 		$this->send_mail('auth.emails.generic', $data1, $title, $to);
 		if ($owner->mobile != '') {
@@ -98,7 +110,7 @@ class UmaController extends Controller
 		$valid_scopes_array = [];
 		$query = DB::table('resource_set_scopes')->where('resource_set_id', '=', $resource_set_id)->first();
 		if ($query) {
-			// Resource set exisits
+			// Resource set exists
 			foreach ($scopes_array as $scope) {
 				$query1 = DB::table('resource_set_scopes')->where('resource_set_id', '=', $resource_set_id)->where('scope', '=', $scope)->first();
 				if ($query1) {
@@ -189,6 +201,11 @@ class UmaController extends Controller
 											'claim_id' => $claim->claim_id
 										];
 										DB::table('claim_to_permission_ticket')->insert($data);
+										// Set last_activity data to claim_to_policy
+										$data1 = [
+											'last_activity' => time()
+										];
+										DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->update($data1);
 										$params['authorization_state'] = 'claims_submitted';
 									} else {
 										// No matching claim, not authorized$params['authorization_state'] = 'not_authorized';
@@ -278,6 +295,12 @@ class UmaController extends Controller
 					$response = [
 						'rpt' => $response['access_token']
 					];
+					// Expire permission ticket
+					$expires = date('Y-m-d H:i:s', time());
+					$data1 = [
+						'expires' => $expires
+					];
+					DB::table('permission_ticket')->where('permission_id', '=', $permission_id)->update($data1);
 					$statusCode = 200;
 				} else {
 					// Invalid ticket

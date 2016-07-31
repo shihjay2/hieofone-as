@@ -11,17 +11,17 @@ use App\Http\Requests;
 
 class ResourceSetController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     * $request contains client_id parameter
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
-    {
+	/**
+	 * Display a listing of the resource.
+	 * $request contains client_id parameter
+	 * @return \Illuminate\Http\Response
+	 */
+	public function index(Request $request)
+	{
 		$return = [];
 		$token = str_replace('Bearer ', '', $request->header('Authorization'));
-        $query = DB::table('oauth_access_tokens')->where('access_token', '=', $token)->first();
-		$query1 = DB::table('resource_set')->where('client_id', '=', $query1->client_id)->get();
+		$query = DB::table('oauth_access_tokens')->where('access_token', '=', $token)->first();
+		$query1 = DB::table('resource_set')->where('client_id', '=', $query->client_id)->get();
 		$i = 0;
 		if ($query1) {
 			foreach ($query1 as $row) {
@@ -40,29 +40,32 @@ class ResourceSetController extends Controller
 		return $return;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
+	/**
+	 * Show the form for creating a new resource.
+	 *
+	 * @return \Illuminate\Http\Response
+	 */
+	public function create()
+	{
+	    //
+	}
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * $request is json object
-     * {"name": "example", "icon_uri":"https://icon.uri", "scopes":["scope1", "scope2", "scope3"]}
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        $data = [
+	/**
+	 * Store a newly created resource in storage.
+	 *
+	 * @param  \Illuminate\Http\Request  $request
+	 * $request is json object
+	 * {"name": "example", "icon_uri":"https://icon.uri", "scopes":["scope1", "scope2", "scope3"]}
+	 * @return \Illuminate\Http\Response
+	 */
+	public function store(Request $request)
+{
+		$token = str_replace('Bearer ', '', $request->header('Authorization'));
+		$client = DB::table('oauth_access_tokens')->where('access_token', '=', $token)->first();
+		$data = [
           'name' => $request->input('name'),
           'icon_uri' => $request->input('icon_uri'),
+		  'client_id' => $client->client_id
         ];
         $resource_set_id = DB::table('resource_set')->insertGetId($data);
         $scopes_array = $request->input('scopes');

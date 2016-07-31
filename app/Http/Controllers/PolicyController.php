@@ -39,6 +39,7 @@ class PolicyController extends Controller
 							} else {
 								$return[$i]['name'] = '';
 							}
+							$return[$i]['last_activity'] = $row1->last_activity;
 						}
 					}
 				}

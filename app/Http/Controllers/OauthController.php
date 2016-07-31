@@ -702,11 +702,34 @@ class OauthController extends Controller
 
 	public function test1(Request $request)
 	{
-		$owner = DB::table('owner')->first();
-		$data1['message_data'] = 'You have a new client awaiting authorization on your HIE of One Authorization Server.  ';
-		$data1['message_data'] .= 'Go to ' . URL::to('authorize_client') . ' to get review and authorize.';
+		$url = "https://noshchartingsystem.com/nosh/fhir/Patient/4534";
+		$url_array = explode('?', $url);
+		$url = $url_array[0];
+		// Trim any trailing Slashes
+		$url = rtrim($url, '/');
+		// Check if end fragment of URL is an integer and strip it out
+		$path = parse_url($url, PHP_URL_PATH);
+		$pathFragments = explode('/', $path);
+		$end = end($pathFragments);
+		if (is_numeric($end)) {
+			$pathFragments1 = explode('/', $url);
+			$sliced = array_slice($pathFragments1, 0, -1);
+			$url = implode('/', $sliced);
+		}
+		echo $url;
 
-		$this->textbelt($owner->mobile, $data1['message_data']);
+
+		// if ($request->isMethod('post')) {
+		// 	return $request->all();
+		// 	// if ($request->input('consent_login_md_nosh') == 'on') {
+		// 	// 	echo 'yes';
+		// 	// } else {
+		// 	// 	echo 'no';
+		// 	// }
+		// } else {
+		// 	$data['permissions'] = 'Test information';
+		// 	return view('rs_authorize', $data);
+		// }
 
 		//return redirect('https://www.google.com/search?q=shuts+down');
 		//return response()->view('auth');

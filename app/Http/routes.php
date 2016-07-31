@@ -44,6 +44,7 @@ Route::any('install', array('as' => 'install', 'uses' => 'OauthController@instal
 Route::any('login', array('as' => 'login', 'uses' => 'OauthController@login'));
 Route::any('logout', array('as' => 'logout', 'uses' => 'OauthController@logout'));
 Route::get('home', array('as' => 'home', 'uses' => 'HomeController@index'));
+Route::get('resources/{id}', array('as' => 'resources', 'uses' => 'HomeController@resources'));
 Route::get('login_authorize', array('as' => 'login_authorize', 'uses' => 'HomeController@login_authorize'));
 Route::get('login_authorize_action/{type}', array('as' => 'login_authorize_action', 'uses' => 'HomeController@login_authorize_action'));
 Route::any('client_register', array('as' => 'client_register', 'uses' => 'OauthController@client_register'));
@@ -54,6 +55,8 @@ Route::get('change_permission/{id}', array('as' => 'change_permission', 'uses' =
 Route::get('change_permission_add_edit/{id}', array('as' => 'change_permission_add_edit', 'uses' => 'HomeController@change_permission_add_edit'));
 Route::get('change_permission_remove_edit/{id}', array('as' => 'change_permission_remove_edit', 'uses' => 'HomeController@change_permission_remove_edit'));
 Route::get('change_permission_delete/{id}', array('as' => 'change_permission_delete', 'uses' => 'HomeController@change_permission_delete'));
+Route::get('authorize_resource_server', array('as' => 'authorize_resource_server', 'uses' => 'HomeController@authorize_resource_server'));
+Route::post('rs_authorize_action', array('as' => 'rs_authorize_action', 'uses' => 'HomeController@rs_authorize_action'));
 Route::get('authorize_client', array('as' => 'authorize_client', 'uses' => 'HomeController@authorize_client'));
 Route::get('authorize_client_action/{id}', array('as' => 'authorize_client_action', 'uses' => 'HomeController@authorize_client_action'));
 Route::get('authorize_client_disable/{id}', array('as' => 'authorize_client_disable', 'uses' => 'HomeController@authorize_client_disable'));

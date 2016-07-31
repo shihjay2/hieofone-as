@@ -23,23 +23,47 @@ class HomeController extends Controller
 	}
 
 	/**
-	 * Show the registered resources.
+	 * Show the registered resource services.
 	 *
 	 * @return \Illuminate\Http\Response
 	 */
 	public function index(Request $request)
 	{
 		$data['name'] = $request->session()->get('owner');
-		$data['title'] = 'My Resources';
-		$data['content'] = 'No resources registered yet.';
-		$query = DB::table('resource_set')->where('client_id', '=', $request->session()->get('client_id'))->get();
+		$data['title'] = 'My Resource Services';
+		$data['content'] = 'No resource services yet.';
+		$query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
 		if ($query) {
 			$data['content'] = '<div class="list-group">';
-			foreach ($query as $resource) {
-				$data['content'] .= '<a href="' . URL::to('resource_view') . '/' . $resource->resource_set_id . '" class="list-group-item"><img src="' . $resource->icon_uri . '" height="20" width="20"> ' . $resource->name . '</a>';
+			foreach ($query as $client) {
+				$data['content'] .= '<a href="' . URL::to('resources') . '/' . $client->client_id . '" class="list-group-item"><img src="' . $client->logo_uri . '" height="30" width="30"><span style="margin:10px">' . $client->client_name . '</span></a>';
 			}
 			$data['content'] .= '</div>';
 		}
+		return view('home', $data);
+	}
+
+	/**
+	 * Show the registered resources.
+	 *
+	 * @return \Illuminate\Http\Response
+	 */
+	public function resources(Request $request, $id)
+	{
+		$data['name'] = $request->session()->get('owner');
+		$client = DB::table('oauth_clients')->where('client_id', '=', $id)->first();
+		$data['title'] = 'My Resources for ' . $client->client_name;
+		$data['content'] = 'No resources registered yet.';
+		$data['back'] = '<a href="' . URL::to('home') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resource Services</a>';
+		$query = DB::table('resource_set')->where('client_id', '=', $id)->get();
+		if ($query) {
+			$data['content'] = '<div class="list-group">';
+			foreach ($query as $resource) {
+				$data['content'] .= '<a href="' . URL::to('resource_view') . '/' . $resource->resource_set_id . '" class="list-group-item"><img src="' . $resource->icon_uri . '" height="20" width="20"><span style="margin:10px;">' . $resource->name . '</span></a>';
+			}
+			$data['content'] .= '</div>';
+		}
+		$request->session()->put('current_client_id', $id);
 		return view('home', $data);
 	}
 
@@ -62,6 +86,7 @@ class HomeController extends Controller
 		$query = DB::table('resource_set')->where('resource_set_id', '=', $id)->first();
 		$data['title'] = 'Permissions for ' . $query->name;
 		$data['content'] = 'No policies registered for this resource.';
+		$data['back'] = '<a href="' . URL::to('resources') . '/' . $request->session()->get('current_client_id') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resources</a>';
 		$query1 = DB::table("policy")->where('resource_set_id', '=', $id)->get();
 		if ($query1) {
 			$data['content'] = '<table class="table table-striped"><thead><tr><th>User</th><th>Permissions</th><th></th></thead><tbody>';
@@ -191,11 +216,11 @@ class HomeController extends Controller
 		$oauth_scope_array = [
 			'openid' => 'OpenID Connect',
 			'uma_authorization' => 'Access Resources',
-			'offline_access' => 'Access Offline'
+			'uma_protection' => 'Register Resources'
 		];
 		$query = DB::table('oauth_clients')->where('authorized', '=', 1)->get();
 		if ($query) {
-			$data['content'] = '<p>Clients are outside apps that work on behalf of users to access your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Client Name</th><th>Permissions Requested</th><th></th></thead><tbody>';
+			$data['content'] = '<p>Clients are outside apps that work on behalf of users to access your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Client Name</th><th>Permissions</th><th></th></thead><tbody>';
 			foreach ($query as $client) {
 				$data['content'] .= '<tr><td>' . $client->client_name . '</td><td>';
 				$scope_array = explode(' ', $client->scope);
@@ -215,6 +240,51 @@ class HomeController extends Controller
 		return view('home', $data);
 	}
 
+	public function authorize_resource_server(Request $request)
+	{
+		$data['name'] = $request->session()->get('owner');
+		$data['title'] = 'Resource Registration Consent';
+		$data['content'] = 'No resource servers pending authorization.';
+		$data['message_action'] = $request->session()->get('message_action');
+		$request->session()->forget('message_action');
+		$query = DB::table('oauth_clients')->where('authorized', '=', '0')->where('scope', 'LIKE', "%uma_protection%")->first();
+		if ($query) {
+			$scopes_array = explode(' ', $query->scope);
+			if ($query->logo_uri == '') {
+				$data['content'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
+			} else {
+				$data['content'] = '<div><img src="' . $query->logo_uri . '" style="margin:20px;text-align: center;"></div>';
+			}
+			$data['content'] .= '<h3>Your information at ' . $query->client_name . ' will be shared</h3>';
+			$data['content'] .= '<p>By clicking Allow, you consent to sharing your information on ' . $query->client_name . ' according to the policies selected below. You can revoke consent or change your policies for ' . $query->client_name . ' at any time using the My Resources page. Requesting parties that are subject to your polices will be listed on the Clients page where you can enhance or limit their access privileges.</p>';
+			$data['content'] .= '<input type="hidden" name="client_id" value="' . $query->client_id . '"/>';
+		}
+		return view('rs_authorize', $data);
+	}
+
+	public function rs_authorize_action(Request $request)
+	{
+		if ($request->input('submit') == 'allow') {
+			$data['consent_login_direct'] = 0;
+			$data['consent_login_md_nosh'] = 0;
+			$data['consent_login_google'] = 0;
+			if ($request->input('consent_login_direct') == 'on') {
+				$data['consent_login_direct'] = 1;
+			}
+			if ($request->input('consent_login_md_nosh') == 'on') {
+				$data['consent_login_md_nosh'] = 1;
+			}
+			if ($request->input('consent_login_google') == 'on') {
+				$data['consent_login_google'] = 1;
+			}
+			$data['authorized'] = 1;
+			DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data);
+		} else {
+			// Deny resource server authorization
+		}
+		return redirect()->route('authorize');
+	}
+
 	public function authorize_client(Request $request)
 	{
 		$data['name'] = $request->session()->get('owner');
@@ -225,7 +295,7 @@ class HomeController extends Controller
 		$oauth_scope_array = [
 			'openid' => 'OpenID Connect',
 			'uma_authorization' => 'Access Resources',
-			'offline_access' => 'Access Offline'
+			'uma_protection' => 'Register Resources'
 		];
 		$query = DB::table('oauth_clients')->where('authorized', '=', 0)->get();
 		if ($query) {
@@ -325,7 +395,7 @@ class HomeController extends Controller
 			'profile' => 'fa-user',
 			'email' => 'fa-envelope',
 			'offline_access' => 'fa-share-alt',
-			'uma_authorization' => 'fa-database'
+			'uma_authorization' => 'fa-key'
 		];
 		if ($request->session()->get('logo_uri') == '') {
 			$data['permissions'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';

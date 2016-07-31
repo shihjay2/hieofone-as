@@ -5,7 +5,19 @@
 	<div class="row">
 		<div class="col-md-10 col-md-offset-1">
 			<div class="panel panel-default">
-				<div class="panel-heading">{!! $title !!}</div>
+				<div class="panel-heading">
+					<div class="container-fluid panel-container">
+						<div class="col-xs-6 col-md-9 text-left">
+							<h4 class="panel-title" style="height:35px;display:table-cell !important;vertical-align:middle;">{!! $title !!}</h4>
+						</div>
+						<div class="col-xs-3 text-right">
+							@if (isset($back))
+								{!! $back !!}
+							@endif
+						</div>
+					</div>
+
+				</div>
 				<div class="panel-body">
 					@if (isset($message_action))
 					  <div class="alert alert-success">
