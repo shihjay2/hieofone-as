@@ -85,13 +85,14 @@ class OauthController extends Controller
 					'smtp_username' => 'required'
 				]);
 				// Register user
+				$sub = $this->gen_uuid();
 				$user_data = [
 					'username' => $request->input('username'),
 					'password' => sha1($request->input('password')),
 					//'password' => substr_replace(Hash::make($request->input('password')),"$2a",0,3),
 					'first_name' => $request->input('first_name'),
 					'last_name' => $request->input('last_name'),
-					'sub' => $this->gen_uuid(),
+					'sub' => $sub,
 					'email' => $request->input('email')
 				];
 				DB::table('oauth_users')->insert($user_data);
@@ -109,7 +110,8 @@ class OauthController extends Controller
 					'DOB' => date('Y-m-d', strtotime($request->input('date_of_birth'))),
 					'email' => $request->input('email'),
 					'mobile' => $request->input('mobile'),
-					'client_id' => $clientId
+					'client_id' => $clientId,
+					'sub' => $sub
 				];
 				DB::table('owner')->insert($owner_data);
 				// Register oauth for Google and Twitter
@@ -208,9 +210,7 @@ class OauthController extends Controller
 			$bridgedRequest = BridgeRequest::createFromRequest($request);
 			$bridgedResponse = new BridgeResponse();
 			$bridgedResponse = App::make('oauth2')->grantAccessToken($bridgedRequest, $bridgedResponse);
-			// Confirm if client is authorized
-			$authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
-			if (isset($bridgedResponse['access_token']) && $authorized) {
+			if (isset($bridgedResponse['access_token'])) {
 				// Update to include JWT for introspection in the future if needed
 				$jwt_data = [
 					'jwt' => $bridgedResponse['access_token']
@@ -229,15 +229,36 @@ class OauthController extends Controller
 				$user1 = DB::table('users')->where('name', '=', $request->username)->first();
 				Auth::loginUsingId($user1->id);
 				if ($request->session()->get('response_type') == 'code') {
-					// This call is from authorization endpoint.  Check if user is associated with client
-					$user_array = explode(' ', $authorized->user_id);
-					if (in_array($request->username, $user_array)) {
-						// Go back to authorize route
-						$request->session()->put('is_authorized', true);
-						return redirect()->route('authorize');
+					// Confirm if client is authorized
+					$authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
+					if ($authorized) {
+						// This call is from authorization endpoint and client is authorized.  Check if user is associated with client
+						$user_array = explode(' ', $authorized->user_id);
+						if (in_array($request->username, $user_array)) {
+							// Go back to authorize route
+							$request->session()->put('is_authorized', true);
+							return redirect()->route('authorize');
+						} else {
+							// Get user permission
+							return redirect()->route('login_authorize');
+						}
 					} else {
-						// Get user permission
-						return redirect()->route('login_authorize');
+						// Get owner permission if owner is logging in from new client/registration server
+						$oauth_user = DB::table('oauth_users')->where('username', '=', $request->username)->first();
+						if ($ower_query->sub == $oauth_user->sub) {
+							// Check if client is a resource server or client
+							$scopes_array = explode(' ', $client1->scope);
+							if (in_array('uma_protection', $scopes_array)) {
+								// Resource registration consent by owner
+								return redirect()->route('authorize_resource_server');
+							} else {
+								// Get owner permission for client to access resource server.
+								return redirect()->route('login_authorize');
+							}
+						} else {
+							// Somehow, this is a registered user, but not the owner, and is using an unauthorized client - return back to login screen
+							return redirect()->back()->withErrors(['tryagain' => 'TPlease contact the owner of this authorization for assistance.']);
+						}
 					}
 				} else {
 					//  This call is directly from the home route.
@@ -523,7 +544,7 @@ class OauthController extends Controller
 	public function oauth_authorize(Request $request)
 	{
 		if (Auth::check()) {
-		  // Logged in, check if there was old request info and if so, plug into request since likely request is empty on the return.
+			// Logged in, check if there was old request info and if so, plug into request since likely request is empty on the return.
 			$request->merge([
 				'response_type' => $request->session()->get('response_type'),
 				'redirect_uri' => $request->session()->get('redirect_uri'),
@@ -702,36 +723,6 @@ class OauthController extends Controller
 
 	public function test1(Request $request)
 	{
-		$url = "https://noshchartingsystem.com/nosh/fhir/Patient/4534";
-		$url_array = explode('?', $url);
-		$url = $url_array[0];
-		// Trim any trailing Slashes
-		$url = rtrim($url, '/');
-		// Check if end fragment of URL is an integer and strip it out
-		$path = parse_url($url, PHP_URL_PATH);
-		$pathFragments = explode('/', $path);
-		$end = end($pathFragments);
-		if (is_numeric($end)) {
-			$pathFragments1 = explode('/', $url);
-			$sliced = array_slice($pathFragments1, 0, -1);
-			$url = implode('/', $sliced);
-		}
-		echo $url;
 
-
-		// if ($request->isMethod('post')) {
-		// 	return $request->all();
-		// 	// if ($request->input('consent_login_md_nosh') == 'on') {
-		// 	// 	echo 'yes';
-		// 	// } else {
-		// 	// 	echo 'no';
-		// 	// }
-		// } else {
-		// 	$data['permissions'] = 'Test information';
-		// 	return view('rs_authorize', $data);
-		// }
-
-		//return redirect('https://www.google.com/search?q=shuts+down');
-		//return response()->view('auth');
 	}
 }

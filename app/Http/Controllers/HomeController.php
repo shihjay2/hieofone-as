@@ -32,6 +32,8 @@ class HomeController extends Controller
 		$data['name'] = $request->session()->get('owner');
 		$data['title'] = 'My Resource Services';
 		$data['content'] = 'No resource services yet.';
+		$data['message_action'] = $request->session()->get('message_action');
+		$request->session()->forget('message_action');
 		$query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
 		if ($query) {
 			$data['content'] = '<div class="list-group">';
@@ -54,6 +56,8 @@ class HomeController extends Controller
 		$client = DB::table('oauth_clients')->where('client_id', '=', $id)->first();
 		$data['title'] = 'My Resources for ' . $client->client_name;
 		$data['content'] = 'No resources registered yet.';
+		$data['message_action'] = $request->session()->get('message_action');
+		$request->session()->forget('message_action');
 		$data['back'] = '<a href="' . URL::to('home') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resource Services</a>';
 		$query = DB::table('resource_set')->where('client_id', '=', $id)->get();
 		if ($query) {
@@ -258,8 +262,11 @@ class HomeController extends Controller
 			$data['content'] .= '<h3>Your information at ' . $query->client_name . ' will be shared</h3>';
 			$data['content'] .= '<p>By clicking Allow, you consent to sharing your information on ' . $query->client_name . ' according to the policies selected below. You can revoke consent or change your policies for ' . $query->client_name . ' at any time using the My Resources page. Requesting parties that are subject to your polices will be listed on the Clients page where you can enhance or limit their access privileges.</p>';
 			$data['content'] .= '<input type="hidden" name="client_id" value="' . $query->client_id . '"/>';
+			return view('rs_authorize', $data);
+		} else {
+			return redirect()-route('home');
 		}
-		return view('rs_authorize', $data);
+
 	}
 
 	public function rs_authorize_action(Request $request)
@@ -279,10 +286,26 @@ class HomeController extends Controller
 			}
 			$data['authorized'] = 1;
 			DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data);
+			$client = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('client_id'))->first();
+			$user_array = explode(' ', $client->user_id);
+			$user_array[] = $request->session()->get('username');
+			$data['user_id'] = implode(' ', $user_array);
+			DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('client_id'))->update($data);
+			$request->session()->put('message_action', 'Authorized resource server named ' . $client->client_name);
+			if ($request->session()->get('response_type') == 'code') {
+				$request->session()->put('is_authorized', true);
+			}
 		} else {
-			// Deny resource server authorization
+			$request->session()->put('message_action', 'Unauthorized resource server named ' . $client->client_name);
+			if ($request->session()->get('response_type') == 'code') {
+				$request->session()->put('is_authorized', false);
+			}
 		}
-		return redirect()->route('authorize');
+		if ($request->session()->get('response_type') == 'code') {
+			return redirect()->route('authorize');
+		} else {
+			return redirect()->route('home');
+		}
 	}
 
 	public function authorize_client(Request $request)

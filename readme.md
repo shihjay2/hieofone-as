@@ -60,7 +60,7 @@ Client makes a call to the <code>dynamic_client_endpoint</code> to [register its
 		"claims_redirect_uri":[
 			"https://client.example.org/callback3"
 		],
-		"scope": "openid email offline uma_authorizaion"
+		"scope": "openid email offline uma_authorization"
 	}
 
 ### Step 7: Patient is notified about the new client and authorizes the client
@@ -73,7 +73,18 @@ Client takes  the JSON return (specifically the <code>href subkey</code> under <
 Client makes a call to the <code>dynamic_client_endpoint</code> to [register itself](https://tools.ietf.org/html/draft-ietf-oauth-dyn-reg-30).  Client will need to store the <code>client_id</code> and <code>client_secret</code> (such as in a database) going forward.  It is important for the client to consider which redirect URIs to use as one of them will need to handle the <code>claims_redirect_uri</code> parameter listed [here](#step-3:-client-makes-a-call-to-the-authorization-server-with-the-permission-ticket-given-by-the-resource-server)
 
 ### Step 10: Patient is notified about the new client and authorizes the client
-HIE of One authorization server will send an email and/or text to the patient that a new client is dynamically registered (but not authorized yet).  Patient verifies that this is indeed a valid client.  The patient presses Authorize and the client is now registered to the authorization server.  From now on, the client is now the **registered client**
+HIE of One authorization server will send an email and/or text to the patient that a new client is dynamically registered (but not authorized yet).  As a client, make a call to the <code>authorization_endpoint</code>.  Make sure as a client you declare these 2 scopes - uma_authorization (which defines you as a client requesting access to resources) and offline_access (so that you can obtain a **refresh token** for future calls without needing the patient to repeat consent online.) Here is an example call (line breaks below are just for display convenience):
+
+	GET /authorize?
+	response_type=code
+	&scope=openid%20profile%20email%20uma_authorization%20offline_access
+	&client_id=some_client_id
+	&client_secret=some_client_secret
+	&state=af0ifjsldkj
+	&redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb HTTP/1.1
+	Host: server.example.com
+
+The patient is then directed to the login page of HIE of One Authorization Server where he/she verifies his/her identity.  If successful, the patient will then see a consent screen that verifies that this client will have access to  resources registered on his/her authorization server.  If the patient accepts, the client is authorized and the client is now registered to the authorization server.  From now on, the client is now the **registered client**.  ***It is the responsibility of the client to correctly assign the registered client information (client_id, client_secret, refresh_token, authorization server URI) to the correct identity (patient, requesting party).***
 
 ## How a client becomes a resource server
 
@@ -82,7 +93,7 @@ Becoming a resource server is exactly the same steps as above except for the fol
 1. Resource server software has **resources** that pertain to the patient
 
 ### Step 6: Client dynamically registers to the authorization server
-Resource server makes a call to the <code>dynamic_client_endpoint</code> to [register itself](https://tools.ietf.org/html/draft-ietf-oauth-dyn-reg-30).  Client will need to store the <code>client_id</code> and <code>client_secret</code> (such as in a database) going forward.  It is important for the resource server to consider which redirect URIs to use as one of them will need to handle the <code>claims_redirect_uri</code> parameter listed [here](#step-3:-client-makes-a-call-to-the-authorization-server-with-the-permission-ticket-given-by-the-resource-server).  Being a resource server requires that you declaire a scope of <code>uma_protection</code>.  Being a resource server also allows it to be client, so a scope declaration can include both <code>uma_authorization</code> and <code>uma_protection</code>.  Here is an example call (line breaks below are just for display convenience):
+Resource server makes a call to the <code>dynamic_client_endpoint</code> to [register itself](https://tools.ietf.org/html/draft-ietf-oauth-dyn-reg-30).  Resource server will need to store the <code>client_id</code> and <code>client_secret</code> (such as in a database) going forward.  It is important for the resource server to consider which redirect URIs to use as one of them will need to handle the <code>claims_redirect_uri</code> parameter listed [here](#step-3:-client-makes-a-call-to-the-authorization-server-with-the-permission-ticket-given-by-the-resource-server).  Being a resource server requires that you declaire a scope of <code>uma_protection</code>.  Being a resource server also allows it to be client, so a scope declaration can include both <code>uma_authorization</code> and <code>uma_protection</code>.  Here is an example call (line breaks below are just for display convenience):
 
 	POST /register HTTP/1.1
 	Content-Type: application/json
@@ -98,8 +109,22 @@ Resource server makes a call to the <code>dynamic_client_endpoint</code> to [reg
 		"claims_redirect_uri":[
 			"https://rs.example.org/callback3"
 		],
-		"scope": "openid email offline uma_authorizaion uma_protection"
+		"scope": "openid email offline uma_authorization uma_protection"
 	}
+
+### Step 10: Patient is notified about the new client and authorizes the client
+HIE of One authorization server will send an email and/or text to the patient that a new resource server is dynamically registered (but not authorized yet).  As a resource server, make a call to the <code>authorization_endpoint</code>.  Make sure as a client you declare these 2 scopes - uma_protection (which defines you as a resource server requesting access to serve resources) and offline_access (so that you can obtain a **refresh token** for future calls without needing the patient to repeat consent online.) Here is an example call (line breaks below are just for display convenience):
+
+	GET /authorize?
+	response_type=code
+	&scope=openid%20profile%20email%20uma_protection%20offline_access
+	&client_id=some_client_id
+	&client_secret=some_client_secret
+	&state=af0ifjsldkj
+	&redirect_uri=https%3A%2F%2Frs.example.org%2Fcb HTTP/1.1
+	Host: server.example.com
+
+The patient is then directed to the login page of HIE of One Authorization Server where he/she verifies his/her identity.  If successful, the patient will then see a consent screen that verifies that this resource server will have access to his data and will be able to serve resources and register them on his/her authorization server.  If the patient accepts, the client is authorized and the client is now registered to the authorization server.  From now on, the client is now the **registered resource server**.  ***It is the responsibility of the resource server to correctly assign the registered client information (client_id, client_secret, refresh_token, authorization server URI) to the correct identity (patient).***
 
 ## How a requesting party (such as a physician) obtains authorization to access a resource
 

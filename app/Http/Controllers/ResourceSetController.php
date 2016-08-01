@@ -38,7 +38,7 @@ class ResourceSetController extends Controller
 			}
 		}
 		return $return;
-    }
+	}
 
 	/**
 	 * Show the form for creating a new resource.
@@ -59,39 +59,52 @@ class ResourceSetController extends Controller
 	 * @return \Illuminate\Http\Response
 	 */
 	public function store(Request $request)
-{
+	{
 		$token = str_replace('Bearer ', '', $request->header('Authorization'));
 		$client = DB::table('oauth_access_tokens')->where('access_token', '=', $token)->first();
 		$data = [
-          'name' => $request->input('name'),
-          'icon_uri' => $request->input('icon_uri'),
-		  'client_id' => $client->client_id
-        ];
-        $resource_set_id = DB::table('resource_set')->insertGetId($data);
-        $scopes_array = $request->input('scopes');
-        foreach ($scopes_array as $scope) {
-          $data1 = [
-            'resource_set_id' => $resource_set_id,
-            'scope' => $scope
-          ];
-          DB::table('resource_set_scopes')->insert($data1);
-        }
-        $return = [
-          '_id' => $resource_set_id,
-          'user_access_policy_uri' => URL::to('policy')
-        ];
-        return $return;
-    }
+			'name' => $request->input('name'),
+			'icon_uri' => $request->input('icon_uri'),
+			'client_id' => $client->client_id
+		];
+		$resource_set_id = DB::table('resource_set')->insertGetId($data);
+		$scopes_array = $request->input('scopes');
+		foreach ($scopes_array as $scope) {
+			$data1 = [
+				'resource_set_id' => $resource_set_id,
+				'scope' => $scope
+			];
+			DB::table('resource_set_scopes')->insert($data1);
+		}
+		$return = [
+			'_id' => $resource_set_id,
+			'user_access_policy_uri' => URL::to('policy')
+		];
+		return $return;
+	}
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
+	/**
+	 * Display the specified resource.
+	 *
+	 * @param  int  $id
+	 * @return \Illuminate\Http\Response
+	 */
+	public function show($id)
+	{
+		$return = [];
+		$query = DB::table('resource_set')->where('resource_set_id', '=', $id)->first();
+		if ($query) {
+			$return = [
+				'_id' => $id,
+				'name' => $query->name,
+				'icon_uri' => $query->icon_uri,
+			];
+			$query1 = DB::table('resource_set_scopes')->where('resource_set_id', '=', $id)->get();
+			foreach ($query1 as $scope) {
+				$return['scopes'][] = $scope->scope;
+			}
+		}
+		return $return;
     }
 
     /**

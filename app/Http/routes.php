@@ -111,6 +111,7 @@ Route::get('installgoogle', array('as' => 'installgoogle', 'uses' => 'OauthContr
 Route::get('.well-known/openid-configuration', array('as' => 'openid-configuration', function() {
 	$scopes = DB::table('oauth_scopes')->get();
 	$config = [
+		'issuer' => URL::to('/'),
 		'grant_types_supported' => [
 			'authorization_code',
 			'client_credentials',
@@ -119,19 +120,28 @@ Route::get('.well-known/openid-configuration', array('as' => 'openid-configurati
 			'urn:ietf:params:oauth:grant-type:jwt-bearer',
 			'urn:ietf:params:oauth:grant_type:redelegate'
 		],
-		'authorization_endpoint' => URL::to('authorize'),
-		'token_endpoint' => URL::to('token'),
-		'userinfo_endpoint' => URL::to('userinfo'),
 		'registration_endpoint' => URL::to('register'),
+		'token_endpoint' => URL::to('token'),
+		'authorization_endpoint' => URL::to('authorize'),
 		'introspection_endpoint' => URL::to('introspection'),
-		'scopes_supported' => $scopes,
-		'issuer' => URL::to('welcome')
+		'userinfo_endpoint' => URL::to('userinfo'),
+		'scopes_supported' => $scopes
 	];
 	return $config;
 }));
 
 Route::get('.well-known/uma-configuration', function() {
 	$config = [
+		'issuer' => URL::to('/'),
+		'pat_profiles_supported' => [
+			'bearer'
+		],
+		'aat_profiles_supported' => [
+			'bearer'
+		],
+		'rpt_profiles_supported' => [
+			'bearer'
+		],
 		'pat_grant_types_supported' => [
 			'authorization_code',
 			'client_credentials',
@@ -148,22 +158,17 @@ Route::get('.well-known/uma-configuration', function() {
 			'urn:ietf:params:oauth:grant-type:jwt-bearer',
 			'urn:ietf:params:oauth:grant_type:redelegate'
 		],
-		'authorization_endpoint' => URL::to('authorize'),
+		// 'dynamic_client_endpoint' => URL::to('register'),
+		'registration_endpoint' => URL::to('register'),
 		'token_endpoint' => URL::to('token'),
-		'userinfo_endpoint' => URL::to('userinfo'),
-		'dynamic_client_endpoint' => URL::to('register'),
-		'permission_registration_endpoint' => URL::to('permission'),
+		'authorization_endpoint' => URL::to('authorize'),
 		'requesting_party_claims_endpoint' => URL::to('rqp_claims'),
 		'resource_set_registration_endpoint' => URL::to('resource_set'),
-		'policy_endpoint' => URL::to('policy'),
-		'rpt_endpoint' => URL::to('authz_request'),
 		'introspection_endpoint' => URL::to('introspect'),
-		'aat_profiles_supported' => [
-			'bearer'
-		],
-		'rpt_profiles_supported' => [
-			'bearer'
-		]
+		'permission_registration_endpoint' => URL::to('permission'),
+		'rpt_endpoint' => URL::to('authz_request'),
+		'userinfo_endpoint' => URL::to('userinfo'),
+		'policy_endpoint' => URL::to('policy'),
 	];
 	return $config;
 });
