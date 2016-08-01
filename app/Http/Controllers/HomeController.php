@@ -84,7 +84,7 @@ class HomeController extends Controller
 		$data['message_action'] = $request->session()->get('message_action');
 		$request->session()->forget('message_action');
 		$uma_scope_array = [
-			'show' => 'View',
+			'view' => 'View',
 			'edit' => 'Edit'
 		];
 		$query = DB::table('resource_set')->where('resource_set_id', '=', $id)->first();
@@ -131,7 +131,7 @@ class HomeController extends Controller
 	{
 		$data['name'] = $request->session()->get('owner');
 		$uma_scope_array = [
-			'show' => 'view',
+			'view' => 'view',
 			'edit' => 'edit'
 		];
 		$query = DB::table("policy")->where('policy_id', '=', $id)->first();
