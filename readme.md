@@ -155,7 +155,7 @@ After login, the authorization server checks the login identity email address to
 	&authorization_state=claims_submitted HTTP/1.1
 	Host: client.example.com
 
-### Step 3: Client makes a call to the authorization server to get a requesting party token
+### Step 4: Client makes a call to the authorization server to get a requesting party token
 Client makes a call to the <code>rpt_endpoint</code> of the **authorization server** supplying the **authorization API token** and the **permission ticket** as such (line breaks below are just for display convenience):
 
 	POST /authz_request HTTP/1.1
@@ -168,7 +168,7 @@ Client makes a call to the <code>rpt_endpoint</code> of the **authorization serv
 
 The **requesting party token** is <code>rpt</code> in the JSON return.
 
-### Step 4: Client re-accesses resource server
+### Step 5: Client re-accesses resource server
 The client redirects back to the **resource server** with the **requesting party token** attached to the original FHIR **resource endpoint**.
 
 	GET /fhir/Patient/1 HTTP/1.1
