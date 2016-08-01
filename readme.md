@@ -30,7 +30,11 @@ Run the following commands to install:
 Patient submits his or her HIE of One email address (patient@domain.xyz) to the client (like a physician), where domain.xyz is the same domain name as where the HIE of One **authorization server** is installed.  This can be done, for example, through a EHR patient portal that has a text input that allows processing of the patient's HIE of One email address.  Alternatively, the provider would enter this email address in the EHR directly when the patient's chart is open.  A negative result results in a 404 error response.
 
 ### Step 2: Client verifies patient's authorization server
-Client submits email address to the following address per [Webfinger protocol](https://tools.ietf.org/html/rfc7033) to confirm validity of the account and email address: https://domain.xyz/.well-known/webfinger?resource=acct:patient@domain.xyz&rel=http://openid.net/specs/connect/1.0/issuer
+Client submits email address to the following address per [Webfinger protocol](https://tools.ietf.org/html/rfc7033) to confirm validity of the account and email address.  Here is an example call (line breaks below are just for display convenience):
+
+	GET /.well-known/webfinger?
+	resource=acct:patient@domain.xyz
+	&rel=http://openid.net/specs/connect/1.0/issuer
 
 ### Step 3: Client learns authorization server endpoints
 Client takes  the JSON return (specifically the <code>href subkey</code> under <code>links</code>) and when appending <code>.well-known/uma-configuration</code> to the URL, like this: https://domain.xyz/uma/.well-known/uma-configuration, client will see in JSON format all the valid UMA endpoints where client makes calls to initiate a token request, start authorization, request a permission ticket, and make requesting party claims.
