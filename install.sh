@@ -9,6 +9,8 @@ LOG=$LOGDIR/installation_log
 WEB=/opt
 HIE=$WEB/hieofone-as
 ENV=$HIE/.env
+PRIVKEY=$HIE/.privkey.pem
+PUBKEY=$HIE/.pubkey.pem
 
 log_only () {
 	echo "$1"
@@ -161,6 +163,8 @@ INSTALL_TYPE=UMA
 sed -i '/^DB_DATABASE=/s/=.*/='"$MYSQL_DATABASE"'/' .env
 sed -i '/^DB_USERNAME=/s/=.*/='"$MYSQL_USERNAME"'/' .env
 sed -i '/^DB_PASSWORD=/s/=.*/='"$MYSQL_PASSWORD"'/' .env
+openssl genrsa -out $PRIVKEY 2048
+openssl rsa -in $PRIVKEY -pubout -out $PUBKEY
 chown -R $WEB_GROUP.$WEB_USER $HIE
 chmod -R 755 $HIE
 chmod -R 777 $HIE/storage

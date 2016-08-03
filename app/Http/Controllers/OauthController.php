@@ -223,8 +223,8 @@ class OauthController extends Controller
 					'client_id' => $client_id,
 					'owner' => $owner_query->firstname . ' ' . $owner_query->lastname,
 					'username' => $request->username,
-					'client_name' => $authorized->client_name,
-					'logo_uri' => $authorized->logo_uri
+					'client_name' => $client1->client_name,
+					'logo_uri' => $client1->logo_uri
 				]);
 				$user1 = DB::table('users')->where('name', '=', $request->username)->first();
 				Auth::loginUsingId($user1->id);

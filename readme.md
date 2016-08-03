@@ -167,7 +167,7 @@ Client makes a call to the <code>rpt_endpoint</code> of the **authorization serv
 	Authorization: Bearer some_authorization_API_token
 	...
 	{
-	 "ticket": "some_permission_ticket"
+		"ticket": "some_permission_ticket"
 	}
 
 The **requesting party token** is <code>rpt</code> in the JSON return.
