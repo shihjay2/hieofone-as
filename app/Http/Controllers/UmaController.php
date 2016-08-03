@@ -35,7 +35,7 @@ class UmaController extends Controller
 			$grant_types_arr = $request->input('grant_types');
 			$grant_types = implode(' ', $grant_types_arr);
 		}
-		$grant_types = 'client_credentials authorization_code implicit jwt-bearer refresh_token';
+		// $grant_types = 'client_credentials authorization_code implicit jwt-bearer refresh_token';
 		// scopes with space between entries
 		if ($request->input('scope') == '') {
 			$scopes = 'openid profile email address phone offline_access uma_authorization';
