@@ -7,8 +7,7 @@
 			<div class="panel panel-default">
 				<div class="panel-heading">Resource Registration Consent</div>
 				<div class="panel-body">
-					<!-- <form class="form-horizontal" role="form" method="POST" action="{{ URL::to('rs_authorize_action') }}"> -->
-					<form class="form-horizontal" role="form" method="POST" action="{{ URL::to('test1') }}">
+					<form class="form-horizontal" role="form" method="POST" action="{{ URL::to('rs_authorize_action') }}">
 						<div style="text-align: center;">
 						  {!! $content !!}
 						</div>
