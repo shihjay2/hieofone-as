@@ -561,27 +561,23 @@ class OauthController extends Controller
 			// Do client check
 			$query = DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->first();
 			if ($query) {
-				if ($query->authorized == 1) {
-					// Validate request
-					$bridgedRequest = BridgeRequest::createFromRequest($request);
-					$bridgedResponse = new BridgeResponse();
-					$bridgedResponse = App::make('oauth2')->validateAuthorizeRequest($bridgedRequest, $bridgedResponse);
-					if ($bridgedResponse == true) {
-						// Save request input to session prior to going to login route
-						session([
-							'response_type' => $request->input('response_type'),
-							'redirect_uri' => $request->input('redirect_uri'),
-							'client_id' => $request->input('client_id'),
-							'nonce' => $request->input('nonce'),
-							'state' => $request->input('state'),
-							'scope' => $request->input('scope')
-						]);
-						return redirect()->route('login');
-					} else {
-						return response('invalid_request', 400);
-					}
+				// Validate request
+				$bridgedRequest = BridgeRequest::createFromRequest($request);
+				$bridgedResponse = new BridgeResponse();
+				$bridgedResponse = App::make('oauth2')->validateAuthorizeRequest($bridgedRequest, $bridgedResponse);
+				if ($bridgedResponse == true) {
+					// Save request input to session prior to going to login route
+					session([
+						'response_type' => $request->input('response_type'),
+						'redirect_uri' => $request->input('redirect_uri'),
+						'client_id' => $request->input('client_id'),
+						'nonce' => $request->input('nonce'),
+						'state' => $request->input('state'),
+						'scope' => $request->input('scope')
+					]);
+					return redirect()->route('login');
 				} else {
-					return response('unauthorized_client', 400);
+					return response('invalid_request', 400);
 				}
 			} else {
 				return response('unauthorized_client', 400);
