@@ -14,7 +14,8 @@
 App::singleton('oauth2', function() {
 	$storage = new OAuth2\Storage\Pdo(DB::connection()->getPdo());
 	// specify your audience (typically, the URI of the oauth server)
-	$issuer = env('URI', false);
+	// $issuer = env('URI', false);
+	$issuer = URL::to('/');
 	$audience = 'https://' . $issuer;
 	$config['use_openid_connect'] = true;
 	$config['issuer'] = $issuer;
