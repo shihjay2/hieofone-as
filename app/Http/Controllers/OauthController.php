@@ -245,7 +245,7 @@ class OauthController extends Controller
 					} else {
 						// Get owner permission if owner is logging in from new client/registration server
 						$oauth_user = DB::table('oauth_users')->where('username', '=', $request->username)->first();
-						if ($ower_query->sub == $oauth_user->sub) {
+						if ($owner_query->sub == $oauth_user->sub) {
 							// Check if client is a resource server or client
 							$scopes_array = explode(' ', $client1->scope);
 							if (in_array('uma_protection', $scopes_array)) {
