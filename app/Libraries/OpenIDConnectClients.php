@@ -780,7 +780,7 @@ class OpenIDConnectClient
 				'logo_uri' => 'https://www.noshchartingsystem.com/SAAS-Logo.jpg'
 			);
 		} else {
-			$registration_endpoint = $this->getProviderConfigValue('dynamic_client_endpoint', $uma);
+			$registration_endpoint = $this->getProviderConfigValue('registration_endpoint', $uma);
 			if ($rs == true) {
 				$send_array = (object)array(
 					'redirect_uris' => array(
@@ -1029,7 +1029,7 @@ class OpenIDConnectClient
 		$return = json_decode($this->fetchURL($resource_set_endpoint, null, $this->accessToken, null), true);
 		return $return;
 	}
-	
+
 	/**
 	 * UMA - Policy
 	 * $permissions is array such as
