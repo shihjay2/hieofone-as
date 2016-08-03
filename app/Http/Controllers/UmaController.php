@@ -30,7 +30,7 @@ class UmaController extends Controller
 		$uma_protection = false;
 		// grant types with space between entries
 		if ($request->input('grant_types') == '') {
-			$grant_types = 'client_credentials authorization_code implicit jwt-bearer refresh_token';
+			$grant_types = 'client_credentials password authorization_code implicit jwt-bearer refresh_token';
 		} else {
 			$grant_types_arr = $request->input('grant_types');
 			$grant_types = implode(' ', $grant_types_arr);

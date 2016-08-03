@@ -33,7 +33,8 @@ App::singleton('oauth2', function() {
 	// set grant types
 	$server->addGrantType(new OAuth2\GrantType\ClientCredentials($storage));
 	$server->addGrantType(new OAuth2\GrantType\UserCredentials($storage));
-	$server->addGrantType(new OAuth2\GrantType\AuthorizationCode($storage));
+	$server->addGrantType(new OAuth2\OpenID\GrantType\AuthorizationCode($storage));
+	// $server->addGrantType(new OAuth2\GrantType\AuthorizationCode($storage));
 	$server->addGrantType(new OAuth2\GrantType\RefreshToken($storage));
 	$server->addGrantType(new OAuth2\GrantType\JwtBearer($storage, $audience));
 	return $server;
