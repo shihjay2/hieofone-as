@@ -34,7 +34,6 @@ App::singleton('oauth2', function() {
 	$server->addGrantType(new OAuth2\GrantType\ClientCredentials($storage));
 	$server->addGrantType(new OAuth2\GrantType\UserCredentials($storage));
 	$server->addGrantType(new OAuth2\OpenID\GrantType\AuthorizationCode($storage));
-	// $server->addGrantType(new OAuth2\GrantType\AuthorizationCode($storage));
 	$server->addGrantType(new OAuth2\GrantType\RefreshToken($storage));
 	$server->addGrantType(new OAuth2\GrantType\JwtBearer($storage, $audience));
 	return $server;
@@ -73,6 +72,8 @@ Route::post('token', array('as' => 'token', function() {
 }));
 
 Route::get('authorize', array('as' => 'authorize', 'uses' => 'OauthController@oauth_authorize'));
+
+Route::get('jwks_uri', array('as' => 'jwks_uri', 'uses' => 'OauthController@jwks_uri'));
 
 Route::get('userinfo', array('as' => 'userinfo', 'uses' => 'OauthController@userinfo'));
 
@@ -126,7 +127,8 @@ Route::get('.well-known/openid-configuration', array('as' => 'openid-configurati
 		'authorization_endpoint' => URL::to('authorize'),
 		'introspection_endpoint' => URL::to('introspection'),
 		'userinfo_endpoint' => URL::to('userinfo'),
-		'scopes_supported' => $scopes
+		'scopes_supported' => $scopes,
+		'jwks_uri' => URL::to('jwks_uri')
 	];
 	return $config;
 }));
@@ -170,6 +172,7 @@ Route::get('.well-known/uma-configuration', function() {
 		'rpt_endpoint' => URL::to('authz_request'),
 		'userinfo_endpoint' => URL::to('userinfo'),
 		'policy_endpoint' => URL::to('policy'),
+		'jwks_uri' => URL::to('jwks_uri')
 	];
 	return $config;
 });

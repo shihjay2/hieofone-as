@@ -46,6 +46,10 @@ class Controller extends BaseController
 		return $result;
 	}
 
+	protected function base64url_encode($data) {
+		return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+	} 
+
 	protected function send_mail($template, $data_message, $subject, $to)
 	{
 		$google_client = DB::table('oauth_rp')->where('type', '=', 'google')->first();

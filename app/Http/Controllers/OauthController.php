@@ -17,12 +17,14 @@ use OAuth2\HttpFoundationBridge\Response as BridgeResponse;
 use Response;
 use Socialite;
 use URL;
+use phpseclib\Crypt\RSA;
+use SimpleXMLElement;
 
 class OauthController extends Controller
 {
 	/**
 	* Base funtions
-	*
+	*SimpleXMLElement
 	*/
 
 	public function github_all()
@@ -620,6 +622,34 @@ class OauthController extends Controller
 		} else {
 			return Response::json(array('error' => 'Unauthorized'), $bridgedResponse->getStatusCode());
 		}
+	}
+
+	/**
+	* JSON Web Token signing keys
+	*
+	* @return Response
+	*/
+
+	public function jwks_uri(Request $request)
+	{
+		$rsa = new RSA();
+		$publicKey = File::get(__DIR__."/../../../.pubkey.pem");
+		$rsa->loadKey($publicKey);
+		$parts = $rsa->getPublicKey(RSA::PUBLIC_FORMAT_XML);
+		$values = new SimpleXMLElement($parts);
+		$n = (string) $values->Modulus;
+		$e = (string) $values->Exponent;
+		$keys[] = [
+			'kty' => 'RSA',
+			'alg' => 'RS256',
+			'use' => 'sig',
+			'n' => $n,
+			'e' => $e
+		];
+		$return = [
+			'keys' => $keys
+		];
+		return $return;
 	}
 
 	/**
