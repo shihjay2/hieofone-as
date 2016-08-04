@@ -248,20 +248,16 @@ class OauthController extends Controller
 						}
 					} else {
 						// Get owner permission if owner is logging in from new client/registration server
-
-						if ($owner_query->sub == $oauth_user->sub) {
-							// Check if client is a resource server or client
-							$scopes_array = explode(' ', $client1->scope);
-							if (in_array('uma_protection', $scopes_array)) {
-								// Resource registration consent by owner
+						if ($oauth_user) {
+							if ($owner_query->sub == $oauth_user->sub) {
 								return redirect()->route('authorize_resource_server');
 							} else {
-								// Get owner permission for client to access resource server.
-								return redirect()->route('login_authorize');
+								// Somehow, this is a registered user, but not the owner, and is using an unauthorized client - return back to login screen
+								return redirect()->back()->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
 							}
 						} else {
-							// Somehow, this is a registered user, but not the owner, and is using an unauthorized client - return back to login screen
-							return redirect()->back()->withErrors(['tryagain' => 'TPlease contact the owner of this authorization for assistance.']);
+							// Not a registered user
+							return redirect()->back()->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
 						}
 					}
 				} else {
@@ -477,7 +473,7 @@ class OauthController extends Controller
 		} else {
 			$client = $this->mdnosh_register_client();
 		}
-		$open_id_url = 'https://noshchartingsystem.com/openid-connect-server-webapp/';
+		$open_id_url = 'https://noshchartingsystem.com/oidc';
 		$url = route('mdnosh');
 		$oidc = new OpenIDConnectClient($open_id_url, $client['client_id'], $client['client_secret']);
 		$oidc->setRedirectURL($url);
@@ -505,7 +501,7 @@ class OauthController extends Controller
 		$user = DB::table('owner')->where('id', '=', '1')->first();
 		$dob = date('m/d/Y', strtotime($user->DOB));
 		$client_name = 'HIE of One Authorization Server for ' . $user->firstname . ' ' . $user->lastname . ' (DOB: ' . $dob . ')';
-		$open_id_url = 'https://noshchartingsystem.com/openid-connect-server-webapp/';
+		$open_id_url = 'https://noshchartingsystem.com/oidc';
 		$url = route('mdnosh');
 		$oidc = new OpenIDConnectClient($open_id_url);
 		$oidc->setClientName($client_name);
@@ -687,7 +683,7 @@ class OauthController extends Controller
 	{
 		$resource = str_replace('acct:', '', $request->input('resource'));
 		$rel = $request->input('rel');
-		$query = DB::table('oauth_users')->where('username', '=', $resource)->first();
+		$query = DB::table('oauth_users')->where('email', '=', $resource)->first();
 		if ($query) {
 			$response = [
 				'subject' => $request->input('resource'),
