@@ -606,26 +606,26 @@ class OauthController extends Controller
 			$authorizationHeader = $rawHeaders["Authorization"];
 			$bridgedRequest->headers->add([ 'Authorization' => $authorizationHeader]);
 		}
-		$bridgedResponse = App::make('oauth2')->handleUserInfoRequest($bridgedRequest, $bridgedResponse);
-		return $bridgedResponse;
-		// if (App::make('oauth2')->verifyResourceRequest($bridgedRequest, $bridgedResponse)) {
-		// 	$token = App::make('oauth2')->getAccessTokenData($bridgedRequest);
-		// 	// Grab user details
-		// 	$query = DB::table('oauth_users')->where('username', '=', $token['user_id'])->first();
-		// 	return Response::json(array(
-		// 		'sub' => $token['user_id'],
-		// 		'name' => $query->first_name . ' ' . $query->last_name,
-		// 		'given_name' => $query->first_name,
-		// 		'family_name' => $query->last_name,
-		// 		'email' => $query->email,
-		// 		'picture' => $query->picture,
-		// 		'npi' => $query->npi,
-		// 		'client'  => $token['client_id'],
-		// 		'expires' => $token['expires']
-		// 	));
-		// } else {
-		// 	return Response::json(array('error' => 'Unauthorized'), $bridgedResponse->getStatusCode());
-		// }
+		// $bridgedResponse = App::make('oauth2')->handleUserInfoRequest($bridgedRequest, $bridgedResponse);
+		// return $bridgedResponse;
+		if (App::make('oauth2')->verifyResourceRequest($bridgedRequest, $bridgedResponse)) {
+			$token = App::make('oauth2')->getAccessTokenData($bridgedRequest);
+			// Grab user details
+			$query = DB::table('oauth_users')->where('sub', '=', $token['user_id'])->first();
+			return Response::json(array(
+				'sub' => $token['user_id'],
+				'name' => $query->first_name . ' ' . $query->last_name,
+				'given_name' => $query->first_name,
+				'family_name' => $query->last_name,
+				'email' => $query->email,
+				'picture' => $query->picture,
+				'npi' => $query->npi,
+				'client'  => $token['client_id'],
+				'expires' => $token['expires']
+			));
+		} else {
+			return Response::json(array('error' => 'Unauthorized'), $bridgedResponse->getStatusCode());
+		}
 	}
 
 	/**
