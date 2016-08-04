@@ -293,12 +293,12 @@ class HomeController extends Controller
 			DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('client_id'))->update($data);
 			$request->session()->put('message_action', 'Authorized resource server named ' . $client->client_name);
 			if ($request->session()->get('response_type') == 'code') {
-				$request->session()->put('is_authorized', true);
+				$request->session()->put('is_authorized', 'true');
 			}
 		} else {
 			$request->session()->put('message_action', 'Unauthorized resource server named ' . $client->client_name);
 			if ($request->session()->get('response_type') == 'code') {
-				$request->session()->put('is_authorized', false);
+				$request->session()->put('is_authorized', 'false');
 			}
 		}
 		if ($request->session()->get('response_type') == 'code') {

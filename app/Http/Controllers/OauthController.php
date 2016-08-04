@@ -553,9 +553,14 @@ class OauthController extends Controller
 				'state' => $request->session()->get('state'),
 				'scope' => $request->session()->get('scope')
 			]);
+			if ($request->session()->get('is_authorized') == 'true') {
+				$authorized = true;
+			} else {
+				$authorized = false;
+			}
 			$bridgedRequest = BridgeRequest::createFromRequest($request);
 			$bridgedResponse = new BridgeResponse();
-			$bridgedResponse = App::make('oauth2')->handleAuthorizeRequest($bridgedRequest, $bridgedResponse, $request->session()->get('is_authorized'), $request->session()->get('sub'));
+			$bridgedResponse = App::make('oauth2')->handleAuthorizeRequest($bridgedRequest, $bridgedResponse, $authorized, $request->session()->get('sub'));
 			return $bridgedResponse;
 		} else {
 			// Do client check
