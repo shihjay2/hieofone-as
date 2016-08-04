@@ -220,6 +220,7 @@ class OauthController extends Controller
 				DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->update($jwt_data);
 				// Access token granted, authorize login!
 				$owner_query = DB::table('owner')->first();
+				$oauth_user = DB::table('oauth_users')->where('username', '=', $request->username)->first();
 				session([
 					'access_token' => $bridgedResponse['access_token'],
 					'client_id' => $client_id,
@@ -239,6 +240,7 @@ class OauthController extends Controller
 						if (in_array($request->username, $user_array)) {
 							// Go back to authorize route
 							$request->session()->put('is_authorized', true);
+							$request->session()->put('sub', $oauth_user->sub);
 							return redirect()->route('authorize');
 						} else {
 							// Get user permission
@@ -246,7 +248,7 @@ class OauthController extends Controller
 						}
 					} else {
 						// Get owner permission if owner is logging in from new client/registration server
-						$oauth_user = DB::table('oauth_users')->where('username', '=', $request->username)->first();
+
 						if ($owner_query->sub == $oauth_user->sub) {
 							// Check if client is a resource server or client
 							$scopes_array = explode(' ', $client1->scope);
@@ -557,7 +559,7 @@ class OauthController extends Controller
 			]);
 			$bridgedRequest = BridgeRequest::createFromRequest($request);
 			$bridgedResponse = new BridgeResponse();
-			$bridgedResponse = App::make('oauth2')->handleAuthorizeRequest($bridgedRequest, $bridgedResponse, $request->session()->get('is_authorized'));
+			$bridgedResponse = App::make('oauth2')->handleAuthorizeRequest($bridgedRequest, $bridgedResponse, $request->session()->get('is_authorized'), $request->session()->get('sub'));
 			return $bridgedResponse;
 		} else {
 			// Do client check
@@ -601,27 +603,29 @@ class OauthController extends Controller
 		$bridgedRequest->request = new \Symfony\Component\HttpFoundation\ParameterBag();
 		$rawHeaders = getallheaders();
 		if (isset($rawHeaders["Authorization"])) {
-		  $authorizationHeader = $rawHeaders["Authorization"];
-		  $bridgedRequest->headers->add([ 'Authorization' => $authorizationHeader]);
+			$authorizationHeader = $rawHeaders["Authorization"];
+			$bridgedRequest->headers->add([ 'Authorization' => $authorizationHeader]);
 		}
-		if (App::make('oauth2')->verifyResourceRequest($bridgedRequest, $bridgedResponse)) {
-			$token = App::make('oauth2')->getAccessTokenData($bridgedRequest);
-			// Grab user details
-			$query = DB::table('oauth_users')->where('username', '=', $token['user_id'])->first();
-			return Response::json(array(
-				'sub' => $token['user_id'],
-				'name' => $query->first_name . ' ' . $query->last_name,
-				'given_name' => $query->first_name,
-				'family_name' => $query->last_name,
-				'email' => $query->email,
-				'picture' => $query->picture,
-				'npi' => $query->npi,
-				'client'  => $token['client_id'],
-				'expires' => $token['expires']
-			));
-		} else {
-			return Response::json(array('error' => 'Unauthorized'), $bridgedResponse->getStatusCode());
-		}
+		$bridgedResponse = App::make('oauth2')->handleUserInfoRequest($bridgedRequest, $bridgedResponse);
+		return $bridgedResponse;
+		// if (App::make('oauth2')->verifyResourceRequest($bridgedRequest, $bridgedResponse)) {
+		// 	$token = App::make('oauth2')->getAccessTokenData($bridgedRequest);
+		// 	// Grab user details
+		// 	$query = DB::table('oauth_users')->where('username', '=', $token['user_id'])->first();
+		// 	return Response::json(array(
+		// 		'sub' => $token['user_id'],
+		// 		'name' => $query->first_name . ' ' . $query->last_name,
+		// 		'given_name' => $query->first_name,
+		// 		'family_name' => $query->last_name,
+		// 		'email' => $query->email,
+		// 		'picture' => $query->picture,
+		// 		'npi' => $query->npi,
+		// 		'client'  => $token['client_id'],
+		// 		'expires' => $token['expires']
+		// 	));
+		// } else {
+		// 	return Response::json(array('error' => 'Unauthorized'), $bridgedResponse->getStatusCode());
+		// }
 	}
 
 	/**
