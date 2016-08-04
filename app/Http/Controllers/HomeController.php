@@ -251,7 +251,7 @@ class HomeController extends Controller
 		$data['content'] = 'No resource servers pending authorization.';
 		$data['message_action'] = $request->session()->get('message_action');
 		$request->session()->forget('message_action');
-		$query = DB::table('oauth_clients')->where('authorized', '=', '0')->where('scope', 'LIKE', "%uma_protection%")->first();
+		$query = DB::table('oauth_clients')->where('authorized', '=', '0')->first();
 		if ($query) {
 			$scopes_array = explode(' ', $query->scope);
 			if ($query->logo_uri == '') {
@@ -264,7 +264,7 @@ class HomeController extends Controller
 			$data['content'] .= '<input type="hidden" name="client_id" value="' . $query->client_id . '"/>';
 			return view('rs_authorize', $data);
 		} else {
-			return redirect()-route('home');
+			return redirect()->route('home');
 		}
 
 	}
