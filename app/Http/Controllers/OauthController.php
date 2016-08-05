@@ -614,6 +614,12 @@ class OauthController extends Controller
 			$token = App::make('oauth2')->getAccessTokenData($bridgedRequest);
 			// Grab user details
 			$query = DB::table('oauth_users')->where('sub', '=', $token['user_id'])->first();
+			$owner_query = DB::table('owner')->first();
+			if ($owner_query->sub == $token['user_id']) {
+				$birthday = $owner_query->DOB;
+			} else {
+				$birthday = '';
+			}
 			return Response::json(array(
 				'sub' => $token['user_id'],
 				'name' => $query->first_name . ' ' . $query->last_name,
@@ -621,6 +627,7 @@ class OauthController extends Controller
 				'family_name' => $query->last_name,
 				'email' => $query->email,
 				'picture' => $query->picture,
+				'birthday' => $birthday,
 				'npi' => $query->npi,
 				'client'  => $token['client_id'],
 				'expires' => $token['expires']

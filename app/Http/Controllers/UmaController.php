@@ -66,9 +66,13 @@ class UmaController extends Controller
 			'client_name' => $request->input('client_name'),
 			'client_uri' => $client_uri,
 			'authorized' => 0,
-			'allow_introspection' => 0,
 			'claims_redirect_uris' => $claims_redirect_uris
 		];
+		if ($uma_protection == true) {
+			$data['allow_introspection'] = 1;
+		} else {
+			$data['allow_introspection'] = 0;
+		}
 		DB::table('oauth_clients')->insert($data);
 		$response = [
 			'client_id' => $clientId,
