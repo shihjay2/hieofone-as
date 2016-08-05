@@ -239,7 +239,7 @@ class OauthController extends Controller
 						$user_array = explode(' ', $authorized->user_id);
 						if (in_array($request->username, $user_array)) {
 							// Go back to authorize route
-							$request->session()->put('is_authorized', true);
+							$request->session()->put('is_authorized', 'true');
 							$request->session()->put('sub', $oauth_user->sub);
 							return redirect()->route('authorize');
 						} else {
