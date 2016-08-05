@@ -250,6 +250,7 @@ class OauthController extends Controller
 						// Get owner permission if owner is logging in from new client/registration server
 						if ($oauth_user) {
 							if ($owner_query->sub == $oauth_user->sub) {
+								$request->session()->put('sub', $oauth_user->sub);
 								return redirect()->route('authorize_resource_server');
 							} else {
 								// Somehow, this is a registered user, but not the owner, and is using an unauthorized client - return back to login screen
