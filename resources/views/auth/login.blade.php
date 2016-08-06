@@ -64,7 +64,7 @@
 									<i class="fa fa-btn fa-sign-in"></i> Login
 								</button>
 
-								<a class="btn btn-link" href="{{ url('/password/_email') }}">Forgot Your Password?</a>
+								<a class="btn btn-link" href="{{ url('/password_email') }}">Forgot Your Password?</a>
 							</div>
 						</div>
 						@if (!isset($nooauth))
