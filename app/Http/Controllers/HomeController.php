@@ -32,6 +32,10 @@ class HomeController extends Controller
 		$data['name'] = $request->session()->get('owner');
 		$data['title'] = 'My Resource Services';
 		$data['content'] = 'No resource services yet.';
+		$mdnosh = DB::table('oauth_clients')->where('client_name', '=', 'mdNOSH Gateway')->first();
+		if (! $mdnosh) {
+			$data['mdnosh'] = true;
+		}
 		$data['message_action'] = $request->session()->get('message_action');
 		$request->session()->forget('message_action');
 		$query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();

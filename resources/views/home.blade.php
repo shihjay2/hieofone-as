@@ -20,9 +20,16 @@
 				</div>
 				<div class="panel-body">
 					@if (isset($message_action))
-					  <div class="alert alert-success">
-						<strong>{{ $message_action }}</strong>
-					  </div>
+						<div class="alert alert-success">
+							<strong>{{ $message_action }}</strong>
+						</div>
+					@endif
+					@if (isset($mdnosh))
+						<div class="alert alert-danger">
+							<h4>Get connected!</h4>
+							<p>Get connected to mdNOSH Gateway, a single-sign-on solution for physicians, so that your authorization server can connect to thousands of physicians who may be involved in your care.</p>
+							<p><a href="https://noshchartingsystem.com/oidc/uma_register">Get Started</a></p>
+						</div>
 					@endif
 					{!! $content !!}
 				</div>
