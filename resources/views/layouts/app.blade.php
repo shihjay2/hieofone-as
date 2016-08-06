@@ -59,6 +59,7 @@
 							</ul>
 						</li>
 						<li><a href="{{ url('/make_invitation') }}">Invite</a></li>
+						<li><a href="{{ url('/change_password') }}">Change Password</a></li>
 					@endif
 				</ul>
 

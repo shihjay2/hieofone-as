@@ -64,6 +64,9 @@ Route::get('authorize_client_disable/{id}', array('as' => 'authorize_client_disa
 Route::any('make_invitation', array('as' => 'make_invitation', 'uses' => 'HomeController@make_invitation'));
 Route::any('accept_invitation/{id}', array('as' => 'accept_invitation', 'uses' => 'OauthController@accept_invitation'));
 Route::any('process_invitation', array('as' => 'process_invitation', 'uses' => 'HomeController@process_invitation'));
+Route::any('password_email', array('as' => 'password_email', 'uses' => 'OauthController@password_email'));
+Route::any('password_reset/{id}', array('as' => 'password_reset', 'uses' => 'OauthController@password_reset'));
+Route::any('change_password/', array('as' => 'change_password', 'uses' => 'HomeController@change_password'));
 
 Route::post('token', array('as' => 'token', function() {
 	$bridgedRequest = OAuth2\HttpFoundationBridge\Request::createFromRequest(Request::instance());

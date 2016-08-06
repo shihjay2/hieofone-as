@@ -453,4 +453,27 @@ class HomeController extends Controller
 		}
 		return redirect()->route('authorize');
 	}
+
+	public function change_password(Request $request)
+	{
+		$data['name'] = $request->session()->get('owner');
+		if ($request->isMethod('post')) {
+			$this->validate($request, [
+				'old_password' => 'required',
+				'password' => 'required|min:7',
+				'confirm_password' => 'required|min:7|same:password',
+			]);
+			$query = DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->first();
+			if ($query->password == sha1($request->input('old_password'))) {
+				$data1['password'] = sha1($request->input('password'));
+				DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->update($data1);
+				$request->session()->put('message_action', 'Password changed!');
+				return redirect()->route('home');
+			} else {
+				return redirect()->back()->withErrors(['tryagain' => 'Your old password was incorrect.  Try again.']);
+			}
+		} else {
+			return view('changepassword', $data);
+		}
+	}
 }

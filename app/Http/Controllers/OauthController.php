@@ -304,6 +304,54 @@ class OauthController extends Controller
 		return $code;
 	}
 
+	public function password_email(Request $request)
+	{
+		if ($request->isMethod('post')) {
+			$this->validate($request, [
+				'email' => 'required',
+			]);
+			$query = DB::table('oauth_users')->where('email', '=', $request->input('email'))->first();
+			if ($query) {
+				$data['password'] = $this->gen_secret();
+				DB::table('oauth_users')->where('email', '=', $request->input('email'))->update($data);
+				$url = URL::to('password_reset') . '/' . $data['password'];
+				$data2['message_data'] = 'This message is to notify you that you have reset your password with mdNOSH Gateway.<br>';
+				$data2['message_data'] .= 'To finish this process, please click on the following link or point your web browser to:<br>';
+				$data2['message_data'] .= $url;
+				$title = 'Reset password to mdNOSH Gateway';
+				$to = $request->input('email');
+				$this->send_mail('auth.emails.generic', $data2, $title, $to);
+			}
+			return redirect()->route('welcome');
+		} else {
+			return view('password');
+		}
+	}
+
+	public function password_reset(Request $request, $id)
+	{
+		if ($request->isMethod('post')) {
+			$this->validate($request, [
+				'password' => 'required|min:7',
+				'confirm_password' => 'required|min:7|same:password',
+			]);
+			$query = DB::table('oauth_users')->where('password', '=', $id)->first();
+			if ($query) {
+				$data['password'] = sha1($request->input('password'));
+				DB::table('oauth_users')->where('password', '=', $id)->update($data);
+			}
+			return redirect()->route('home');
+		} else {
+			$query1 = DB::table('oauth_users')->where('password', '=', $id)->first();
+			if ($query1) {
+				$data1['id'] = $id;
+				return view('resetpassword', $data1);
+			} else {
+				return redirect()->route('welcome');
+			}
+		}
+	}
+
 	/**
 	* Update system through GitHub
 	*
