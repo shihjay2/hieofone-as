@@ -594,18 +594,59 @@ class OauthController extends Controller
 	{
 		if (Auth::check()) {
 			// Logged in, check if there was old request info and if so, plug into request since likely request is empty on the return.
-			$request->merge([
-				'response_type' => $request->session()->get('oauth_response_type'),
-				'redirect_uri' => $request->session()->get('oauth_redirect_uri'),
-				'client_id' => $request->session()->get('oauth_client_id'),
-				'nonce' => $request->session()->get('oauth_nonce'),
-				'state' => $request->session()->get('oauth_state'),
-				'scope' => $request->session()->get('oauth_scope')
-			]);
-			if ($request->session()->get('is_authorized') == 'true') {
-				$authorized = true;
+			if ($request->session()->has('oauth_response_type')) {
+				$request->merge([
+					'response_type' => $request->session()->get('oauth_response_type'),
+					'redirect_uri' => $request->session()->get('oauth_redirect_uri'),
+					'client_id' => $request->session()->get('oauth_client_id'),
+					'nonce' => $request->session()->get('oauth_nonce'),
+					'state' => $request->session()->get('oauth_state'),
+					'scope' => $request->session()->get('oauth_scope')
+				]);
+				if ($request->session()->get('is_authorized') == 'true') {
+					$authorized = true;
+				} else {
+					$authorized = false;
+				}
 			} else {
-				$authorized = false;
+				$owner_query = DB::table('owner')->first();
+				$oauth_user = DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->first();
+				$authorized_query = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
+				if ($authorized_query) {
+					// This call is from authorization endpoint and client is authorized.  Check if user is associated with client
+					$user_array = explode(' ', $authorized_query->user_id);
+					if (in_array($request->username, $user_array)) {
+						$authorized = true;
+					} else {
+						session([
+							'oauth_response_type' => $request->input('response_type'),
+							'oauth_redirect_uri' => $request->input('redirect_uri'),
+							'oauth_client_id' => $request->input('client_id'),
+							'oauth_nonce' => $request->input('nonce'),
+							'oauth_state' => $request->input('state'),
+							'oauth_scope' => $request->input('scope')
+						]);
+						// Get user permission
+						return redirect()->route('login_authorize');
+					}
+				} else {
+					if ($owner_query->sub == $oauth_user->sub) {
+						session([
+							'oauth_response_type' => $request->input('response_type'),
+							'oauth_redirect_uri' => $request->input('redirect_uri'),
+							'oauth_client_id' => $request->input('client_id'),
+							'oauth_nonce' => $request->input('nonce'),
+							'oauth_state' => $request->input('state'),
+							'oauth_scope' => $request->input('scope')
+						]);
+						return redirect()->route('authorize_resource_server');
+					} else {
+						// Somehow, this is a registered user, but not the owner, and is using an unauthorized client - logout and return back to login screen
+						$request->session()->flush();
+						Auth::logout();
+						return redirect()->route('login')->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
+					}
+				}
 			}
 			$bridgedRequest = BridgeRequest::createFromRequest($request);
 			$bridgedResponse = new BridgeResponse();
