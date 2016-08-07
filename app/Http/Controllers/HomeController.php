@@ -255,7 +255,7 @@ class HomeController extends Controller
 		$data['content'] = 'No resource servers pending authorization.';
 		$data['message_action'] = $request->session()->get('message_action');
 		$request->session()->forget('message_action');
-		$query = DB::table('oauth_clients')->where('authorized', '=', '0')->first();
+		$query = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('oauth_client_id'))->first();
 		if ($query) {
 			$scopes_array = explode(' ', $query->scope);
 			if ($query->logo_uri == '') {
@@ -270,7 +270,6 @@ class HomeController extends Controller
 		} else {
 			return redirect()->route('home');
 		}
-
 	}
 
 	public function rs_authorize_action(Request $request)
@@ -290,22 +289,22 @@ class HomeController extends Controller
 			}
 			$data['authorized'] = 1;
 			DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data);
-			$client = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('client_id'))->first();
+			$client = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('oauth_client_id'))->first();
 			$user_array = explode(' ', $client->user_id);
 			$user_array[] = $request->session()->get('username');
 			$data['user_id'] = implode(' ', $user_array);
-			DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('client_id'))->update($data);
+			DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('oauth_client_id'))->update($data);
 			$request->session()->put('message_action', 'Authorized resource server named ' . $client->client_name);
-			if ($request->session()->get('response_type') == 'code') {
+			if ($request->session()->get('oauth_response_type') == 'code') {
 				$request->session()->put('is_authorized', 'true');
 			}
 		} else {
 			$request->session()->put('message_action', 'Unauthorized resource server named ' . $client->client_name);
-			if ($request->session()->get('response_type') == 'code') {
+			if ($request->session()->get('oauth_response_type') == 'code') {
 				$request->session()->put('is_authorized', 'false');
 			}
 		}
-		if ($request->session()->get('response_type') == 'code') {
+		if ($request->session()->get('oauth_response_type') == 'code') {
 			return redirect()->route('authorize');
 		} else {
 			return redirect()->route('home');

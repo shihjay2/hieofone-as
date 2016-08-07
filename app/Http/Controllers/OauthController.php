@@ -192,7 +192,7 @@ class OauthController extends Controller
 				'password' => 'required'
 			]);
 			// Check if there was an old request from the ouath_authorize function, else assume login is coming from server itself
-			if ($request->session()->get('response_type') == 'code') {
+			if ($request->session()->get('oauth_response_type') == 'code') {
 				$client_id = $request->session()->get('client_id');
 				$data['nooauth'] = true;
 			} else {
@@ -232,7 +232,7 @@ class OauthController extends Controller
 				]);
 				$user1 = DB::table('users')->where('name', '=', $request->username)->first();
 				Auth::loginUsingId($user1->id);
-				if ($request->session()->get('response_type') == 'code') {
+				if ($request->session()->get('oauth_response_type') == 'code') {
 					// Confirm if client is authorized
 					$authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
 					if ($authorized) {
@@ -595,12 +595,12 @@ class OauthController extends Controller
 		if (Auth::check()) {
 			// Logged in, check if there was old request info and if so, plug into request since likely request is empty on the return.
 			$request->merge([
-				'response_type' => $request->session()->get('response_type'),
-				'redirect_uri' => $request->session()->get('redirect_uri'),
-				'client_id' => $request->session()->get('client_id'),
-				'nonce' => $request->session()->get('nonce'),
-				'state' => $request->session()->get('state'),
-				'scope' => $request->session()->get('scope')
+				'response_type' => $request->session()->get('oauth_response_type'),
+				'redirect_uri' => $request->session()->get('oauth_redirect_uri'),
+				'client_id' => $request->session()->get('oauth_client_id'),
+				'nonce' => $request->session()->get('oauth_nonce'),
+				'state' => $request->session()->get('oauth_state'),
+				'scope' => $request->session()->get('oauth_scope')
 			]);
 			if ($request->session()->get('is_authorized') == 'true') {
 				$authorized = true;
@@ -622,12 +622,12 @@ class OauthController extends Controller
 				if ($bridgedResponse == true) {
 					// Save request input to session prior to going to login route
 					session([
-						'response_type' => $request->input('response_type'),
-						'redirect_uri' => $request->input('redirect_uri'),
-						'client_id' => $request->input('client_id'),
-						'nonce' => $request->input('nonce'),
-						'state' => $request->input('state'),
-						'scope' => $request->input('scope')
+						'oauth_response_type' => $request->input('response_type'),
+						'oauth_redirect_uri' => $request->input('redirect_uri'),
+						'oauth_client_id' => $request->input('client_id'),
+						'oauth_nonce' => $request->input('nonce'),
+						'oauth_state' => $request->input('state'),
+						'oauth_scope' => $request->input('scope')
 					]);
 					return redirect()->route('login');
 				} else {
