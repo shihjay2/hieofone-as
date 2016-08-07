@@ -178,8 +178,8 @@ class UmaController extends Controller
 		$error = '';
 		if ($request->session()->has('permission_ticket') && $request->session()->has('redirect_uri') && $request->session()->has('client_id') && $request->session()->has('email')) {
 			$params['state'] = $request->session()->get('state');
-			$redirect_uri = $request->session()->get('redirect_uri');
-			$client_id = $request->session()->get('client_id');
+			$redirect_uri = $request->session()->get('oauth_redirect_uri');
+			$client_id = $request->session()->get('oauth_client_id');
 			$ticket = $request->session()->get('permission_ticket');
 			$params['ticket'] = $ticket;
 			// Verify client and claims redirect uri exists

@@ -430,7 +430,7 @@ class HomeController extends Controller
 		}
 		$data['permissions'] .= '<h2>' . $request->session()->get('client_name') . ' would like to:</h2>';
 		$data['permissions'] .= '<ul class="list-group">';
-		$client = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('client_id'))->first();
+		$client = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('oauth_client_id'))->first();
 		$scopes_array = explode(' ', $client->scope);
 		foreach ($scopes_array as $scope) {
 			if (array_key_exists($scope, $scope_array)) {
@@ -445,11 +445,11 @@ class HomeController extends Controller
 	{
 		if ($type == 'yes') {
 			// Add user to client
-			$client = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('client_id'))->first();
+			$client = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('oauth_client_id'))->first();
 			$user_array = explode(' ', $client->user_id);
 			$user_array[] = $request->session()->get('username');
 			$data['user_id'] = implode(' ', $user_array);
-			DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('client_id'))->update($data);
+			DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('oauth_client_id'))->update($data);
 			$request->session()->put('is_authorized', true);
 		} else {
 			$request->session()->put('is_authorized', false);
