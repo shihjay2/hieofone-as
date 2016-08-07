@@ -193,7 +193,7 @@ class OauthController extends Controller
 			]);
 			// Check if there was an old request from the ouath_authorize function, else assume login is coming from server itself
 			if ($request->session()->get('oauth_response_type') == 'code') {
-				$client_id = $request->session()->get('client_id');
+				$client_id = $request->session()->get('oauth_client_id');
 				$data['nooauth'] = true;
 			} else {
 				$client = DB::table('owner')->first();
