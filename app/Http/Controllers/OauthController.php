@@ -611,7 +611,7 @@ class OauthController extends Controller
 			} else {
 				$owner_query = DB::table('owner')->first();
 				$oauth_user = DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->first();
-				$authorized_query = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
+				$authorized_query = DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->where('authorized', '=', 1)->first();
 				if ($authorized_query) {
 					// This call is from authorization endpoint and client is authorized.  Check if user is associated with client
 					$user_array = explode(' ', $authorized_query->user_id);
