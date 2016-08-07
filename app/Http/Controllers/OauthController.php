@@ -705,7 +705,7 @@ class OauthController extends Controller
 			$query = DB::table('oauth_users')->where('sub', '=', $token['user_id'])->first();
 			$owner_query = DB::table('owner')->first();
 			if ($owner_query->sub == $token['user_id']) {
-				$birthday = $owner_query->DOB;
+				$birthday = str_replace(' 00:00:00', '', $owner_query->DOB);
 			} else {
 				$birthday = '';
 			}
