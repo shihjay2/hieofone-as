@@ -53,7 +53,11 @@ class UmaController extends Controller
 		$user_id = '';
 		$client_uri = $request->input('client_uri');
 		$claims_redirect_uris_arr = $request->input('claims_redirect_uris');
-		$claims_redirect_uris = implode(' ', $claims_redirect_uris_arr);
+		if (empty($claims_redirect_uris_arr)) {
+			$claims_redirect_uris = '';
+		} else {
+			$claims_redirect_uris = implode(' ', $claims_redirect_uris_arr);
+		}
 		// create a new client
 		$data = [
 			'client_id' => $clientId,

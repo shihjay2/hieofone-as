@@ -227,7 +227,8 @@ class OauthController extends Controller
 					'owner' => $owner_query->firstname . ' ' . $owner_query->lastname,
 					'username' => $request->username,
 					'client_name' => $client1->client_name,
-					'logo_uri' => $client1->logo_uri
+					'logo_uri' => $client1->logo_uri,
+					'sub' => $oauth_user->sub
 				]);
 				$user1 = DB::table('users')->where('name', '=', $request->username)->first();
 				Auth::loginUsingId($user1->id);
@@ -240,7 +241,7 @@ class OauthController extends Controller
 						if (in_array($request->username, $user_array)) {
 							// Go back to authorize route
 							$request->session()->put('is_authorized', 'true');
-							$request->session()->put('sub', $oauth_user->sub);
+
 							return redirect()->route('authorize');
 						} else {
 							// Get user permission
@@ -250,7 +251,6 @@ class OauthController extends Controller
 						// Get owner permission if owner is logging in from new client/registration server
 						if ($oauth_user) {
 							if ($owner_query->sub == $oauth_user->sub) {
-								$request->session()->put('sub', $oauth_user->sub);
 								return redirect()->route('authorize_resource_server');
 							} else {
 								// Somehow, this is a registered user, but not the owner, and is using an unauthorized client - return back to login screen
