@@ -39,6 +39,7 @@ class HomeController extends Controller
 		$pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
 		if (! $pnosh) {
 			$data['pnosh'] = true;
+			$data['pnosh_url'] = URL::to('/') . '/nosh';
 		}
 		$data['message_action'] = $request->session()->get('message_action');
 		$request->session()->forget('message_action');
