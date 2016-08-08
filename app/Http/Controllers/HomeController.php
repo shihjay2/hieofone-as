@@ -36,6 +36,10 @@ class HomeController extends Controller
 		if (! $mdnosh) {
 			$data['mdnosh'] = true;
 		}
+		$pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
+		if (! $pnosh) {
+			$data['pnosh'] = true;
+		}
 		$data['message_action'] = $request->session()->get('message_action');
 		$request->session()->forget('message_action');
 		$query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
