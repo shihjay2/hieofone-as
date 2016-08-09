@@ -280,6 +280,7 @@ class OpenIDConnectClient
 		if ($this->verifyJWTclaimsRefresh($claims)) {
 			// Save the access token
 			$this->accessToken = $token_json->access_token;
+			if (isset($token_json->refresh_token)) $this->refreshToken = $token_json->refresh_token;
 			return true;
 		} else {
 			throw new OpenIDConnectClientException ("Unable to verify JWT claims");
