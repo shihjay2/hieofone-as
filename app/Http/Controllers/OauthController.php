@@ -615,7 +615,7 @@ class OauthController extends Controller
 				if ($authorized_query) {
 					// This call is from authorization endpoint and client is authorized.  Check if user is associated with client
 					$user_array = explode(' ', $authorized_query->user_id);
-					if (in_array($request->username, $user_array)) {
+					if (in_array($request->session()->get('username'), $user_array)) {
 						$authorized = true;
 					} else {
 						session([
@@ -772,7 +772,27 @@ class OauthController extends Controller
 			}
 		}
 		return $return;
+	}
 
+	/**
+	* Revocation endpoint
+	*
+	* @return Response
+	*/
+
+	public function revoke(Request $request)
+	{
+		$bridgedRequest = BridgeRequest::createFromRequest($request);
+		$bridgedResponse = new BridgeResponse();
+		// Fix for Laravel
+		$bridgedRequest->request = new \Symfony\Component\HttpFoundation\ParameterBag();
+		$rawHeaders = getallheaders();
+		if (isset($rawHeaders["Authorization"])) {
+			$authorizationHeader = $rawHeaders["Authorization"];
+			$bridgedRequest->headers->add([ 'Authorization' => $authorizationHeader]);
+		}
+		$bridgedResponse = App::make('oauth2')->handleRevokeRequest($bridgedRequest, $bridgedResponse);
+		return $bridgedResponse;
 	}
 
 	/**=

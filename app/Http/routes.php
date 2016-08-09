@@ -107,6 +107,9 @@ Route::group(['middleware' => 'token'], function() {
 
 	// introspection
 	Route::post('introspect', array('as'=> 'introspect', 'uses' => 'OauthController@introspect'));
+
+	// Revocation
+	Route::post('revoke', array('as' => 'revoke', 'uses' => 'OauthController@revoke'));
 });
 
 // OpenID Connect relying party routes
@@ -136,7 +139,8 @@ Route::get('.well-known/openid-configuration', array('as' => 'openid-configurati
 		'introspection_endpoint' => URL::to('introspection'),
 		'userinfo_endpoint' => URL::to('userinfo'),
 		'scopes_supported' => $scopes,
-		'jwks_uri' => URL::to('jwks_uri')
+		'jwks_uri' => URL::to('jwks_uri'),
+		'revocation_endpoint' => URL::to('revoke')
 	];
 	return $config;
 }));
