@@ -40,6 +40,10 @@ class HomeController extends Controller
 		if (! $pnosh) {
 			$data['pnosh'] = true;
 			$data['pnosh_url'] = URL::to('/') . '/nosh';
+			$owner = DB::table('owner')->first();
+			setcookie('pnosh_firstname', $owner->first_name);
+			setcookie('pnosh_lastname', $owner->last_name);
+			setcookie('pnosh_dob', date("mm/dd/Y", strtotime($owner->DOB)));
 		}
 		$data['message_action'] = $request->session()->get('message_action');
 		$request->session()->forget('message_action');
