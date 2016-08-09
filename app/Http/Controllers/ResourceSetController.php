@@ -20,7 +20,7 @@ class ResourceSetController extends Controller
 	{
 		$return = [];
 		$token = str_replace('Bearer ', '', $request->header('Authorization'));
-		$query = DB::table('oauth_access_tokens')->where('access_token', '=', $token)->first();
+		$query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($token, 0, 255))->first();
 		$query1 = DB::table('resource_set')->where('client_id', '=', $query->client_id)->get();
 		$i = 0;
 		if ($query1) {
@@ -61,7 +61,7 @@ class ResourceSetController extends Controller
 	public function store(Request $request)
 	{
 		$token = str_replace('Bearer ', '', $request->header('Authorization'));
-		$client = DB::table('oauth_access_tokens')->where('access_token', '=', $token)->first();
+		$client = DB::table('oauth_access_tokens')->where('access_token', '=', substr($token, 0, 255))->first();
 		$data = [
 			'name' => $request->input('name'),
 			'icon_uri' => $request->input('icon_uri'),
