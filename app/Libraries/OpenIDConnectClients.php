@@ -261,13 +261,15 @@ class OpenIDConnectClient
 			throw new OpenIDConnectClientException($token_json->error_description);
 		}
 		if (!property_exists($token_json, 'id_token')) {
-			throw new OpenIDConnectClientException("User did not authorize openid scope.");
+			$token = $token_json->access_token;
+		} else {
+			$token = $token_json->id_token;
 		}
-		$claims = $this->decodeJWT($token_json->id_token, 1);
 
+		$claims = $this->decodeJWT($token, 1);
 		// Verify the signature
 		if ($this->canVerifySignatures()) {
-			if (!$this->verifyJWTsignature($token_json->id_token, $uma)) {
+			if (!$this->verifyJWTsignature($token, $uma)) {
 				throw new OpenIDConnectClientException ("Unable to verify signature");
 			}
 		} else {

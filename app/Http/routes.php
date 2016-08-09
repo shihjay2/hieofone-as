@@ -21,6 +21,8 @@ App::singleton('oauth2', function() {
 	$config['issuer'] = $issuer;
 	$config['allow_implicit'] = true;
 	$config['use_jwt_access_tokens'] = true;
+	$config['always_issue_new_refresh_token'] = true;
+	$config['refresh_token_lifetime'] = 2419200;
 	// create server
 	$server = new OAuth2\Server($storage, $config);
 	$publicKey  = File::get(__DIR__."/../../.pubkey.pem");
