@@ -43,7 +43,9 @@ class HomeController extends Controller
 			$owner = DB::table('owner')->first();
 			setcookie('pnosh_firstname', $owner->firstname);
 			setcookie('pnosh_lastname', $owner->lastname);
-			setcookie('pnosh_dob', date("mm/dd/Y", strtotime($owner->DOB)));
+			setcookie('pnosh_dob', date("m/d/Y", strtotime($owner->DOB)));
+			setcookie('pnosh_email', $owner->email);
+			setcookie('pnosh_username', $request->session()->get('username'));
 		}
 		$data['message_action'] = $request->session()->get('message_action');
 		$request->session()->forget('message_action');
