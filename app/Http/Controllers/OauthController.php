@@ -232,6 +232,7 @@ class OauthController extends Controller
 				]);
 				$user1 = DB::table('users')->where('name', '=', $request->username)->first();
 				Auth::loginUsingId($user1->id);
+				$request->session()->save();
 				if ($request->session()->get('oauth_response_type') == 'code') {
 					// Confirm if client is authorized
 					$authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
