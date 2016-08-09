@@ -593,7 +593,7 @@ class OauthController extends Controller
 
 	public function oauth_authorize(Request $request)
 	{
-		if (Auth::check()) {
+		if (!Auth::guest()) {
 			// Logged in, check if there was old request info and if so, plug into request since likely request is empty on the return.
 			if ($request->session()->has('oauth_response_type')) {
 				$request->merge([
