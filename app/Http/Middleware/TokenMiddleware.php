@@ -20,7 +20,7 @@ class TokenMiddleware
       $error_array = [];
       if ($request->header('Authorization')) {
         $token = str_replace('Bearer ', '', $request->header('Authorization'));
-        $query = DB::table('oauth_access_tokens')->where('access_token', '=', $token)->first();
+        $query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($token, 0, 255))->first();
         if ($query) {
           // Check if not expired
           $expires = strtotime($query->expires);

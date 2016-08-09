@@ -284,7 +284,7 @@ class UmaController extends Controller
 					$permission_id = $query->permission_id;
 					// Find client associated with permission ticket
 					$token = str_replace('Bearer ', '', $request->header('Authorization'));
-					$token_query = DB::table('oauth_access_tokens')->where('access_token', '=', $token)->first();
+					$token_query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($token, 0, 255))->first();
 					$client = DB::table('oauth_clients')->where('client_id', '=', $token_query->client_id)->first();
 					// Create RPT
 					$request->merge([
