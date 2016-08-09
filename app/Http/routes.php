@@ -21,9 +21,10 @@ App::singleton('oauth2', function() {
 	$config['issuer'] = $issuer;
 	$config['allow_implicit'] = true;
 	$config['use_jwt_access_tokens'] = true;
-	$config['always_issue_new_refresh_token'] = false;
-	$config['unset_refresh_token_after_use'] = false;
 	$config['refresh_token_lifetime'] = 0;
+	$refresh_config['always_issue_new_refresh_token'] = false;
+	$refresh_config['unset_refresh_token_after_use'] = false;
+
 	// create server
 	$server = new OAuth2\Server($storage, $config);
 	$publicKey  = File::get(__DIR__."/../../.pubkey.pem");
@@ -38,7 +39,7 @@ App::singleton('oauth2', function() {
 	$server->addGrantType(new OAuth2\GrantType\ClientCredentials($storage));
 	$server->addGrantType(new OAuth2\GrantType\UserCredentials($storage));
 	$server->addGrantType(new OAuth2\OpenID\GrantType\AuthorizationCode($storage));
-	$server->addGrantType(new OAuth2\GrantType\RefreshToken($storage));
+	$server->addGrantType(new OAuth2\GrantType\RefreshToken($storage, $refresh_config));
 	$server->addGrantType(new OAuth2\GrantType\JwtBearer($storage, $audience));
 	return $server;
 });
