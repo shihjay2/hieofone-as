@@ -609,6 +609,13 @@ class OauthController extends Controller
 				} else {
 					$authorized = false;
 				}
+				$request->session()->forget('oauth_response_type');
+				$request->session()->forget('oauth_redirect_uri');
+				$request->session()->forget('oauth_client_id');
+				$request->session()->forget('oauth_nonce');
+				$request->session()->forget('oauth_state');
+				$request->session()->forget('oauth_scope');
+				$request->session()->forget('is_authorized');
 			} else {
 				$owner_query = DB::table('owner')->first();
 				$oauth_user = DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->first();
