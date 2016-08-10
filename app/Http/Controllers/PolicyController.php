@@ -99,7 +99,7 @@ class PolicyController extends Controller
 			];
 			DB::table('policy_scopes')->insert($data4);
 		}
-        return Response::json('', 201);
+		return Response::json('', 201);
     }
 
     /**
