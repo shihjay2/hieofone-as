@@ -221,15 +221,13 @@ class OauthController extends Controller
 				// Access token granted, authorize login!
 				$owner_query = DB::table('owner')->first();
 				$oauth_user = DB::table('oauth_users')->where('username', '=', $request->username)->first();
-				session([
-					'access_token' => $bridgedResponse['access_token'],
-					'client_id' => $client_id,
-					'owner' => $owner_query->firstname . ' ' . $owner_query->lastname,
-					'username' => $request->username,
-					'client_name' => $client1->client_name,
-					'logo_uri' => $client1->logo_uri,
-					'sub' => $oauth_user->sub
-				]);
+				$request->session()->put('access_token',  $bridgedResponse['access_token']);
+				$request->session()->put('client_id', $client_id);
+				$request->session()->put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
+				$request->session()->put('username', $request->input('username'));
+				$request->session()->put('client_name', $client1->client_name);
+				$request->session()->put('logo_uri', $client1->logo_uri);
+				$request->session()->put('sub', $oauth_user->sub);
 				$user1 = DB::table('users')->where('name', '=', $request->username)->first();
 				Auth::loginUsingId($user1->id);
 				$request->session()->save();
@@ -276,8 +274,16 @@ class OauthController extends Controller
 				// Show login form
 				$data['name'] = $query->firstname . ' ' . $query->lastname;
 				$data['noheader'] = true;
-				if ($request->old('response_type') == 'code') {
+				if ($request->session()->get('oauth_response_type') == 'code') {
 					$data['nooauth'] = true;
+				} else {
+					$request->session()->forget('oauth_response_type');
+					$request->session()->forget('oauth_redirect_uri');
+					$request->session()->forget('oauth_client_id');
+					$request->session()->forget('oauth_nonce');
+					$request->session()->forget('oauth_state');
+					$request->session()->forget('oauth_scope');
+					$request->session()->forget('is_authorized');
 				}
 				$data['google'] = DB::table('oauth_rp')->where('type', '=', 'google')->first();
 				$data['twitter'] = DB::table('oauth_rp')->where('type', '=', 'twitter')->first();
@@ -593,7 +599,7 @@ class OauthController extends Controller
 
 	public function oauth_authorize(Request $request)
 	{
-		if (!Auth::guest()) {
+		if (Auth::check()) {
 			// Logged in, check if there was old request info and if so, plug into request since likely request is empty on the return.
 			if ($request->session()->has('oauth_response_type')) {
 				$request->merge([
@@ -626,27 +632,23 @@ class OauthController extends Controller
 					if (in_array($request->session()->get('username'), $user_array)) {
 						$authorized = true;
 					} else {
-						session([
-							'oauth_response_type' => $request->input('response_type'),
-							'oauth_redirect_uri' => $request->input('redirect_uri'),
-							'oauth_client_id' => $request->input('client_id'),
-							'oauth_nonce' => $request->input('nonce'),
-							'oauth_state' => $request->input('state'),
-							'oauth_scope' => $request->input('scope')
-						]);
+						$request->session()->put('oauth_response_type', $request->input('response_type'));
+						$request->session()->put('oauth_redirect_uri', $request->input('redirect_uri'));
+						$request->session()->put('oauth_client_id', $request->input('client_id'));
+						$request->session()->put('oauth_nonce', $request->input('nonce'));
+						$request->session()->put('oauth_state', $request->input('state'));
+						$request->session()->put('oauth_scope', $request->input('scope'));
 						// Get user permission
 						return redirect()->route('login_authorize');
 					}
 				} else {
 					if ($owner_query->sub == $oauth_user->sub) {
-						session([
-							'oauth_response_type' => $request->input('response_type'),
-							'oauth_redirect_uri' => $request->input('redirect_uri'),
-							'oauth_client_id' => $request->input('client_id'),
-							'oauth_nonce' => $request->input('nonce'),
-							'oauth_state' => $request->input('state'),
-							'oauth_scope' => $request->input('scope')
-						]);
+						$request->session()->put('oauth_response_type', $request->input('response_type'));
+						$request->session()->put('oauth_redirect_uri', $request->input('redirect_uri'));
+						$request->session()->put('oauth_client_id', $request->input('client_id'));
+						$request->session()->put('oauth_nonce', $request->input('nonce'));
+						$request->session()->put('oauth_state', $request->input('state'));
+						$request->session()->put('oauth_scope', $request->input('scope'));
 						return redirect()->route('authorize_resource_server');
 					} else {
 						// Somehow, this is a registered user, but not the owner, and is using an unauthorized client - logout and return back to login screen
@@ -670,14 +672,12 @@ class OauthController extends Controller
 				$bridgedResponse = App::make('oauth2')->validateAuthorizeRequest($bridgedRequest, $bridgedResponse);
 				if ($bridgedResponse == true) {
 					// Save request input to session prior to going to login route
-					session([
-						'oauth_response_type' => $request->input('response_type'),
-						'oauth_redirect_uri' => $request->input('redirect_uri'),
-						'oauth_client_id' => $request->input('client_id'),
-						'oauth_nonce' => $request->input('nonce'),
-						'oauth_state' => $request->input('state'),
-						'oauth_scope' => $request->input('scope')
-					]);
+					$request->session()->put('oauth_response_type', $request->input('response_type'));
+					$request->session()->put('oauth_redirect_uri', $request->input('redirect_uri'));
+					$request->session()->put('oauth_client_id', $request->input('client_id'));
+					$request->session()->put('oauth_nonce', $request->input('nonce'));
+					$request->session()->put('oauth_state', $request->input('state'));
+					$request->session()->put('oauth_scope', $request->input('scope'));
 					return redirect()->route('login');
 				} else {
 					return response('invalid_request', 400);

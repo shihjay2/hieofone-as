@@ -8,14 +8,16 @@
 				<div class="panel-heading">Login</div>
 				<div class="panel-body">
 					<div style="text-align: center;">
-					  <i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i>
-					  @if ($errors->has('tryagain'))
-						  <div class="form-group  has-error">
-							<span class="help-block has-error">
-								<strong>{{ $errors->first('tryagain') }}</strong>
-							</span>
-						  </div>
-					  @endif
+						<div style="text-align: center;">
+							<i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i>
+							@if ($errors->has('tryagain'))
+								<div class="form-group  has-error">
+									<span class="help-block has-error">
+										<strong>{{ $errors->first('tryagain') }}</strong>
+									</span>
+								</div>
+							@endif
+						</div>
 					</div>
 					<form class="form-horizontal" role="form" method="POST" action="{{ url('/login') }}">
 						{{ csrf_field() }}
