@@ -74,33 +74,31 @@ class PolicyController extends Controller
     public function store(Request $request)
     {
         $permissions_array = $request->input('permissions');
-        foreach($permissions_array as $permissions) {
-          $data1['resource_set_id'] = $request->input('resourceId');
-          $policy_id = DB::table('policy')->insertGetId($data1);
-          $query = DB::table('claim')->where('claim_value', '=', $permissions->claim)->first();
-          if ($query) {
-            $claim_id = $query->claim_id;
-          } else {
-            $data2 = [
-              'name' => 'email',
-              'claim_value' => $permissions->claim
-            ];
-            $claim_id = DB::table('claim')->insertGetId($data2);
-          }
-          $data3 = [
-            'claim_id' => $claim_id,
-            'policy_id' => $policy_id
-          ];
-          DB::table('claim_to_policy')->insert($data3);
-          $scopes_array = $permissions->scopes;
-          foreach($scopes_array as $scope) {
-            $data4 = [
-              'policy_id' => $policy_id,
-              'scope' => $scope
-            ];
-            DB::table('policy_scopes')->insert($data4);
-          }
-        }
+		$data1['resource_set_id'] = $request->input('resourceId');
+		$policy_id = DB::table('policy')->insertGetId($data1);
+		$query = DB::table('claim')->where('claim_value', '=', $permissions_array['claim'])->first();
+		if ($query) {
+			$claim_id = $query->claim_id;
+		} else {
+			$data2 = [
+				'name' => 'email',
+				'claim_value' => $permissions_array['claim']
+			];
+			$claim_id = DB::table('claim')->insertGetId($data2);
+		}
+		$data3 = [
+			'claim_id' => $claim_id,
+			'policy_id' => $policy_id
+		];
+		DB::table('claim_to_policy')->insert($data3);
+		$scopes_array = $permissions_array['scopes'];
+		foreach($scopes_array as $scope) {
+			$data4 = [
+				'policy_id' => $policy_id,
+				'scope' => $scope
+			];
+			DB::table('policy_scopes')->insert($data4);
+		}
         return Response::json('', 201);
     }
 
