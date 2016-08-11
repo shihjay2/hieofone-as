@@ -771,7 +771,7 @@ class OauthController extends Controller
 	{
 		$token = $request->input('token');
 		$return['active'] = false;
-		$query = DB::table('oauth_access_tokens')->where('jtw', '=', $token)->first();
+		$query = DB::table('oauth_access_tokens')->where('jwt', '=', $token)->first();
 		if ($query) {
 			$expires = strtotime($query->expires);
 			if ($expires > time()) {
