@@ -271,6 +271,7 @@ class UmaController extends Controller
 	public function authz_request(Request $request)
 	{
 		$ticket = $request->input('ticket');
+		$access_lifetime = App::make('oauth2')->getConfig('access_lifetime');
 		$query = DB::table('permission_ticket')->where('ticket', '=', $ticket)->first();
 		if ($query) {
 			$expires = strtotime($query->expires);
@@ -293,18 +294,20 @@ class UmaController extends Controller
 					$bridgedRequest = BridgeRequest::createFromRequest($request);
 					$response = new BridgeResponse();
 					$response = App::make('oauth2')->grantAccessToken($bridgedRequest, $response);
+					$new_token_query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($response['access_token'], 0, 255))->first();
 					$data = [
 						'permission_id' => $permission_id,
-						'jwt' => $response['access_token']
+						'jwt' => $response['access_token'],
+						'expires' => $new_token_query->expires
 					];
 					DB::table('oauth_access_tokens')->where('access_token', '=', substr($response['access_token'], 0, 255))->update($data);
 					$response = [
 						'rpt' => $response['access_token']
 					];
 					// Expire permission ticket
-					$expires = date('Y-m-d H:i:s', time());
+					$expires1 = date('Y-m-d H:i:s', time());
 					$data1 = [
-						'expires' => $expires
+						'expires' => $expires1
 					];
 					DB::table('permission_ticket')->where('permission_id', '=', $permission_id)->update($data1);
 					$statusCode = 200;

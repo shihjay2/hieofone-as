@@ -214,8 +214,10 @@ class OauthController extends Controller
 			$bridgedResponse = App::make('oauth2')->grantAccessToken($bridgedRequest, $bridgedResponse);
 			if (isset($bridgedResponse['access_token'])) {
 				// Update to include JWT for introspection in the future if needed
+				$new_token_query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->first();
 				$jwt_data = [
-					'jwt' => $bridgedResponse['access_token']
+					'jwt' => $bridgedResponse['access_token'],
+					'expires' => $new_token_query->expires
 				];
 				DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->update($jwt_data);
 				// Access token granted, authorize login!
