@@ -552,7 +552,7 @@ class OauthController extends Controller
 			// If generated from rqp_claims endpoint, do this
 			return redirect()->route('rqp_claims');
 		} else {
-			$this->oauth_authenticate($user->getEmail());
+			$this->oauth_authenticate($oidc->requestUserInfo('email'));
 			return redirect()->route('home');
 		}
 	}
