@@ -176,11 +176,11 @@ class UmaController extends Controller
 	{
 		// Check if this is a redirect from OAuth2
 		$error = '';
-		if ($request->session()->has('permission_ticket') && $request->session()->has('redirect_uri') && $request->session()->has('client_id') && $request->session()->has('email')) {
-			$params['state'] = $request->session()->get('state');
-			$redirect_uri = $request->session()->get('oauth_redirect_uri');
-			$client_id = $request->session()->get('oauth_client_id');
-			$ticket = $request->session()->get('permission_ticket');
+		if ($request->session()->has('uma_permission_ticket') && $request->session()->has('uma_redirect_uri') && $request->session()->has('uma_client_id') && $request->session()->has('email')) {
+			$params['state'] = $request->session()->get('uma_state');
+			$redirect_uri = $request->session()->get('uma_redirect_uri');
+			$client_id = $request->session()->get('uma_client_id');
+			$ticket = $request->session()->get('uma_permission_ticket');
 			$params['ticket'] = $ticket;
 			// Verify client and claims redirect uri exists
 			$query0 = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
@@ -255,7 +255,7 @@ class UmaController extends Controller
 			// New instance, place input into a new session
 			$request->session()->put('permission_ticket', $request->input('ticket'));
 			$request->session()->put('redirect_uri', $request->input('redirect_uri'));
-			$request->session()->put('client_id', $request->input('client_id'));
+			$request->session()->put('oauth_client_id', $request->input('client_id'));
 			$request->session()->put('state', $request->input('state'));
 			// Let requesting party choose type of OpenID Connect service to gather claims
 			return redirect()->route('login');
