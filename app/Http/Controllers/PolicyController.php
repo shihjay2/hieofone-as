@@ -35,7 +35,7 @@ class PolicyController extends Controller
 							$return[$i]['email'] = $query2->claim_value;
 							$query3 = DB::table('oauth_users')->where('email', '=', $query2->claim_value)->first();
 							if ($query3) {
-								$return[$i]['name'] = $$query3->first_name . ' ' . $query3->last_name;
+								$return[$i]['name'] = $query3->first_name . ' ' . $query3->last_name;
 							} else {
 								$return[$i]['name'] = '';
 							}
