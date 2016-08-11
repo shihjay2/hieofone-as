@@ -479,7 +479,7 @@ class OauthController extends Controller
 		config(['services.google.client_secret' => $query0->client_secret]);
 		config(['services.google.redirect' => $query0->redirect_uri]);
 		$user = Socialite::driver('google')->user();
-		session(['email' => $user->getEmail()]);
+		$request->session()->put('email', $user->getEmail());
 		if ($request->session()->has('permission_ticket') && $request->session()->has('redirect_uri') && $request->session()->has('client_id') && $request->session()->has('email')) {
 			// If generated from rqp_claims endpoint, do this
 			return redirect()->route('rqp_claims');
@@ -506,7 +506,7 @@ class OauthController extends Controller
 		config(['services.twitter.client_secret' => $query0->client_secret]);
 		config(['services.twitter.redirect' => $query0->redirect_uri]);
 		$user = Socialize::driver('twitter')->user();
-		session(['email' => $user->getEmail()]);
+		$request->session()->put('email', $user->getEmail());
 		if ($request->session()->has('permission_ticket') && $request->session()->has('redirect_uri') && $request->session()->has('client_id') && $request->session()->has('email')) {
 			// If generated from rqp_claims endpoint, do this
 			return redirect()->route('rqp_claims');
@@ -542,7 +542,7 @@ class OauthController extends Controller
 		// $email = $oidc->requestUserInfo('email');
 		// $npi = $oidc->requestUserInfo('npi');
 		$access_token = $oidc->getAccessToken();
-		session(['email' => $oidc->requestUserInfo('email')]);
+		$request->session()->put('email',  $oidc->requestUserInfo('email'));
 		if ($request->session()->has('permission_ticket') && $request->session()->has('redirect_uri') && $request->session()->has('client_id') && $request->session()->has('email')) {
 			// If generated from rqp_claims endpoint, do this
 			return redirect()->route('rqp_claims');
@@ -583,12 +583,6 @@ class OauthController extends Controller
 			Auth::login($user);
 		}
 		return true;
-	}
-
-	public function oauth_register($email)
-	{
-
-		return $response;
 	}
 
 	/**

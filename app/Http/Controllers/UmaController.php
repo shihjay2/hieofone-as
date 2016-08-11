@@ -253,14 +253,12 @@ class UmaController extends Controller
 			}
 		} else {
 			// New instance, place input into a new session
-			session([
-				'permission_ticket' => $request->input('ticket'),
-				'redirect_uri' => $request->input('redirect_uri'),
-				'client_id' => $request->input('client_id'),
-				'state' => $request->input('state')
-			]);
+			$request->session()->put('permission_ticket', $request->input('ticket'));
+			$request->session()->put('redirect_uri', $request->input('redirect_uri'));
+			$request->session()->put('client_id', $request->input('client_id'));
+			$request->session()->put('state', $request->input('state'));
 			// Let requesting party choose type of OpenID Connect service to gather claims
-			return response()->view('auth_choose');
+			return redirect()->route('login');
 		}
 	}
 
