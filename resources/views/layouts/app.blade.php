@@ -60,6 +60,7 @@
 						</li>
 						<li><a href="{{ url('/make_invitation') }}">Invite</a></li>
 						<li><a href="{{ url('/change_password') }}">Change Password</a></li>
+						<li>Your email address: {{ Auth::user()->email }}</li>
 					@endif
 				</ul>
 
@@ -77,7 +78,6 @@
 							</a>
 
 							<ul class="dropdown-menu" role="menu">
-								<li>Your email address: {{ Auth::user()->email }}</li>
 								<li><a href="{{ url('/logout') }}"><i class="fa fa-btn fa-sign-out"></i>Logout</a></li>
 							</ul>
 						</li>
