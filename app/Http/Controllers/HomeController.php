@@ -79,7 +79,7 @@ class HomeController extends Controller
 			$data['content'] = '<div class="list-group">';
 			foreach ($query as $resource) {
 				$count = DB::table("policy")->where('resource_set_id', '=', $id)->count();
-				$data['content'] .= '<a href="' . URL::to('resource_view') . '/' . $resource->resource_set_id . '" class="list-group-item"><img src="' . $resource->icon_uri . '" height="20" width="20"><span style="margin:10px;">' . $resource->name . '</span><span class="badge">' . $count . '</span></a>';
+				$data['content'] .= '<a href="' . URL::to('resource_view') . '/' . $resource->resource_set_id . '" class="list-group-item"><img src="' . $resource->icon_uri . '" height="20" width="20"><span style="margin:10px;">' . $resource->name . '</span><span class="badge">' . $count . ' Polices</span></a>';
 			}
 			$data['content'] .= '</div>';
 		}
