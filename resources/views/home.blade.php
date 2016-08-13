@@ -53,6 +53,10 @@
 		$("#remove_permissions_button").on('click', function() {
 			return confirm('Removing all permissions cannot be undone!');
 		});
+		$(".pnosh_link").on('click', function(){
+			var link = $(this).attr('nosh-link');
+			window.open(link);
+		});
 	});
 </script>
 @endsection
