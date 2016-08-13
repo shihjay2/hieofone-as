@@ -60,7 +60,7 @@
 						</li>
 						<li><a href="{{ url('/make_invitation') }}">Invite</a></li>
 						<li><a href="{{ url('/change_password') }}">Change Password</a></li>
-						<li>Your email address: {{ Auth::user()->email }}</li>
+						<li><a href="#">Your email address: {{ Auth::user()->email }}</a></li>
 					@endif
 				</ul>
 
