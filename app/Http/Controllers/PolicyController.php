@@ -33,12 +33,7 @@ class PolicyController extends Controller
 						$query2 = DB::table('claim')->where('claim_id', '=', $row1->claim_id)->first();
 						if ($query2) {
 							$return[$i]['email'] = $query2->claim_value;
-							$query3 = DB::table('oauth_users')->where('email', '=', $query2->claim_value)->first();
-							if ($query3) {
-								$return[$i]['name'] = $query3->first_name . ' ' . $query3->last_name;
-							} else {
-								$return[$i]['name'] = '';
-							}
+							$return[$i]['name']  = $query2->name;
 							$return[$i]['last_activity'] = $row1->last_activity;
 						}
 					}
@@ -81,7 +76,7 @@ class PolicyController extends Controller
 			$claim_id = $query->claim_id;
 		} else {
 			$data2 = [
-				'name' => 'email',
+				'name' => $permissions_array['name'],
 				'claim_value' => $permissions_array['claim']
 			];
 			$claim_id = DB::table('claim')->insertGetId($data2);
@@ -138,16 +133,15 @@ class PolicyController extends Controller
         $permissions_array = $request->input('permissions');
         $query = DB::table('policy')->where('policy_id', '=', $id)->where('resource_set_id', '=', $request->input('resourceId'))->first();
         if ($query) {
-          DB::table('policy_scopes')->where('policy_id', '=', $id)->delete();
-          DB::table('claim_to_policy')->where('policy_id', '=', $id)->delete();
-          foreach($permissions_array as $permissions) {
-            $query1 = DB::table('claim')->where('claim_value', '=', $permissions->claim)->first();
+			DB::table('policy_scopes')->where('policy_id', '=', $id)->delete();
+			DB::table('claim_to_policy')->where('policy_id', '=', $id)->delete();
+            $query1 = DB::table('claim')->where('claim_value', '=', $permissions_array['claim'])->first();
             if ($query1) {
               $claim_id = $query1->claim_id;
             } else {
               $data2 = [
-                'name' => 'email',
-                'claim_value' => $permissions->claim
+                'name' => $permissions_array['name'],
+                'claim_value' => $permissions_array['claim']
               ];
               $claim_id = DB::table('claim')->insertGetId($data2);
             }
@@ -156,7 +150,7 @@ class PolicyController extends Controller
               'policy_id' => $policy_id
             ];
             DB::table('claim_to_policy')->insert($data3);
-            $scopes_array = $permissions->scopes;
+            $scopes_array = $permissions_array['scopes'];
             foreach($scopes_array as $scope) {
               $data4 = [
                 'policy_id' => $policy_id,
@@ -164,7 +158,6 @@ class PolicyController extends Controller
               ];
               DB::table('policy_scopes')->insert($data4);
             }
-          }
           return Response::json('', 201);
         } else {
           $response = [
