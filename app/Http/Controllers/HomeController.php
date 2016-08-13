@@ -125,12 +125,7 @@ class HomeController extends Controller
 				$query2 = DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->first();
 				if ($query2) {
 					$query3 = DB::table('claim')->where('claim_id', '=', $query2->claim_id)->first();
-					$query4 = DB::table('oauth_users')->where('email', '=', $query3->claim_value)->first();
-					if ($query4) {
-						$user = $query4->first_name . ' ' . $query4->last_name . ' (' . $query3->claim_value . ')';
-					} else {
-						$user = $query3->claim_value;
-					}
+					$user = $query3->name . ' (' . $query3->claim_value . ')';
 					$data['content'] .= '<tr><td>' . $user . '</td><td>';
 					$query4 = DB::table('policy_scopes')->where('policy_id', '=', $policy->policy_id)->get();
 					$i = 0;
