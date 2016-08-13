@@ -34,8 +34,8 @@
 					@if (isset($mdnosh))
 						<div class="alert alert-danger">
 							<h4>Get connected!</h4>
-							<p>Get connected to mdNOSH Gateway, a single-sign-on solution for physicians.</p>
-							<p>With mdNOSH Gateway, your authorization server can connect to thousands of physicians who may be involved in your care.</p>
+							<p>Get connected to the mdNOSH Electronic Health Record System.</p>
+							<p>With mdNOSH, your authorization server can connect to thousands of physicians who may be involved in your care.</p>
 							<p><a href="https://noshchartingsystem.com/oidc/uma_register">Get Started</a></p>
 						</div>
 					@endif
