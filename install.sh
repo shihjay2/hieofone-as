@@ -224,6 +224,9 @@ APACHE_CONF="$APACHE_CONF
 	RewriteCond %{REQUEST_FILENAME} !-d
 	RewriteCond %{REQUEST_FILENAME} !-f
 	RewriteRule ^ index.php [L]
+	# Force SSL
+	RewriteCond %{HTTPS} !=on
+	RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 	<IfModule mod_php5.c>
 		php_value upload_max_filesize 512M
 		php_value post_max_size 512M

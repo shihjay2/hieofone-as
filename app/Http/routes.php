@@ -201,6 +201,9 @@ Route::any('test1', array('as' => 'test1', 'uses' => 'OauthController@test1'));
 Route::get('/', array('as' => 'welcome', function () {
 	$query = DB::table('owner')->first();
 	if ($query) {
+		if (Auth::check()) {
+			return redirect()->route('home');
+		}
 		$data = [
 			'name' => $query->firstname . ' ' . $query->lastname
 		];
