@@ -53,7 +53,7 @@ class HomeController extends Controller
 		if ($query) {
 			$data['content'] = '<div class="list-group">';
 			foreach ($query as $client) {
-				$data['content'] .= '<a href="' . URL::to('resources') . '/' . $client->client_id . '" class="list-group-item"><img src="' . $client->logo_uri . '" height="30" width="30"><span style="margin:10px">' . $client->client_name . '</span></a>';
+				$data['content'] .= '<a href="' . URL::to('resources') . '/' . $client->client_id . '" class="list-group-item"><img src="' . $client->logo_uri . '" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $client->client_name . '</span></a>';
 			}
 			$data['content'] .= '</div>';
 		}
@@ -78,7 +78,8 @@ class HomeController extends Controller
 		if ($query) {
 			$data['content'] = '<div class="list-group">';
 			foreach ($query as $resource) {
-				$data['content'] .= '<a href="' . URL::to('resource_view') . '/' . $resource->resource_set_id . '" class="list-group-item"><img src="' . $resource->icon_uri . '" height="20" width="20"><span style="margin:10px;">' . $resource->name . '</span></a>';
+				$query1 = DB::table("policy")->where('resource_set_id', '=', $id)->count();
+				$data['content'] .= '<a href="' . URL::to('resource_view') . '/' . $resource->resource_set_id . '" class="list-group-item"><img src="' . $resource->icon_uri . '" height="20" width="20"><span style="margin:10px;">' . $resource->name . '</span><span class="badge">' . $count . '</span></a>';
 			}
 			$data['content'] .= '</div>';
 		}
@@ -109,8 +110,6 @@ class HomeController extends Controller
 		$query1 = DB::table("policy")->where('resource_set_id', '=', $id)->get();
 		if ($query1) {
 			$data['content'] = '<table class="table table-striped"><thead><tr><th>User</th><th>Permissions</th><th></th></thead><tbody>';
-			$row_array = [];
-			$i = 0;
 			foreach ($query1 as $policy) {
 				// Get claim
 				$query2 = DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->first();
