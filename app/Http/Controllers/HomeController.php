@@ -56,7 +56,7 @@ class HomeController extends Controller
 				$link = '';
 				if ($pnosh) {
 					if ($client->client_id == $pnosh->client_id) {
-						$link = '<span class="label label-success pnosh_link" nosh-link="' . URL::to('/') . '/nosh">Go Here</span>';
+						$link = '<span class="label label-success pnosh_link" nosh-link="' . URL::to('/') . '/nosh/uma_auth">Go Here</span>';
 					}
 				}
 				$data['content'] .= '<a href="' . URL::to('resources') . '/' . $client->client_id . '" class="list-group-item"><img src="' . $client->logo_uri . '" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $client->client_name . '</span>' . $link . '</a>';
