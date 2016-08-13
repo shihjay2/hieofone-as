@@ -158,16 +158,15 @@ class PolicyController extends Controller
               ];
               DB::table('policy_scopes')->insert($data4);
             }
-          return Response::json('', 201);
+			return Response::json('', 201);
         } else {
-          $response = [
-            'code' => 404,
-            'reason' => "Not found",
-            'message' => "UMA Policy not found, " . $id
-          ];
-          return Response::json($response, 404);
+			$response = [
+				'code' => 404,
+				'reason' => "Not found",
+				'message' => "UMA Policy not found, " . $id
+			];
+			return Response::json($response, 404);
         }
-
     }
 
     /**
