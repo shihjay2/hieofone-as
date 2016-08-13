@@ -186,122 +186,126 @@ class OauthController extends Controller
 
 	public function login(Request $request)
 	{
-		if ($request->isMethod('post')) {
-			$this->validate($request, [
-				'username' => 'required',
-				'password' => 'required'
-			]);
-			// Check if there was an old request from the ouath_authorize function, else assume login is coming from server itself
-			if ($request->session()->get('oauth_response_type') == 'code') {
-				$client_id = $request->session()->get('oauth_client_id');
-				$data['nooauth'] = true;
-			} else {
-				$client = DB::table('owner')->first();
-				$client_id = $client->client_id;
-			}
-			// Get client secret
-			$client1 = DB::table('oauth_clients')->where('client_id', '=', $client_id)->first();
-			// Run authorization request
-			$request->merge([
-				'client_id' => $client_id,
-				'client_secret' => $client1->client_secret,
-				'username' => $request->username,
-				'password' => $request->password,
-				'grant_type' => 'password'
-			]);
-			$bridgedRequest = BridgeRequest::createFromRequest($request);
-			$bridgedResponse = new BridgeResponse();
-			$bridgedResponse = App::make('oauth2')->grantAccessToken($bridgedRequest, $bridgedResponse);
-			if (isset($bridgedResponse['access_token'])) {
-				// Update to include JWT for introspection in the future if needed
-				$new_token_query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->first();
-				$jwt_data = [
-					'jwt' => $bridgedResponse['access_token'],
-					'expires' => $new_token_query->expires
-				];
-				DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->update($jwt_data);
-				// Access token granted, authorize login!
-				$owner_query = DB::table('owner')->first();
-				$oauth_user = DB::table('oauth_users')->where('username', '=', $request->username)->first();
-				$request->session()->put('access_token',  $bridgedResponse['access_token']);
-				$request->session()->put('client_id', $client_id);
-				$request->session()->put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
-				$request->session()->put('username', $request->input('username'));
-				$request->session()->put('client_name', $client1->client_name);
-				$request->session()->put('logo_uri', $client1->logo_uri);
-				$request->session()->put('sub', $oauth_user->sub);
-				$request->session()->put('email', $oauth_user->email);
-				$user1 = DB::table('users')->where('name', '=', $request->username)->first();
-				Auth::loginUsingId($user1->id);
-				$request->session()->save();
-				if ($request->session()->has('uma_permission_ticket') && $request->session()->has('uma_redirect_uri') && $request->session()->has('uma_client_id') && $request->session()->has('email')) {
-					// If generated from rqp_claims endpoint, do this
-					return redirect()->route('rqp_claims');
-				}
+		if (Auth::guest()) {
+			if ($request->isMethod('post')) {
+				$this->validate($request, [
+					'username' => 'required',
+					'password' => 'required'
+				]);
+				// Check if there was an old request from the ouath_authorize function, else assume login is coming from server itself
 				if ($request->session()->get('oauth_response_type') == 'code') {
-					// Confirm if client is authorized
-					$authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
-					if ($authorized) {
-						// This call is from authorization endpoint and client is authorized.  Check if user is associated with client
-						$user_array = explode(' ', $authorized->user_id);
-						if (in_array($request->username, $user_array)) {
-							// Go back to authorize route
-							$request->session()->put('is_authorized', 'true');
-
-							return redirect()->route('authorize');
-						} else {
-							// Get user permission
-							return redirect()->route('login_authorize');
-						}
-					} else {
-						// Get owner permission if owner is logging in from new client/registration server
-						if ($oauth_user) {
-							if ($owner_query->sub == $oauth_user->sub) {
-								return redirect()->route('authorize_resource_server');
-							} else {
-								// Somehow, this is a registered user, but not the owner, and is using an unauthorized client - return back to login screen
-								return redirect()->back()->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
-							}
-						} else {
-							// Not a registered user
-							return redirect()->back()->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
-						}
-					}
-				} else {
-					//  This call is directly from the home route.
-					return redirect()->intended('home');
-				}
-			} else {
-				//  Incorrect login information
-				return redirect()->back()->withErrors(['tryagain' => 'Try again']);
-			}
-		} else {
-			$query = DB::table('owner')->first();
-			if ($query) {
-				// Show login form
-				$data['name'] = $query->firstname . ' ' . $query->lastname;
-				$data['noheader'] = true;
-				if ($request->session()->get('oauth_response_type') == 'code') {
+					$client_id = $request->session()->get('oauth_client_id');
 					$data['nooauth'] = true;
 				} else {
-					$request->session()->forget('oauth_response_type');
-					$request->session()->forget('oauth_redirect_uri');
-					$request->session()->forget('oauth_client_id');
-					$request->session()->forget('oauth_nonce');
-					$request->session()->forget('oauth_state');
-					$request->session()->forget('oauth_scope');
-					$request->session()->forget('is_authorized');
+					$client = DB::table('owner')->first();
+					$client_id = $client->client_id;
 				}
-				$data['google'] = DB::table('oauth_rp')->where('type', '=', 'google')->first();
-				$data['twitter'] = DB::table('oauth_rp')->where('type', '=', 'twitter')->first();
-				return view('auth.login', $data);
+				// Get client secret
+				$client1 = DB::table('oauth_clients')->where('client_id', '=', $client_id)->first();
+				// Run authorization request
+				$request->merge([
+					'client_id' => $client_id,
+					'client_secret' => $client1->client_secret,
+					'username' => $request->username,
+					'password' => $request->password,
+					'grant_type' => 'password'
+				]);
+				$bridgedRequest = BridgeRequest::createFromRequest($request);
+				$bridgedResponse = new BridgeResponse();
+				$bridgedResponse = App::make('oauth2')->grantAccessToken($bridgedRequest, $bridgedResponse);
+				if (isset($bridgedResponse['access_token'])) {
+					// Update to include JWT for introspection in the future if needed
+					$new_token_query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->first();
+					$jwt_data = [
+						'jwt' => $bridgedResponse['access_token'],
+						'expires' => $new_token_query->expires
+					];
+					DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->update($jwt_data);
+					// Access token granted, authorize login!
+					$owner_query = DB::table('owner')->first();
+					$oauth_user = DB::table('oauth_users')->where('username', '=', $request->username)->first();
+					$request->session()->put('access_token',  $bridgedResponse['access_token']);
+					$request->session()->put('client_id', $client_id);
+					$request->session()->put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
+					$request->session()->put('username', $request->input('username'));
+					$request->session()->put('client_name', $client1->client_name);
+					$request->session()->put('logo_uri', $client1->logo_uri);
+					$request->session()->put('sub', $oauth_user->sub);
+					$request->session()->put('email', $oauth_user->email);
+					$user1 = DB::table('users')->where('name', '=', $request->username)->first();
+					Auth::loginUsingId($user1->id);
+					$request->session()->save();
+					if ($request->session()->has('uma_permission_ticket') && $request->session()->has('uma_redirect_uri') && $request->session()->has('uma_client_id') && $request->session()->has('email')) {
+						// If generated from rqp_claims endpoint, do this
+						return redirect()->route('rqp_claims');
+					}
+					if ($request->session()->get('oauth_response_type') == 'code') {
+						// Confirm if client is authorized
+						$authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
+						if ($authorized) {
+							// This call is from authorization endpoint and client is authorized.  Check if user is associated with client
+							$user_array = explode(' ', $authorized->user_id);
+							if (in_array($request->username, $user_array)) {
+								// Go back to authorize route
+								$request->session()->put('is_authorized', 'true');
+
+								return redirect()->route('authorize');
+							} else {
+								// Get user permission
+								return redirect()->route('login_authorize');
+							}
+						} else {
+							// Get owner permission if owner is logging in from new client/registration server
+							if ($oauth_user) {
+								if ($owner_query->sub == $oauth_user->sub) {
+									return redirect()->route('authorize_resource_server');
+								} else {
+									// Somehow, this is a registered user, but not the owner, and is using an unauthorized client - return back to login screen
+									return redirect()->back()->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
+								}
+							} else {
+								// Not a registered user
+								return redirect()->back()->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
+							}
+						}
+					} else {
+						//  This call is directly from the home route.
+						return redirect()->intended('home');
+					}
+				} else {
+					//  Incorrect login information
+					return redirect()->back()->withErrors(['tryagain' => 'Try again']);
+				}
 			} else {
-				// Not installed yet
-				$data2 = [
-					'noheader' => true
-				];
-				return view('install', $data2);
+				$query = DB::table('owner')->first();
+				if ($query) {
+					// Show login form
+					$data['name'] = $query->firstname . ' ' . $query->lastname;
+					$data['noheader'] = true;
+					if ($request->session()->get('oauth_response_type') == 'code') {
+						$data['nooauth'] = true;
+					} else {
+						$request->session()->forget('oauth_response_type');
+						$request->session()->forget('oauth_redirect_uri');
+						$request->session()->forget('oauth_client_id');
+						$request->session()->forget('oauth_nonce');
+						$request->session()->forget('oauth_state');
+						$request->session()->forget('oauth_scope');
+						$request->session()->forget('is_authorized');
+					}
+					$data['google'] = DB::table('oauth_rp')->where('type', '=', 'google')->first();
+					$data['twitter'] = DB::table('oauth_rp')->where('type', '=', 'twitter')->first();
+					return view('auth.login', $data);
+				} else {
+					// Not installed yet
+					$data2 = [
+						'noheader' => true
+					];
+					return view('install', $data2);
+				}
 			}
+		} else {
+			return redirect()->route('home');
 		}
 	}
 
