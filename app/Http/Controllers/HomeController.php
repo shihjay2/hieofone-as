@@ -278,9 +278,27 @@ class HomeController extends Controller
 			} else {
 				$data['content'] = '<div><img src="' . $query->logo_uri . '" style="margin:20px;text-align: center;"></div>';
 			}
-			$data['content'] .= '<h3>Your information at ' . $query->client_name . ' will be shared</h3>';
-			$data['content'] .= '<p>By clicking Allow, you consent to sharing your information on ' . $query->client_name . ' according to the policies selected below. You can revoke consent or change your policies for ' . $query->client_name . ' at any time using the My Resources page. Requesting parties that are subject to your polices will be listed on the Clients page where you can enhance or limit their access privileges.</p>';
+			$data['content'] .= '<h3>Resource Registration Consent for ' . $query->client_name . '</h3>';
+			$data['content'] .= '<p>By clicking Allow, you consent to sharing your information on ' . $query->client_name . ' according to the policies selected below. You can revoke consent or change your policies for ' . $query->client_name . ' at any time using the My Resources page.  Parties requesting access to your information will be listed on the My Clients page where their access can also be revoked or changed.   Your sharing defaults can be changed on the My Policies page.</p>';
 			$data['content'] .= '<input type="hidden" name="client_id" value="' . $query->client_id . '"/>';
+			$data['client'] = $query->client_name;
+			$query1 = DB::table('owner')->first();
+			$data['login_direct'] = '';
+			$data['login_md_nosh'] = '';
+			$data['any_npi'] = '';
+			$data['login_google'] = '';
+			if ($query1->login_direct == 1) {
+				$data['login_direct'] = 'checked';
+			}
+			if ($query1->login_md_nosh == 1) {
+				$data['login_md_nosh'] = 'checked';
+			}
+			if ($query1->any_npi == 1) {
+				$data['any_npi'] = 'checked';
+			}
+			if ($query1->login_google == 1) {
+				$data['login_google'] = 'checked';
+			}
 			return view('rs_authorize', $data);
 		} else {
 			return redirect()->route('home');
@@ -292,12 +310,16 @@ class HomeController extends Controller
 		if ($request->input('submit') == 'allow') {
 			$data['consent_login_direct'] = 0;
 			$data['consent_login_md_nosh'] = 0;
+			$data['consent_any_api'] = 0;
 			$data['consent_login_google'] = 0;
 			if ($request->input('consent_login_direct') == 'on') {
 				$data['consent_login_direct'] = 1;
 			}
 			if ($request->input('consent_login_md_nosh') == 'on') {
 				$data['consent_login_md_nosh'] = 1;
+			}
+			if ($request->input('consent_any_api') == 'on') {
+				$data['consent_any_api'] = 1;
 			}
 			if ($request->input('consent_login_google') == 'on') {
 				$data['consent_login_google'] = 1;
@@ -492,6 +514,101 @@ class HomeController extends Controller
 			}
 		} else {
 			return view('changepassword', $data);
+		}
+	}
+
+	public function my_info(Request $request)
+	{
+		$query = DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->first();
+		$data['message_action'] = $request->session()->get('message_action');
+		$request->session()->forget('message_action');
+		$data['title'] = 'My Information';
+		$data['content'] = '<ul class="list-group">';
+		$data['content'] .= '<li class="list-group-item">First Name: ' . $query->first_name . '</li>';
+		$data['content'] .= '<li class="list-group-item">Last Name: ' . $query->last_name . '</li>';
+		$data['content'] .= '<li class="list-group-item">Email: ' . $query->email . '</li>';
+		$owner_query = DB::table('owner')->first();
+		if ($owner_query->sub == $query->sub) {
+			$data['content'] .= '<li class="list-group-item">Date of Birth: ' . date('m/d/Y', strtotime($owner_query->DOB)) . '</li>';
+			$data['content'] .= '<li class="list-group-item">Mobile Number: ' . $owner_query->mobile . '</li>';
+		}
+		$data['content'] .= '</ul>';
+		$data['back'] = '<a href="' . URL::to('my_info_edit') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-pencil"></i> Edit</a>';
+		return view('home', $data);
+	}
+
+	public function my_info_edit(Request $request)
+	{
+		if ($request->isMethod('post')) {
+			$this->validate($request, [
+				'email' => 'required',
+				'first_name' => 'required',
+				'last_name' => 'required',
+				'date_of_birth' => 'required'
+			]);
+			$data1 = [
+				'first_name' => $request->input('first_name'),
+				'last_name' => $request->input('last_name'),
+				'email' => $request->input('email')
+			];
+			$owner_data = [
+				'lastname' => $request->input('last_name'),
+				'firstname' => $request->input('first_name'),
+				'DOB' => date('Y-m-d', strtotime($request->input('date_of_birth'))),
+				'email' => $request->input('email'),
+				'mobile' => $request->input('mobile')
+			];
+			DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->update($data1);
+			DB::table('owner')->where('id', '=', '1')->update($owner_data);
+			$request->session()->put('message_action', 'Information Updated.');
+			return redirect()->route('my_info');
+		} else {
+			$query = DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->first();
+			$data = [
+				'first_name' => $query->first_name,
+				'last_name' => $query->last_name,
+				'email' => $query->email
+			];
+			$owner_query = DB::table('owner')->first();
+			if ($owner_query->sub == $query->sub) {
+				$data['date_of_birth'] = date('m/d/Y', strtotime($owner_query->DOB));
+				$data['mobile'] = $owner_query->mobile;
+			}
+			return view('edit', $data);
+		}
+	}
+
+	public function default_policies(Request $request)
+	{
+		$data['message_action'] = $request->session()->get('message_action');
+		$request->session()->forget('message_action');
+		$data['content'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
+		$data['content'] .= '<h3>Resource Registration Consent Default Policies</h3>';
+		$data['content'] .= '<p>You can set default policies (who gets access to your resources) whenever you have a new resource server registered to this authorization server.</p>';
+		return view('policies', $data);
+	}
+
+	public function change_policy(Request $request)
+	{
+		if ($request->input('submit') == 'save') {
+			if ($request->input('login_direct') == 'on') {
+				$data['login_direct'] = 1;
+			}
+			if ($request->input('login_md_nosh') == 'on') {
+				$data['login_md_nosh'] = 1;
+			}
+			if ($request->input('any_api') == 'on') {
+				$data['any_api'] = 1;
+			}
+			if ($request->input('login_google') == 'on') {
+				$data['login_google'] = 1;
+			}
+			$query = DB::table('owner')->first();
+			DB::table('owner')->where('id', '=', $query->id)->update($data);
+			$request->session()->put('message_action', 'Default policies saved!');
+			return redirect()->route('home');
+		} else {
+			return redirect()->route('home');
 		}
 	}
 }

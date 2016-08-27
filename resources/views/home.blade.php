@@ -57,6 +57,7 @@
 			var link = $(this).attr('nosh-link');
 			window.open(link);
 		});
+		$('[data-toggle="tooltip"]').tooltip();
 	});
 </script>
 @endsection

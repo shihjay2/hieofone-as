@@ -70,7 +70,11 @@ Route::any('accept_invitation/{id}', array('as' => 'accept_invitation', 'uses' =
 Route::any('process_invitation', array('as' => 'process_invitation', 'uses' => 'HomeController@process_invitation'));
 Route::any('password_email', array('as' => 'password_email', 'uses' => 'OauthController@password_email'));
 Route::any('password_reset/{id}', array('as' => 'password_reset', 'uses' => 'OauthController@password_reset'));
-Route::any('change_password/', array('as' => 'change_password', 'uses' => 'HomeController@change_password'));
+Route::any('change_password', array('as' => 'change_password', 'uses' => 'HomeController@change_password'));
+Route::get('my_info', array('as' => 'my_info', 'uses' => 'HomeController@my_info'));
+Route::any('my_info_edit', array('as' => 'my_info_edit', 'uses' => 'HomeController@my_info_edit'));
+Route::get('default_policies', array('as' => 'default_policies', 'uses' => 'HomeController@default_policies'));
+Route::post('change_policy', array('as' => 'change_policy', 'uses' => 'HomeController@change_policy'));
 
 Route::post('token', array('as' => 'token', function() {
 	$bridgedRequest = OAuth2\HttpFoundationBridge\Request::createFromRequest(Request::instance());

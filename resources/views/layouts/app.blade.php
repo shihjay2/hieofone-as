@@ -52,6 +52,7 @@
 				<ul class="nav navbar-nav">
 					@if (!Auth::guest())
 						<li><a href="{{ url('/home') }}">My Resources</a></li>
+						<li><a href="{{ url('/default_policies') }}">Policies</a></li>
 						<li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">My Clients <span class="caret"></span></a>
 							<ul class="dropdown-menu" role="menu">
 								<li><a href="{{ url('/clients') }}">Authorized</a></li>
@@ -59,8 +60,6 @@
 							</ul>
 						</li>
 						<li><a href="{{ url('/make_invitation') }}">Invite</a></li>
-						<li><a href="{{ url('/change_password') }}">Change Password</a></li>
-						<li><a href="#">Your email address: {{ Auth::user()->email }}</a></li>
 					@endif
 				</ul>
 
@@ -78,6 +77,8 @@
 							</a>
 
 							<ul class="dropdown-menu" role="menu">
+								<li><a href="{{ url('/my_info') }}"><i class="fa fa-btn fa-cogs"></i>My Information</a></li>
+								<li><a href="{{ url('/change_password') }}"><i class="fa fa-btn fa-cog"></i>Change Password</a></li>
 								<li><a href="{{ url('/logout') }}"><i class="fa fa-btn fa-sign-out"></i>Logout</a></li>
 							</ul>
 						</li>

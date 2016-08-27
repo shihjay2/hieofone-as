@@ -5,16 +5,16 @@
 	<div class="row">
 		<div class="col-md-10 col-md-offset-1">
 			<div class="panel panel-default">
-				<div class="panel-heading">Resource Registration Consent</div>
+				<div class="panel-heading">Resource Registration Consent Default Policies</div>
 				<div class="panel-body">
-					<form class="form-horizontal" role="form" method="POST" action="{{ URL::to('rs_authorize_action') }}">
+					<form class="form-horizontal" role="form" method="POST" action="{{ URL::to('change_policy') }}">
 						<div style="text-align: center;">
-						  {!! $content !!}
+							{!! $content !!}
 						</div>
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
-									<label><input type="checkbox" name="consent_login_direct" {!! $login_direct !!}> Anyone signed-in directly to this Authorization Server sees Everything</label>
+									<label><input type="checkbox" name="login_direct"> Anyone signed-in directly to this Authorization Server sees Everything</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#login_direct_detail" style="margin-left:20px">Details</button>
 								</div>
 								<div id="login_direct_detail" class="collapse">
@@ -25,7 +25,7 @@
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
-									<label><input type="checkbox" name="consent_login_md_nosh" {!! $login_md_nosh !!}> Anyone signed in via mdNOSH Gateway sees these Resources</label>
+									<label><input type="checkbox" name="login_md_nosh"> Anyone signed in via mdNOSH Gateway sees these Resources</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#login_md_nosh_detail" style="margin-left:20px">Details</button>
 								</div>
 								<div id="login_md_nosh_detail" class="collapse">
@@ -36,7 +36,7 @@
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
-									<label><input type="checkbox" name="consent_any_npi" {!! $any_npi !!}> Anyone that has a National Provider Identifier (NPI) sees these Resources</label>
+									<label><input type="checkbox" name="any_npi"> Anyone that has a National Provider Identifier (NPI) sees these Resources</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#any_npi_detail" style="margin-left:20px">Details</button>
 								</div>
 								<div id="any_npi_detail" class="collapse">
@@ -68,7 +68,7 @@
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
-									<label><input type="checkbox" name="consent_login_google" {!! $login_google !!}> Anyone signed in via Google ID gets an email from me and can see Emergency Information</label>
+									<label><input type="checkbox" name="login_google"> Anyone signed in via Google ID sees these Resources</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#login_google_detail" style="margin-left:20px">Details</button>
 								</div>
 								<div id="login_google_detail" class="collapse">
@@ -78,11 +78,11 @@
 						</div>
 						<div class="form-group">
 							<div class="col-md-6 col-md-offset-3">
-								<button type="submit" class="btn btn-success btn-block" name="submit" value="allow">
-									<i class="fa fa-btn fa-check"></i> Allow Registration of {!! $client !!}
+								<button type="submit" class="btn btn-success btn-block" name="submit" value="save">
+									<i class="fa fa-btn fa-check"></i> Save
 								</button>
-								<button type="submit" class="btn btn-danger btn-block" name="submit" value="deny">
-									<i class="fa fa-btn fa-times"></i> Cancel Registration of {!! $client !!}
+								<button type="submit" class="btn btn-danger btn-block" name="submit" value="cancel">
+									<i class="fa fa-btn fa-times"></i> Cancel
 								</button>
 							</div>
 						</div>

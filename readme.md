@@ -59,7 +59,7 @@ Client makes a call to the <code>dynamic_client_endpoint</code> to [register its
 		"scope": "openid email offline uma_authorization"
 	}
 
-### Step 5: Authorize client and retreive refresh token
+### Step 5: Authorize client and retrieve refresh token
 As a client, make a call to the <code>authorization_endpoint</code>.  Make sure as a client that it declares these 2 scopes - uma_authorization (which defines you as a client requesting access to resources) and offline_access (so that you can obtain a **refresh token** for future calls without needing the patient to repeat consent online.) Here is an example call (line breaks below are just for display convenience):
 
 	GET /authorize?
@@ -99,7 +99,7 @@ Resource server makes a call to the <code>dynamic_client_endpoint</code> to [reg
 		"scope": "openid email offline uma_authorization uma_protection"
 	}
 
-### Step 5: Authorize client and retreive refresh token
+### Step 5: Authorize client and retrieve refresh token
 As a resource server, make a call to the <code>authorization_endpoint</code>.  Make sure as a resource server that it declares these 2 scopes - uma_protection (which defines you as a resource server requesting access to serve resources) and offline_access (so that you can obtain a **refresh token** for future calls without needing the patient to repeat consent online.) Here is an example call (line breaks below are just for display convenience):
 
 	GET /authorize?
