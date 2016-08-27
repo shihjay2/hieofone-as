@@ -82,7 +82,8 @@ class HomeController extends Controller
 		$data['back'] = '<a href="' . URL::to('home') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resource Services</a>';
 		$query = DB::table('resource_set')->where('client_id', '=', $id)->get();
 		if ($query) {
-			$data['content'] = '<div class="list-group">';
+			$data['content'] = '<a href ="' . URL::to('consents_resource_server') . '" class="btn btn-info" role="button" style="margin:15px">Default Policies</a>';
+			$data['content'] .= '<div class="list-group">';
 			foreach ($query as $resource) {
 				$count = DB::table("policy")->where('resource_set_id', '=', $id)->count();
 				$count_label = 'policies';
@@ -263,6 +264,43 @@ class HomeController extends Controller
 		return view('home', $data);
 	}
 
+	public function consents_resource_server(Request $request)
+	{
+		$data['name'] = $request->session()->get('owner');
+		$data['title'] = 'Resource Registration Consent';
+		$data['message_action'] = $request->session()->get('message_action');
+		$data['back'] = '<a href="' . URL::to('resources') . '/' . $request->session()->get('current_client_id') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resources</a>';
+		$request->session()->forget('message_action');
+		$query = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('current_client_id'))->first();
+		$scopes_array = explode(' ', $query->scope);
+		if ($query->logo_uri == '') {
+			$data['content'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
+		} else {
+			$data['content'] = '<div><img src="' . $query->logo_uri . '" style="margin:20px;text-align: center;"></div>';
+		}
+		$data['content'] .= '<h3>Resource Registration Consent for ' . $query->client_name . '</h3>';
+		$data['content'] .= '<p>By clicking Allow, you consent to sharing your information on ' . $query->client_name . ' according to the policies selected below. You can revoke consent or change your policies for ' . $query->client_name . ' at any time using the My Resources page.  Parties requesting access to your information will be listed on the My Clients page where their access can also be revoked or changed.   Your sharing defaults can be changed on the My Policies page.</p>';
+		$data['content'] .= '<input type="hidden" name="client_id" value="' . $query->client_id . '"/>';
+		$data['client'] = $query->client_name;
+		$data['login_direct'] = '';
+		$data['login_md_nosh'] = '';
+		$data['any_npi'] = '';
+		$data['login_google'] = '';
+		if ($query->consent_login_direct == 1) {
+			$data['login_direct'] = 'checked';
+		}
+		if ($query->consent_login_md_nosh == 1) {
+			$data['login_md_nosh'] = 'checked';
+		}
+		if ($query->consent_any_npi == 1) {
+			$data['any_npi'] = 'checked';
+		}
+		if ($query->consent_login_google == 1) {
+			$data['login_google'] = 'checked';
+		}
+		return view('rs_authorize', $data);
+	}
+
 	public function authorize_resource_server(Request $request)
 	{
 		$data['name'] = $request->session()->get('owner');
@@ -339,12 +377,15 @@ class HomeController extends Controller
 			$request->session()->put('message_action', 'Unauthorized resource server named ' . $client->client_name);
 			if ($request->session()->get('oauth_response_type') == 'code') {
 				$request->session()->put('is_authorized', 'false');
+			} else {
+				$data1['authorized'] = 0;
+				DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data1);
 			}
 		}
 		if ($request->session()->get('oauth_response_type') == 'code') {
 			return redirect()->route('authorize');
 		} else {
-			return redirect()->route('home');
+			return redirect()->route('resources' . '/' . $request->session()->get('current_client_id'));
 		}
 	}
 

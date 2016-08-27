@@ -60,6 +60,7 @@ Route::get('change_permission/{id}', array('as' => 'change_permission', 'uses' =
 Route::get('change_permission_add_edit/{id}', array('as' => 'change_permission_add_edit', 'uses' => 'HomeController@change_permission_add_edit'));
 Route::get('change_permission_remove_edit/{id}', array('as' => 'change_permission_remove_edit', 'uses' => 'HomeController@change_permission_remove_edit'));
 Route::get('change_permission_delete/{id}', array('as' => 'change_permission_delete', 'uses' => 'HomeController@change_permission_delete'));
+Route::get('consents_resource_server', array('as' => 'consents_resource_server', 'uses' => 'HomeController@consents_resource_server'));
 Route::get('authorize_resource_server', array('as' => 'authorize_resource_server', 'uses' => 'HomeController@authorize_resource_server'));
 Route::post('rs_authorize_action', array('as' => 'rs_authorize_action', 'uses' => 'HomeController@rs_authorize_action'));
 Route::get('authorize_client', array('as' => 'authorize_client', 'uses' => 'HomeController@authorize_client'));
