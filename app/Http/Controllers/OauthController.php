@@ -232,6 +232,7 @@ class OauthController extends Controller
 					$request->session()->put('logo_uri', $client1->logo_uri);
 					$request->session()->put('sub', $oauth_user->sub);
 					$request->session()->put('email', $oauth_user->email);
+					$request->session()->put('login_origin', 'login_direct');
 					$user1 = DB::table('users')->where('name', '=', $request->username)->first();
 					Auth::loginUsingId($user1->id);
 					$request->session()->save();
@@ -491,6 +492,7 @@ class OauthController extends Controller
 		config(['services.google.redirect' => $query0->redirect_uri]);
 		$user = Socialite::driver('google')->user();
 		$request->session()->put('email', $user->getEmail());
+		$request->session()->put('login_origin', 'login_google');
 		if ($request->session()->has('uma_permission_ticket') && $request->session()->has('uma_redirect_uri') && $request->session()->has('uma_client_id') && $request->session()->has('email')) {
 			// If generated from rqp_claims endpoint, do this
 			return redirect()->route('rqp_claims');
@@ -518,6 +520,7 @@ class OauthController extends Controller
 		config(['services.twitter.redirect' => $query0->redirect_uri]);
 		$user = Socialize::driver('twitter')->user();
 		$request->session()->put('email', $user->getEmail());
+		$request->session()->put('login_origin', 'login_twitter');
 		if ($request->session()->has('uma_permission_ticket') && $request->session()->has('uma_redirect_uri') && $request->session()->has('uma_client_id') && $request->session()->has('email')) {
 			// If generated from rqp_claims endpoint, do this
 			return redirect()->route('rqp_claims');
@@ -551,9 +554,11 @@ class OauthController extends Controller
 		// $firstname = $oidc->requestUserInfo('given_name');
 		// $lastname = $oidc->requestUserInfo('family_name');
 		// $email = $oidc->requestUserInfo('email');
-		// $npi = $oidc->requestUserInfo('npi');
+		$npi = $oidc->requestUserInfo('npi');
 		$access_token = $oidc->getAccessToken();
 		$request->session()->put('email',  $oidc->requestUserInfo('email'));
+		$request->session()->put('login_origin', 'login_md_nosh');
+		$request->session()->put('npi', $npi);
 		if ($request->session()->has('uma_permission_ticket') && $request->session()->has('uma_redirect_uri') && $request->session()->has('uma_client_id') && $request->session()->has('email')) {
 			// If generated from rqp_claims endpoint, do this
 			return redirect()->route('rqp_claims');

@@ -75,20 +75,37 @@ class HomeController extends Controller
 	{
 		$data['name'] = $request->session()->get('owner');
 		$client = DB::table('oauth_clients')->where('client_id', '=', $id)->first();
-		$data['title'] = 'My Resources for ' . $client->client_name;
+		$data['title'] = 'My Resources from ' . $client->client_name;
 		$data['content'] = 'No resources registered yet.';
 		$data['message_action'] = $request->session()->get('message_action');
 		$request->session()->forget('message_action');
 		$data['back'] = '<a href="' . URL::to('home') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resource Services</a>';
 		$query = DB::table('resource_set')->where('client_id', '=', $id)->get();
 		if ($query) {
-			$data['content'] = '<a href ="' . URL::to('consents_resource_server') . '" class="btn btn-info" role="button" style="margin:15px">Default Policies</a>';
+			$count1 = 0;
+			if ($client->consent_login_direct == 1) {
+				$count1++;
+			}
+			if ($client->consent_login_md_nosh == 1) {
+				$count1++;
+			}
+			if ($client->consent_any_npi == 1) {
+				$count1++;
+			}
+			if ($client->consent_login_google == 1) {
+				$count1++;
+			}
+			$count_label1 = 'policies';
+			if ($count1 == 1) {
+				$count_label1 = 'policy';
+			}
+			$data['content'] = '<a href ="' . URL::to('consents_resource_server') . '" class="btn btn-primary" role="button" style="margin:15px"><span style="margin:20px;">Default Group Policies</span><span class="badge">' . $count1 . ' ' . $count_label1 . '</span></a>';
 			$data['content'] .= '<div class="list-group">';
 			foreach ($query as $resource) {
 				$count = DB::table("policy")->where('resource_set_id', '=', $id)->count();
-				$count_label = 'policies';
+				$count_label = 'individual policies';
 				if ($count == 1) {
-					$count_label = 'policy';
+					$count_label = 'individual policy';
 				}
 				$data['content'] .= '<a href="' . URL::to('resource_view') . '/' . $resource->resource_set_id . '" class="list-group-item"><img src="' . $resource->icon_uri . '" height="30" width="30"><span style="margin:10px;">' . $resource->name . '</span><span class="badge">' . $count . ' ' . $count_label . '</span></a>';
 			}
@@ -114,6 +131,12 @@ class HomeController extends Controller
 			'view' => 'View',
 			'edit' => 'Edit'
 		];
+		$default_policy_type = [
+			'login_direct',
+			'login_md_nosh',
+			'any_npi',
+			'login_google'
+		];
 		$query = DB::table('resource_set')->where('resource_set_id', '=', $id)->first();
 		$data['title'] = 'Permissions for ' . $query->name;
 		$data['content'] = 'No policies registered for this resource.';
@@ -126,20 +149,22 @@ class HomeController extends Controller
 				$query2 = DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->first();
 				if ($query2) {
 					$query3 = DB::table('claim')->where('claim_id', '=', $query2->claim_id)->first();
-					$user = $query3->name . ' (' . $query3->claim_value . ')';
-					$data['content'] .= '<tr><td>' . $user . '</td><td>';
-					$query4 = DB::table('policy_scopes')->where('policy_id', '=', $policy->policy_id)->get();
-					$i = 0;
-					foreach ($query4 as $scope) {
-						if (array_key_exists($scope->scope, $uma_scope_array)) {
-							if ($i > 0) {
-								$data['content'] .= ', ';
+					if (!in_array($query3->claim_value, $default_policy_type)) {
+						$user = $query3->name . ' (' . $query3->claim_value . ')';
+						$data['content'] .= '<tr><td>' . $user . '</td><td>';
+						$query4 = DB::table('policy_scopes')->where('policy_id', '=', $policy->policy_id)->get();
+						$i = 0;
+						foreach ($query4 as $scope) {
+							if (array_key_exists($scope->scope, $uma_scope_array)) {
+								if ($i > 0) {
+									$data['content'] .= ', ';
+								}
+								$data['content'] .= $uma_scope_array[$scope->scope];
+								$i++;
 							}
-							$data['content'] .= $uma_scope_array[$scope->scope];
-							$i++;
 						}
+						$data['content'] .= '</td><td><a href="' . URL::to('change_permission') . '/' . $policy->policy_id . '" class="btn btn-primary" role="button">Change</a></td></tr>';
 					}
-					$data['content'] .= '</td><td><a href="' . URL::to('change_permission') . '/' . $policy->policy_id . '" class="btn btn-primary" role="button">Change</a></td></tr>';
 				}
 			}
 			$data['content'] .= '</tbody></table>';
@@ -348,31 +373,37 @@ class HomeController extends Controller
 		if ($request->input('submit') == 'allow') {
 			$data['consent_login_direct'] = 0;
 			$data['consent_login_md_nosh'] = 0;
-			$data['consent_any_api'] = 0;
+			$data['consent_any_npi'] = 0;
 			$data['consent_login_google'] = 0;
+			$types = [];
 			if ($request->input('consent_login_direct') == 'on') {
 				$data['consent_login_direct'] = 1;
+				$types[] = 'login_direct';
 			}
 			if ($request->input('consent_login_md_nosh') == 'on') {
 				$data['consent_login_md_nosh'] = 1;
+				$types[] = 'login_md_nosh';
 			}
-			if ($request->input('consent_any_api') == 'on') {
-				$data['consent_any_api'] = 1;
+			if ($request->input('consent_any_npi') == 'on') {
+				$data['consent_any_npi'] = 1;
+				$types[] = 'any_npi';
 			}
 			if ($request->input('consent_login_google') == 'on') {
 				$data['consent_login_google'] = 1;
+				$types[] = 'login_google';
 			}
 			$data['authorized'] = 1;
 			DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data);
-			$client = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('oauth_client_id'))->first();
-			$user_array = explode(' ', $client->user_id);
-			$user_array[] = $request->session()->get('username');
-			$data['user_id'] = implode(' ', $user_array);
-			DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('oauth_client_id'))->update($data);
-			$request->session()->put('message_action', 'Authorized resource server named ' . $client->client_name);
+			$client = DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->first();
+			$this->group_policy($request->input('client_id'), $types, 'update');
 			if ($request->session()->get('oauth_response_type') == 'code') {
+				$user_array = explode(' ', $client->user_id);
+				$user_array[] = $request->session()->get('username');
+				$data['user_id'] = implode(' ', $user_array);
+				DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data);
 				$request->session()->put('is_authorized', 'true');
 			}
+			$request->session()->put('message_action', 'Authorized resource server named ' . $client->client_name);
 		} else {
 			$request->session()->put('message_action', 'Unauthorized resource server named ' . $client->client_name);
 			if ($request->session()->get('oauth_response_type') == 'code') {
@@ -380,12 +411,13 @@ class HomeController extends Controller
 			} else {
 				$data1['authorized'] = 0;
 				DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data1);
+				$this->group_policy($request->input('client_id'), $types, 'delete');
 			}
 		}
 		if ($request->session()->get('oauth_response_type') == 'code') {
 			return redirect()->route('authorize');
 		} else {
-			return redirect()->route('resources' . '/' . $request->session()->get('current_client_id'));
+			return redirect()->route('resources', ['id' => $request->session()->get('current_client_id')]);
 		}
 	}
 

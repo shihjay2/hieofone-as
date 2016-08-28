@@ -198,29 +198,77 @@ class UmaController extends Controller
 							if ($expires > time()) {
 								// Valid ticket and gather claims
 								$resource_set = DB::table('permission')->where('permission_id', '=', $query1->permission_id)->first();
-								$policy = DB::table('policy')->where('resource_set_id', '=', $resource_set->resource_set_id)->first();
-								$claim = DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->first();
-								if ($claim) {
-									$claim_item = DB::table('claim')->where('claim_id', '=', $claim->claim_id)->first();
-									if ($request->session()->get('email') == $claim_item->claim_value) {
-										// Claims match, attach permission ticket to claim
-										$data = [
-											'permission_ticket_id' => $query1->permission_ticket_id,
-											'claim_id' => $claim->claim_id
-										];
-										DB::table('claim_to_permission_ticket')->insert($data);
-										// Set last_activity data to claim_to_policy
-										$data1 = [
-											'last_activity' => time()
-										];
-										DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->update($data1);
-										$params['authorization_state'] = 'claims_submitted';
+								$policies = DB::table('policy')->where('resource_set_id', '=', $resource_set->resource_set_id)->get();
+								if ($policies) {
+									$valid_claims_array = [];
+									foreach ($policies as $policy) {
+										$claims = DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->get();
+										if ($claims) {
+											foreach ($claims as $claim) {
+												$claim_item = DB::table('claim')->where('claim_id', '=', $claim->claim_id)->first();
+												$valid_claims_array[] = $claim_item->claim_value;
+											}
+										}
+									}
+									if (count($valid_claims_array) > 0) {
+										$claim_id = '';
+										// Get default policies and get a match
+										$rs_query1 = DB::table('resource_set')->where('resource_set_id', '=', $resource_set->resource_set_id)->first();
+										$rs_query2 = DB::table('oauth_clients')->where('client_id', '=', $rs_query1->client_id)->first();
+										if ($rs_query2->consent_login_direct == 1) {
+											if ($request->session()->get('login_origin') == 'login_direct' && $claim_id == '') {
+												$rs_query3 = DB::table('claim')->where('claim_value', '=', 'login_direct')->first();
+												$claim_id = $rs_query3->claim_id;
+											}
+										}
+										if ($rs_query2->consent_login_md_nosh == 1) {
+											if ($request->session()->get('login_origin') == 'login_md_nosh' && $claim_id == '') {
+												$rs_query4 = DB::table('claim')->where('claim_value', '=', 'login_md_nosh')->first();
+												$claim_id = $rs_query4->claim_id;
+											}
+										}
+										if ($rs_query2->consent_any_npi == 1) {
+											if ($request->session()->has('npi') && $claim_id == '') {
+												if ($request->session()->get('npi') !== '') {
+													$rs_query5 = DB::table('claim')->where('claim_value', '=', 'any_npi')->first();
+													$claim_id = $rs_query5->claim_id;
+												}
+											}
+										}
+										if ($rs_query2->consent_login_google == 1) {
+											if ($request->session()->get('login_origin') == 'login_google' && $claim_id == '') {
+												$rs_query6 = DB::table('claim')->where('claim_value', '=', 'login_google')->first();
+												$claim_id = $rs_query6->claim_id;
+											}
+										}
+										// Test if email matches
+										if (in_array($request->session()->get('email'), $valid_claims_array) && $claim_id == '') {
+											$claim1 = DB::table('claim')->where('claim_value', '=', $request->session()->get('email'))->first();
+											$claim_id = $claim1->claim_id;
+										}
+										if ($claim_id !== '') {
+											// Claims match, attach permission ticket to claim
+											$data = [
+												'permission_ticket_id' => $query1->permission_ticket_id,
+												'claim_id' => $claim_id
+											];
+											DB::table('claim_to_permission_ticket')->insert($data);
+											// Set last_activity data to claim_to_policy
+											$data1 = [
+												'last_activity' => time()
+											];
+											DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->update($data1);
+											$params['authorization_state'] = 'claims_submitted';
+										} else {
+											// No matching claim, not authorized$params['authorization_state'] = 'not_authorized';
+											$params['authorization_state'] = 'not_authorized';
+										}
 									} else {
-										// No matching claim, not authorized$params['authorization_state'] = 'not_authorized';
+										// No claim to policy, not authorized
 										$params['authorization_state'] = 'not_authorized';
 									}
 								} else {
-									// No claim to policy, not authorized
+									// No policies, not authorized
 									$params['authorization_state'] = 'not_authorized';
 								}
 							} else {

@@ -48,7 +48,7 @@ class Controller extends BaseController
 
 	protected function base64url_encode($data) {
 		return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
-	} 
+	}
 
 	protected function send_mail($template, $data_message, $subject, $to)
 	{
@@ -87,6 +87,124 @@ class Controller extends BaseController
 				->subject($subject);
 		});
 		return "E-mail sent.";
+	}
+
+	protected function group_policy($client_id, $types, $action)
+	{
+		// $types is an array of claims
+		$default_policy_type = [
+			'login_direct',
+			'login_md_nosh',
+			'any_npi',
+			'login_google'
+		];
+		// Create default policy claims if they don't exist
+		foreach ($default_policy_type as $default_claim) {
+			$claims = DB::table('claim')->where('claim_value', '=', $default_claim)->first();
+			if (!$claims) {
+				$claims_data = [
+					'name' => 'Group',
+					'claim_value' => $default_claim
+				];
+				DB::table('claim')->insert($claims_data);
+			}
+		}
+		// Find all existing default polices for the resource server
+		$default_policies_old_array = [];
+		$resource_set_id_array = [];
+		$policies_array = [];
+		$resource_sets = DB::table('resource_set')->where('client_id', '=', $client_id)->get();
+		if ($resource_sets) {
+			foreach ($resource_sets as $resource_set) {
+				$resource_set_id_array[] = $resource_set->resource_set_id;
+				$policies = DB::table('policy')->where('resource_set_id', '=', $resource_set->resource_set_id)->get();
+				if ($policies) {
+					foreach ($policies as $policy) {
+						$policies_array[] = $policy->policy_id;
+						$query1 = DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->get();
+						if ($query1) {
+							foreach ($query1 as $row1) {
+								$query2 = DB::table('claim')->where('claim_id', '=', $row1->claim_id)->first();
+								if ($query2) {
+									if (in_array($query2->claim_value, $default_policy_type)) {
+										$default_policies_old_array[] = $policy->policy_id;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		// Remove all existing default policy scopes to refresh them, delete them all if action is to delete
+		if (count($default_policies_old_array) > 0) {
+			foreach($default_policies_old_array as $old_policy_id) {
+				DB::table('policy_scopes')->where('policy_id', '=', $old_policy_id)->delete();
+				DB::table('claim_to_policy')->where('policy_id', '=', $old_policy_id)->delete();
+				if ($action == 'delete') {
+					DB::table('policy')->where('policy_id', '=', $old_policy_id)->delete();
+				}
+			}
+		}
+		if ($action !== 'delete') {
+			// Identify resource sets without policies and create new policies
+			// Get all resource set scopes to default policies
+			if (count($resource_set_id_array) > 0) {
+				foreach ($resource_set_id_array as $resource_set_id) {
+					$query3 = DB::table('policy')->where('resource_set_id', '=', $resource_set_id)->first();
+					if ($query3) {
+						// Check if there is an existing policy with this resource set and attach all scopes these policies
+						$policies1 = DB::table('policy')->where('resource_set_id', '=', $resource_set_id)->get();
+						if ($policies1) {
+							foreach ($policies1 as $policy1) {
+								if (in_array($policy1->policy_id, $default_policies_old_array)) {
+									foreach ($types as $type) {
+										$query4 = DB::table('claims')->where('claim_value', '=', $type)->first();
+										$data1 = [
+							              'claim_id' => $query4->claim_id,
+							              'policy_id' => $policy1->policy_id
+							            ];
+							            DB::table('claim_to_policy')->insert($data1);
+									}
+									$resource_set_scopes = DB::table('resource_set_scopes')->where('resource_set_id', '=', $resource_set_id)->get();
+									if ($resource_set_scopes) {
+										foreach ($resource_set_scopes as $resource_set_scope) {
+											$data2 = [
+												'policy_id' => $policy1->policy_id,
+												'scope' => $resource_set_scope->scope
+											];
+											DB::table('policy_scopes')->insert($data2);
+										}
+									}
+								}
+							}
+						}
+					} else {
+						// Needs new policy
+						$data3['resource_set_id'] = $resource_set_id;
+						$policy_id = DB::table('policy')->insertGetId($data3);
+						foreach ($types as $type1) {
+							$query5 = DB::table('claims')->where('claim_value', '=', $type1)->first();
+							$data4 = [
+							  'claim_id' => $query5->claim_id,
+							  'policy_id' => $policy_id
+							];
+							DB::table('claim_to_policy')->insert($data4);
+						}
+						$resource_set_scopes1 = DB::table('resource_set_scopes')->where('resource_set_id', '=', $resource_set_id)->get();
+						if ($resource_set_scopes1) {
+							foreach ($resource_set_scopes1 as $resource_set_scope1) {
+								$data5 = [
+									'policy_id' => $policy_id,
+									'scope' => $resource_set_scope1->scope
+								];
+								DB::table('policy_scopes')->insert($data5);
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	/**
