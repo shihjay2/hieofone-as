@@ -670,8 +670,8 @@ class HomeController extends Controller
 			if ($request->input('login_md_nosh') == 'on') {
 				$data['login_md_nosh'] = 1;
 			}
-			if ($request->input('any_api') == 'on') {
-				$data['any_api'] = 1;
+			if ($request->input('any_npi') == 'on') {
+				$data['any_npi'] = 1;
 			}
 			if ($request->input('login_google') == 'on') {
 				$data['login_google'] = 1;
