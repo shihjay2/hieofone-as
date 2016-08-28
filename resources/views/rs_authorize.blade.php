@@ -90,10 +90,10 @@
 						<div class="form-group">
 							<div class="col-md-6 col-md-offset-3">
 								<button type="submit" class="btn btn-success btn-block" name="submit" value="allow">
-									<i class="fa fa-btn fa-check"></i> Allow Registration of {!! $client !!}
+									<i class="fa fa-btn fa-check"></i> Allow Registration
 								</button>
 								<button type="submit" class="btn btn-danger btn-block" name="submit" value="deny">
-									<i class="fa fa-btn fa-times"></i> Cancel Registration of {!! $client !!}
+									<i class="fa fa-btn fa-times"></i> Cancel Registration
 								</button>
 							</div>
 						</div>

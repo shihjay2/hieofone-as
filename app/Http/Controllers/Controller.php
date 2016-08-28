@@ -159,7 +159,7 @@ class Controller extends BaseController
 							foreach ($policies1 as $policy1) {
 								if (in_array($policy1->policy_id, $default_policies_old_array)) {
 									foreach ($types as $type) {
-										$query4 = DB::table('claims')->where('claim_value', '=', $type)->first();
+										$query4 = DB::table('claim')->where('claim_value', '=', $type)->first();
 										$data1 = [
 							              'claim_id' => $query4->claim_id,
 							              'policy_id' => $policy1->policy_id
@@ -184,7 +184,7 @@ class Controller extends BaseController
 						$data3['resource_set_id'] = $resource_set_id;
 						$policy_id = DB::table('policy')->insertGetId($data3);
 						foreach ($types as $type1) {
-							$query5 = DB::table('claims')->where('claim_value', '=', $type1)->first();
+							$query5 = DB::table('claim')->where('claim_value', '=', $type1)->first();
 							$data4 = [
 							  'claim_id' => $query5->claim_id,
 							  'policy_id' => $policy_id
