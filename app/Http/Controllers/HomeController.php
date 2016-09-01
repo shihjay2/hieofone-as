@@ -79,6 +79,12 @@ class HomeController extends Controller
 		$data['content'] = 'No resources registered yet.';
 		$data['message_action'] = $request->session()->get('message_action');
 		$request->session()->forget('message_action');
+		$default_policy_type = [
+			'login_direct',
+			'login_md_nosh',
+			'any_npi',
+			'login_google'
+		];
 		$data['back'] = '<a href="' . URL::to('home') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resource Services</a>';
 		$query = DB::table('resource_set')->where('client_id', '=', $id)->get();
 		if ($query) {
@@ -102,7 +108,17 @@ class HomeController extends Controller
 			$data['content'] = '<a href ="' . URL::to('consents_resource_server') . '" class="btn btn-primary" role="button" style="margin:15px"><span style="margin:20px;">Default Group Policies</span><span class="badge">' . $count1 . ' ' . $count_label1 . '</span></a>';
 			$data['content'] .= '<div class="list-group">';
 			foreach ($query as $resource) {
-				$count = DB::table("policy")->where('resource_set_id', '=', $id)->count();
+				$count = 0;
+				$query1 = DB::table("policy")->where('resource_set_id', '=', $id)->get();
+				foreach ($query1 as $policy) {
+					$query2 = DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->first();
+					if ($query2) {
+						$query3 = DB::table('claim')->where('claim_id', '=', $query2->claim_id)->first();
+						if (!in_array($query3->claim_value, $default_policy_type)) {
+							$count++;
+						}
+					}
+				}
 				$count_label = 'individual policies';
 				if ($count == 1) {
 					$count_label = 'individual policy';
