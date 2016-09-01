@@ -852,14 +852,17 @@ class OauthController extends Controller
 					]);
 					if ($request->input('username') == '') {
 						$username = $this->gen_uuid();
+						$password = sha1($username);
 					} else {
 						$username = $request->input('username');
+						$password = sha1($request->input('password'));
 					}
 					// Add user
 					$data = [
 						'username' => $username,
 						'first_name' => $query->first_name,
 						'last_name' => $query->last_name,
+						'password' => $password,
 						'email' => $query->email
 					];
 					DB::table('oauth_users')->insert($data);
