@@ -543,7 +543,7 @@ class OauthController extends Controller
 		} else {
 			$client = $this->mdnosh_register_client();
 		}
-		$open_id_url = 'https://noshchartingsystem.com/oidc';
+		$open_id_url = 'http://noshchartingsystem.com/oidc';
 		$url = route('mdnosh');
 		$oidc = new OpenIDConnectClient($open_id_url, $client['client_id'], $client['client_secret']);
 		$oidc->setRedirectURL($url);
@@ -573,7 +573,7 @@ class OauthController extends Controller
 		$user = DB::table('owner')->where('id', '=', '1')->first();
 		$dob = date('m/d/Y', strtotime($user->DOB));
 		$client_name = 'HIE of One Authorization Server for ' . $user->firstname . ' ' . $user->lastname . ' (DOB: ' . $dob . ')';
-		$open_id_url = 'https://noshchartingsystem.com/oidc';
+		$open_id_url = 'http://noshchartingsystem.com/oidc';
 		$url = route('mdnosh');
 		$oidc = new OpenIDConnectClient($open_id_url);
 		$oidc->setClientName($client_name);
