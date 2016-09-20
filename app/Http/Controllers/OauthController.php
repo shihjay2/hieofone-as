@@ -19,6 +19,7 @@ use Socialite;
 use URL;
 use phpseclib\Crypt\RSA;
 use SimpleXMLElement;
+use GuzzleHttp\Client;
 
 class OauthController extends Controller
 {
@@ -887,6 +888,46 @@ class OauthController extends Controller
 		} else {
 			$error = 'Your invitation code is invalid';
 			return $error;
+		}
+	}
+
+	public function reset_demo(Request $request)
+	{
+		if (route('home') == 'https://shihjay.xyz/home') {
+			if ($request->isMethod('post')) {
+				$this->validate($request, [
+					'email' => 'required'
+				]);
+				$client = new Google_Client();
+				putenv("GOOGLE_APPLICATION_CREDENTIALS=" . __DIR__ . "/../../../.google.json");
+				getenv('GOOGLE_APPLICATION_CREDENTIALS');
+				$client->useApplicationDefaultCredentials();
+				$client->setApplicationName("Sheets API");
+				$client->setScopes(['https://www.googleapis.com/auth/drive','https://spreadsheets.google.com/feeds']);
+				$client->setAuthConfig(["type" => "service_account", "client_email" => "nosh-chartingsystem@appspot.gserviceaccount.com"]);
+				$fileId = '1CTTYbiMvR3EdS46-uWXDuRlm__JkUOQdRBCFWCD0QlA';
+				$tokenArray = $client->fetchAccessTokenWithAssertion();
+				$accessToken = $tokenArray["access_token"];
+				$url = "https://spreadsheets.google.com/feeds/list/" . $fileId . "/od6/private/full";
+				$method = 'POST';
+				$headers = ["Authorization" => "Bearer $accessToken", 'Content-Type' => 'application/atom+xml'];
+				$postBody = '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended"><gsx:email>' . $request->input('email') . '</gsx:email></entry>';
+				$httpClient = new GuzzleHttp\Client(['headers' => $headers]);
+				$resp = $httpClient->request($method, $url, ['body' => $postBody]);
+				// $body = $resp->getBody()->getContents();
+				// $code = $resp->getStatusCode();
+				// $reason = $resp->getReasonPhrase();
+				// echo "$code : $reason\n\n";
+				// echo "$body\n";
+				return redirect('https://shihjay.xyz/nosh/reset_demo');
+			} else {
+				$data = [
+					'noheader' => true
+				];
+				return view('reset_demo', $data);
+			}
+		} else {
+			return redirect()->route('welcome');
 		}
 	}
 
