@@ -19,7 +19,7 @@ use Socialite;
 use URL;
 use phpseclib\Crypt\RSA;
 use SimpleXMLElement;
-use GuzzleHttp\Client;
+use GuzzleHttp;
 
 class OauthController extends Controller
 {
@@ -904,21 +904,23 @@ class OauthController extends Controller
 				$client->useApplicationDefaultCredentials();
 				$client->setApplicationName("Sheets API");
 				$client->setScopes(['https://www.googleapis.com/auth/drive','https://spreadsheets.google.com/feeds']);
-				$client->setAuthConfig(["type" => "service_account", "client_email" => "nosh-chartingsystem@appspot.gserviceaccount.com"]);
 				$fileId = '1CTTYbiMvR3EdS46-uWXDuRlm__JkUOQdRBCFWCD0QlA';
 				$tokenArray = $client->fetchAccessTokenWithAssertion();
 				$accessToken = $tokenArray["access_token"];
-				$url = "https://spreadsheets.google.com/feeds/list/" . $fileId . "/od6/private/full";
+				$url = "https://sheets.googleapis.com/v4/spreadsheets/" . $fileId . "/values/Sheet1!A1:B1:append?valueInputOption=USER_ENTERED";
 				$method = 'POST';
 				$headers = ["Authorization" => "Bearer $accessToken", 'Content-Type' => 'application/atom+xml'];
-				$postBody = '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended"><gsx:email>' . $request->input('email') . '</gsx:email></entry>';
+				$value[] = $request->input('email');
+				$values[] = $value;
+				$post = [
+					'range' => 'Sheet1!A1:B1',
+					'majorDimension' => 'ROWS',
+					'values' => $values,
+				];
+				$postBody = json_encode($post);
+				//$postBody = '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended"><gsx:email>' . $request->input('email') . '</gsx:email></entry>';
 				$httpClient = new GuzzleHttp\Client(['headers' => $headers]);
 				$resp = $httpClient->request($method, $url, ['body' => $postBody]);
-				// $body = $resp->getBody()->getContents();
-				// $code = $resp->getStatusCode();
-				// $reason = $resp->getReasonPhrase();
-				// echo "$code : $reason\n\n";
-				// echo "$body\n";
 				return redirect('https://shihjay.xyz/nosh/reset_demo');
 			} else {
 				$data = [
