@@ -589,8 +589,8 @@ class HomeController extends Controller
 		if ($request->isMethod('post')) {
 			$this->validate($request, [
 				'old_password' => 'required',
-				'password' => 'required|min:7',
-				'confirm_password' => 'required|min:7|same:password',
+				'password' => 'required|min:4',
+				'confirm_password' => 'required|min:4|same:password',
 			]);
 			$query = DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->first();
 			if ($query->password == sha1($request->input('old_password'))) {

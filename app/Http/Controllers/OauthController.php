@@ -78,8 +78,8 @@ class OauthController extends Controller
 				$this->validate($request, [
 					'username' => 'required',
 					'email' => 'required',
-					'password' => 'required|min:7',
-					'confirm_password' => 'required|min:7|same:password',
+					'password' => 'required|min:4',
+					'confirm_password' => 'required|min:4|same:password',
 					'first_name' => 'required',
 					'last_name' => 'required',
 					'date_of_birth' => 'required',

@@ -26,7 +26,7 @@
 							<label for="username" class="col-md-4 control-label">Username </label>
 
 							<div class="col-md-6">
-								<input id="username" class="form-control" name="username" value="{{ old('username') }}">
+								<input id="username" class="form-control" name="username" value="{{ old('username') }}" data-toggle="tooltip" title="Demo Username: AlicePatient">
 
 								@if ($errors->has('username'))
 									<span class="help-block">
@@ -40,7 +40,7 @@
 							<label for="password" class="col-md-4 control-label">Password</label>
 
 							<div class="col-md-6">
-								<input id="password" type="password" class="form-control" name="password">
+								<input id="password" type="password" class="form-control" name="password" data-toggle="tooltip" title="Demo Password: demo">
 
 								@if ($errors->has('password'))
 									<span class="help-block">
@@ -100,6 +100,7 @@
 <script type="text/javascript">
 	$(document).ready(function() {
 		$("#username").focus();
+		$('[data-toggle="tooltip"]').tooltip();
 	});
 </script>
 @endsection
