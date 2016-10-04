@@ -920,14 +920,14 @@ class OauthController extends Controller
                 //$postBody = '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended"><gsx:email>' . $request->input('email') . '</gsx:email></entry>';
                 $httpClient = new GuzzleHttp\Client(['headers' => $headers]);
                 $resp = $httpClient->request($method, $url, ['body' => $postBody]);
-                Storage::put(__DIR__ . "/../../../.timer", time() + 600);
+                File::put(__DIR__ . "/../../../.timer", time() + 600);
                 return redirect('https://shihjay.xyz/nosh/reset_demo');
             } else {
                 $data = [
                     'noheader' => true,
                     'timer' => false
                 ];
-                $time = Storage::get(__DIR__ . "/../../../.timer");
+                $time = File::get(__DIR__ . "/../../../.timer");
                 if (time() > $time) {
                     $data['timer'] = false;
                 }
