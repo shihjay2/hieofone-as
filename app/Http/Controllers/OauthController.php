@@ -286,7 +286,7 @@ class OauthController extends Controller
                     $data['name'] = $query->firstname . ' ' . $query->lastname;
                     $data['noheader'] = true;
                     if ($request->session()->get('oauth_response_type') == 'code') {
-                        $data['nooauth'] = true;
+                        $data['nooauth'] = false;
                     } else {
                         $request->session()->forget('oauth_response_type');
                         $request->session()->forget('oauth_redirect_uri');
