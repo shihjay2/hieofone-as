@@ -11,37 +11,37 @@
 |
 */
 
-App::singleton('oauth2', function() {
-	$storage = new OAuth2\Storage\Pdo(DB::connection()->getPdo());
-	// specify your audience (typically, the URI of the oauth server)
-	// $issuer = env('URI', false);
-	$issuer = URL::to('/');
-	$audience = 'https://' . $issuer;
-	$config['use_openid_connect'] = true;
-	$config['issuer'] = $issuer;
-	$config['allow_implicit'] = true;
-	$config['use_jwt_access_tokens'] = true;
-	$config['refresh_token_lifetime'] = 0;
-	$refresh_config['always_issue_new_refresh_token'] = false;
-	$refresh_config['unset_refresh_token_after_use'] = false;
+App::singleton('oauth2', function () {
+    $storage = new OAuth2\Storage\Pdo(DB::connection()->getPdo());
+    // specify your audience (typically, the URI of the oauth server)
+    // $issuer = env('URI', false);
+    $issuer = URL::to('/');
+    $audience = 'https://' . $issuer;
+    $config['use_openid_connect'] = true;
+    $config['issuer'] = $issuer;
+    $config['allow_implicit'] = true;
+    $config['use_jwt_access_tokens'] = true;
+    $config['refresh_token_lifetime'] = 0;
+    $refresh_config['always_issue_new_refresh_token'] = false;
+    $refresh_config['unset_refresh_token_after_use'] = false;
 
-	// create server
-	$server = new OAuth2\Server($storage, $config);
-	$publicKey  = File::get(__DIR__."/../../.pubkey.pem");
-	$privateKey = File::get(__DIR__."/../../.privkey.pem");
-	// create storage for OpenID Connect
-	$keyStorage = new OAuth2\Storage\Memory(array('keys' => array(
-		'public_key'  => $publicKey,
-		'private_key' => $privateKey
-	)));
-	$server->addStorage($keyStorage, 'public_key');
-	// set grant types
-	$server->addGrantType(new OAuth2\GrantType\ClientCredentials($storage));
-	$server->addGrantType(new OAuth2\GrantType\UserCredentials($storage));
-	$server->addGrantType(new OAuth2\OpenID\GrantType\AuthorizationCode($storage));
-	$server->addGrantType(new OAuth2\GrantType\RefreshToken($storage, $refresh_config));
-	$server->addGrantType(new OAuth2\GrantType\JwtBearer($storage, $audience));
-	return $server;
+    // create server
+    $server = new OAuth2\Server($storage, $config);
+    $publicKey  = File::get(__DIR__."/../../.pubkey.pem");
+    $privateKey = File::get(__DIR__."/../../.privkey.pem");
+    // create storage for OpenID Connect
+    $keyStorage = new OAuth2\Storage\Memory(array('keys' => array(
+        'public_key'  => $publicKey,
+        'private_key' => $privateKey
+    )));
+    $server->addStorage($keyStorage, 'public_key');
+    // set grant types
+    $server->addGrantType(new OAuth2\GrantType\ClientCredentials($storage));
+    $server->addGrantType(new OAuth2\GrantType\UserCredentials($storage));
+    $server->addGrantType(new OAuth2\OpenID\GrantType\AuthorizationCode($storage));
+    $server->addGrantType(new OAuth2\GrantType\RefreshToken($storage, $refresh_config));
+    $server->addGrantType(new OAuth2\GrantType\JwtBearer($storage, $audience));
+    return $server;
 });
 
 // Core pages
@@ -78,11 +78,11 @@ Route::get('default_policies', array('as' => 'default_policies', 'uses' => 'Home
 Route::post('change_policy', array('as' => 'change_policy', 'uses' => 'HomeController@change_policy'));
 Route::any('reset_demo', array('as' => 'reset_demo', 'uses' => 'OauthController@reset_demo'));
 
-Route::post('token', array('as' => 'token', function() {
-	$bridgedRequest = OAuth2\HttpFoundationBridge\Request::createFromRequest(Request::instance());
-	$bridgedResponse = new OAuth2\HttpFoundationBridge\Response();
-	$bridgedResponse = App::make('oauth2')->handleTokenRequest($bridgedRequest, $bridgedResponse);
-	return $bridgedResponse;
+Route::post('token', array('as' => 'token', function () {
+    $bridgedRequest = OAuth2\HttpFoundationBridge\Request::createFromRequest(Request::instance());
+    $bridgedResponse = new OAuth2\HttpFoundationBridge\Response();
+    $bridgedResponse = App::make('oauth2')->handleTokenRequest($bridgedRequest, $bridgedResponse);
+    return $bridgedResponse;
 }));
 
 Route::get('authorize', array('as' => 'authorize', 'uses' => 'OauthController@oauth_authorize'));
@@ -98,24 +98,24 @@ Route::post('register', array('as' => 'register', 'uses' => 'UmaController@regis
 Route::get('rqp_claims', array('as' => 'rqp_claims', 'uses' => 'UmaController@rqp_claims'));
 
 // Following routes need token authentiation
-Route::group(['middleware' => 'token'], function() {
-	// Resource set
-	Route::resource('resource_set', 'ResourceSetController');
+Route::group(['middleware' => 'token'], function () {
+    // Resource set
+    Route::resource('resource_set', 'ResourceSetController');
 
-	// Policy
-	Route::resource('policy', 'PolicyController');
+    // Policy
+    Route::resource('policy', 'PolicyController');
 
-	// Permission request
-	Route::post('permission', array('as' => 'permission', 'uses' => 'UmaController@permission'));
+    // Permission request
+    Route::post('permission', array('as' => 'permission', 'uses' => 'UmaController@permission'));
 
-	// Requesting party token request
-	Route::post('authz_request', array('as' => 'authz_request', 'uses' => 'UmaController@authz_request'));
+    // Requesting party token request
+    Route::post('authz_request', array('as' => 'authz_request', 'uses' => 'UmaController@authz_request'));
 
-	// introspection
-	Route::post('introspect', array('as'=> 'introspect', 'uses' => 'OauthController@introspect'));
+    // introspection
+    Route::post('introspect', array('as'=> 'introspect', 'uses' => 'OauthController@introspect'));
 
-	// Revocation
-	Route::post('revoke', array('as' => 'revoke', 'uses' => 'OauthController@revoke'));
+    // Revocation
+    Route::post('revoke', array('as' => 'revoke', 'uses' => 'OauthController@revoke'));
 });
 
 // OpenID Connect relying party routes
@@ -127,72 +127,72 @@ Route::get('mdnosh', array('as' => 'mdnosh', 'uses' => 'OauthController@mdnosh')
 Route::get('installgoogle', array('as' => 'installgoogle', 'uses' => 'OauthController@installgoogle'));
 
 // Configuration endpoints
-Route::get('.well-known/openid-configuration', array('as' => 'openid-configuration', function() {
-	$scopes = DB::table('oauth_scopes')->get();
-	$config = [
-		'issuer' => URL::to('/'),
-		'grant_types_supported' => [
-			'authorization_code',
-			'client_credentials',
-			'user_credentials',
-			'implicit',
-			'urn:ietf:params:oauth:grant-type:jwt-bearer',
-			'urn:ietf:params:oauth:grant_type:redelegate'
-		],
-		'registration_endpoint' => URL::to('register'),
-		'token_endpoint' => URL::to('token'),
-		'authorization_endpoint' => URL::to('authorize'),
-		'introspection_endpoint' => URL::to('introspection'),
-		'userinfo_endpoint' => URL::to('userinfo'),
-		'scopes_supported' => $scopes,
-		'jwks_uri' => URL::to('jwks_uri'),
-		'revocation_endpoint' => URL::to('revoke')
-	];
-	return $config;
+Route::get('.well-known/openid-configuration', array('as' => 'openid-configuration', function () {
+    $scopes = DB::table('oauth_scopes')->get();
+    $config = [
+        'issuer' => URL::to('/'),
+        'grant_types_supported' => [
+            'authorization_code',
+            'client_credentials',
+            'user_credentials',
+            'implicit',
+            'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'urn:ietf:params:oauth:grant_type:redelegate'
+        ],
+        'registration_endpoint' => URL::to('register'),
+        'token_endpoint' => URL::to('token'),
+        'authorization_endpoint' => URL::to('authorize'),
+        'introspection_endpoint' => URL::to('introspection'),
+        'userinfo_endpoint' => URL::to('userinfo'),
+        'scopes_supported' => $scopes,
+        'jwks_uri' => URL::to('jwks_uri'),
+        'revocation_endpoint' => URL::to('revoke')
+    ];
+    return $config;
 }));
 
-Route::get('.well-known/uma-configuration', function() {
-	$config = [
-		'issuer' => URL::to('/'),
-		'pat_profiles_supported' => [
-			'bearer'
-		],
-		'aat_profiles_supported' => [
-			'bearer'
-		],
-		'rpt_profiles_supported' => [
-			'bearer'
-		],
-		'pat_grant_types_supported' => [
-			'authorization_code',
-			'client_credentials',
-			'user_credentials',
-			'implicit',
-			'urn:ietf:params:oauth:grant-type:jwt-bearer',
-			'urn:ietf:params:oauth:grant_type:redelegate'
-		],
-		'aat_grant_types_supported' => [
-			'authorization_code',
-			'client_credentials',
-			'user_credentials',
-			'implicit',
-			'urn:ietf:params:oauth:grant-type:jwt-bearer',
-			'urn:ietf:params:oauth:grant_type:redelegate'
-		],
-		// 'dynamic_client_endpoint' => URL::to('register'),
-		'registration_endpoint' => URL::to('register'),
-		'token_endpoint' => URL::to('token'),
-		'authorization_endpoint' => URL::to('authorize'),
-		'requesting_party_claims_endpoint' => URL::to('rqp_claims'),
-		'resource_set_registration_endpoint' => URL::to('resource_set'),
-		'introspection_endpoint' => URL::to('introspect'),
-		'permission_registration_endpoint' => URL::to('permission'),
-		'rpt_endpoint' => URL::to('authz_request'),
-		'userinfo_endpoint' => URL::to('userinfo'),
-		'policy_endpoint' => URL::to('policy'),
-		'jwks_uri' => URL::to('jwks_uri')
-	];
-	return $config;
+Route::get('.well-known/uma-configuration', function () {
+    $config = [
+        'issuer' => URL::to('/'),
+        'pat_profiles_supported' => [
+            'bearer'
+        ],
+        'aat_profiles_supported' => [
+            'bearer'
+        ],
+        'rpt_profiles_supported' => [
+            'bearer'
+        ],
+        'pat_grant_types_supported' => [
+            'authorization_code',
+            'client_credentials',
+            'user_credentials',
+            'implicit',
+            'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'urn:ietf:params:oauth:grant_type:redelegate'
+        ],
+        'aat_grant_types_supported' => [
+            'authorization_code',
+            'client_credentials',
+            'user_credentials',
+            'implicit',
+            'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'urn:ietf:params:oauth:grant_type:redelegate'
+        ],
+        // 'dynamic_client_endpoint' => URL::to('register'),
+        'registration_endpoint' => URL::to('register'),
+        'token_endpoint' => URL::to('token'),
+        'authorization_endpoint' => URL::to('authorize'),
+        'requesting_party_claims_endpoint' => URL::to('rqp_claims'),
+        'resource_set_registration_endpoint' => URL::to('resource_set'),
+        'introspection_endpoint' => URL::to('introspect'),
+        'permission_registration_endpoint' => URL::to('permission'),
+        'rpt_endpoint' => URL::to('authz_request'),
+        'userinfo_endpoint' => URL::to('userinfo'),
+        'policy_endpoint' => URL::to('policy'),
+        'jwks_uri' => URL::to('jwks_uri')
+    ];
+    return $config;
 });
 
 // Webfinger
@@ -205,16 +205,16 @@ Route::get('update_system', array('as' => 'update_system', 'uses' => 'OauthContr
 Route::any('test1', array('as' => 'test1', 'uses' => 'OauthController@test1'));
 
 Route::get('/', array('as' => 'welcome', function () {
-	$query = DB::table('owner')->first();
-	if ($query) {
-		if (Auth::check()) {
-			return redirect()->route('home');
-		}
-		$data = [
-			'name' => $query->firstname . ' ' . $query->lastname
-		];
-		return view('welcome', $data);
-	} else {
-		return redirect()->route('install');
-	}
+    $query = DB::table('owner')->first();
+    if ($query) {
+        if (Auth::check()) {
+            return redirect()->route('home');
+        }
+        $data = [
+            'name' => $query->firstname . ' ' . $query->lastname
+        ];
+        return view('welcome', $data);
+    } else {
+        return redirect()->route('install');
+    }
 }));
