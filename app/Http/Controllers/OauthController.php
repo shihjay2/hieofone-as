@@ -925,7 +925,7 @@ class OauthController extends Controller
             } else {
                 $data = [
                     'noheader' => true,
-                    'timer' => false
+                    'timer' => true
                 ];
                 $time = File::get(__DIR__ . "/../../../.timer");
                 if (time() > $time) {

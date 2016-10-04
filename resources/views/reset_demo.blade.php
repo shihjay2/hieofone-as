@@ -10,7 +10,7 @@
 					<div style="text-align: center;">
 					  <i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i>
 					</div>
-					@if ($errors->has('email'))
+					@if ($timer == true)
 						<span class="help-block">
 							<strong>Retry in about 10 minutes as the demo is being used by another person right now!</strong>
 						</span>
