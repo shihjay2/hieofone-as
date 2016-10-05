@@ -77,6 +77,11 @@ class UmaController extends Controller
         } else {
             $data['allow_introspection'] = 0;
         }
+        $owner = DB::table('owner')->first();
+        // Automatic client authorization if default policies set
+        if ($owner->login_direct == 1 || $owner->login_md_nosh == 1 || $owner->any_npi == 1 || $owner->login_google == 1) {
+            $data['authorized'] = 1;
+        }
         DB::table('oauth_clients')->insert($data);
         $response = [
             'client_id' => $clientId,
@@ -93,7 +98,6 @@ class UmaController extends Controller
             $data1['message_data'] .= 'Go to ' . URL::to('authorize_client') . ' to review and authorize.';
             $title = 'New Client Registered';
         }
-        $owner = DB::table('owner')->first();
         $to = $owner->email;
         $this->send_mail('auth.emails.generic', $data1, $title, $to);
         if ($owner->mobile != '') {
