@@ -72,15 +72,17 @@ class UmaController extends Controller
             'authorized' => 0,
             'claims_redirect_uris' => $claims_redirect_uris
         ];
-        if ($uma_protection == true) {
-            $data['allow_introspection'] = 1;
-        } else {
-            $data['allow_introspection'] = 0;
-        }
-        $owner = DB::table('owner')->first();
         // Automatic client authorization if default policies set
+        $owner = DB::table('owner')->first();
         if ($owner->login_direct == 1 || $owner->login_md_nosh == 1 || $owner->any_npi == 1 || $owner->login_google == 1) {
             $data['authorized'] = 1;
+        }
+        if ($uma_protection == true) {
+            $data['allow_introspection'] = 1;
+            // Make sure authorization owner knows that a resource server is being registered and needs authorization
+            $data['authorized'] = 0;
+        } else {
+            $data['allow_introspection'] = 0;
         }
         DB::table('oauth_clients')->insert($data);
         $response = [
