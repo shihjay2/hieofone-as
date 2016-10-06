@@ -921,6 +921,8 @@ class OauthController extends Controller
                 $httpClient = new GuzzleHttp\Client(['headers' => $headers]);
                 $resp = $httpClient->request($method, $url, ['body' => $postBody]);
                 File::put(__DIR__ . "/../../../.timer", time() + 600);
+                $request->session()->flush();
+                Auth::logout();
                 return redirect('https://shihjay.xyz/nosh/reset_demo');
             } else {
                 $data = [
