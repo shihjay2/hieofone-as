@@ -208,7 +208,7 @@ class OpenIDConnectClient
 			}
 
 			// Do an OpenID Connect session check
-			if ($_REQUEST['state'] != $_SESSION['openid_connect_state']) {
+			if ($_REQUEST['state'] != $_SESSION['openid_connect_state1']) {
 				throw new OpenIDConnectClientException("Unable to determine state");
 			}
 			if (!property_exists($token_json, 'id_token')) {
@@ -398,7 +398,7 @@ class OpenIDConnectClient
 
 		// State essentially acts as a session key for OIDC
 		$state = $this->generateRandString();
-		$_SESSION['openid_connect_state'] = $state;
+		$_SESSION['openid_connect_state1'] = $state;
 		$auth_params = array_merge($this->authParams, array(
 			'response_type' => $response_type,
 			'redirect_uri' => $this->getRedirectURL(),
@@ -931,7 +931,7 @@ class OpenIDConnectClient
 
 		// State essentially acts as a session key for OIDC
 		$state = $this->generateRandString();
-		$_SESSION['openid_connect_state'] = $state;
+		$_SESSION['openid_connect_state1'] = $state;
 
 		if ($type == 'user1') {
 			$auth_params = array_merge($this->authParams, array(
