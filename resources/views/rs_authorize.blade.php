@@ -47,7 +47,7 @@
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
-									<label><input type="checkbox" name="consent_any_npi" {!! $any_npi !!}> Anyone that has a National Provider Identifier (NPI) sees these Resources</label>
+									<label><input type="checkbox" name="consent_any_npi" {!! $any_npi !!}> Anyone that has a Google ID and National Provider Identifier (NPI) sees these Resources"</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#any_npi_detail" style="margin-left:20px">Details</button>
 								</div>
 								<div id="any_npi_detail" class="collapse">
