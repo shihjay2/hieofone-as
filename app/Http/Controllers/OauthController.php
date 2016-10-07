@@ -607,7 +607,7 @@ class OauthController extends Controller
             if ($authorized) {
                 $request->session()->put('is_authorized', 'true');
                 $owner_query = DB::table('owner')->first();
-                if ($owner->login_md_nosh == 1) {
+                if ($owner_query->login_md_nosh == 1) {
                     // Add user if not added already
                     $sub_query = DB::table('oauth_users')->where('sub', '=', $sub)->first();
                     if (!$sub_query) {
