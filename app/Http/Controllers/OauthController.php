@@ -527,6 +527,9 @@ class OauthController extends Controller
                         DB::table('users')->insert($user_data1);
                     }
                     $request->session()->put('sub', $sub);
+                    $request->session()->save();
+                    $user1 = DB::table('users')->where('name', '=', $sub)->first();
+                    Auth::loginUsingId($user1->id);
                     return redirect()->route('authorize');
                 } else {
                     return redirect()->route('login')->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
@@ -628,6 +631,9 @@ class OauthController extends Controller
                         DB::table('users')->insert($user_data1);
                     }
                     $request->session()->put('sub', $sub);
+                    $request->session()->save();
+                    $user1 = DB::table('users')->where('name', '=', $sub)->first();
+                    Auth::loginUsingId($user1->id);
                     return redirect()->route('authorize');
                 } else {
                     return redirect()->route('login')->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
