@@ -189,6 +189,7 @@ class OauthController extends Controller
     public function login(Request $request)
     {
         if (Auth::guest()) {
+            $owner_query = DB::table('owner')->first();
             if ($request->isMethod('post')) {
                 $this->validate($request, [
                     'username' => 'required',
@@ -224,7 +225,6 @@ class OauthController extends Controller
                     ];
                     DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->update($jwt_data);
                     // Access token granted, authorize login!
-                    $owner_query = DB::table('owner')->first();
                     $oauth_user = DB::table('oauth_users')->where('username', '=', $request->username)->first();
                     $request->session()->put('access_token',  $bridgedResponse['access_token']);
                     $request->session()->put('client_id', $client_id);
@@ -286,7 +286,10 @@ class OauthController extends Controller
                     $data['name'] = $query->firstname . ' ' . $query->lastname;
                     $data['noheader'] = true;
                     if ($request->session()->get('oauth_response_type') == 'code') {
-                        $data['nooauth'] = false;
+                        // Check if owner has set default policies and show other OIDC IDP's to relay information with HIE of One AS as relaying IDP
+                        if ($owner_query->login_md_nosh == 0 && $owner_query->any_npi == 0 && $owner_query->login_google == 0) {
+                            $data['nooauth'] = true;
+                        }
                     } else {
                         $request->session()->forget('oauth_response_type');
                         $request->session()->forget('oauth_redirect_uri');
@@ -496,6 +499,41 @@ class OauthController extends Controller
         if ($request->session()->has('uma_permission_ticket') && $request->session()->has('uma_redirect_uri') && $request->session()->has('uma_client_id') && $request->session()->has('email')) {
             // If generated from rqp_claims endpoint, do this
             return redirect()->route('rqp_claims');
+        } elseif ($request->session()->get('oauth_response_type') == 'code') {
+            $client_id = $request->session()->get('oauth_client_id');
+            $authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
+            if ($authorized) {
+                $request->session()->put('is_authorized', 'true');
+                $owner_query = DB::table('owner')->first();
+                if ($owner_query->any_npi == 1 || $owner_query->login_google == 1) {
+                    // Add user if not added already
+                    $sub = $user->getId();
+                    $sub_query = DB::table('oauth_users')->where('sub', '=', $sub)->first();
+                    if (!$sub_query) {
+                        $name_arr = explode(' ', $user->getName());
+                        $user_data = [
+                            'username' => $sub,
+                            'password' => sha1($sub),
+                            'first_name' => $name_arr[0],
+                            'last_name' => $name_arr[1],
+                            'sub' => $sub,
+                            'email' => $user->getEmail()
+                        ];
+                        DB::table('oauth_users')->insert($user_data);
+                        $user_data1 = [
+                            'name' => $sub,
+                            'email' => $user->getEmail()
+                        ];
+                        DB::table('users')->insert($user_data1);
+                    }
+                    $request->session()->put('sub', $sub);
+                    return redirect()->route('authorize');
+                } else {
+                    return redirect()->route('login')->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
+                }
+            } else {
+                return redirect()->route('login')->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
+            }
         } else {
             // Login user
             $this->oauth_authenticate($user->getEmail());
@@ -551,10 +589,11 @@ class OauthController extends Controller
         $oidc->addScope('email');
         $oidc->addScope('profile');
         $oidc->authenticate();
-        // $firstname = $oidc->requestUserInfo('given_name');
-        // $lastname = $oidc->requestUserInfo('family_name');
-        // $email = $oidc->requestUserInfo('email');
+        $firstname = $oidc->requestUserInfo('given_name');
+        $lastname = $oidc->requestUserInfo('family_name');
+        $email = $oidc->requestUserInfo('email');
         $npi = $oidc->requestUserInfo('npi');
+        $sub = $oidc->requestUserInfo('sub');
         $access_token = $oidc->getAccessToken();
         $request->session()->put('email',  $oidc->requestUserInfo('email'));
         $request->session()->put('login_origin', 'login_md_nosh');
@@ -562,6 +601,40 @@ class OauthController extends Controller
         if ($request->session()->has('uma_permission_ticket') && $request->session()->has('uma_redirect_uri') && $request->session()->has('uma_client_id') && $request->session()->has('email')) {
             // If generated from rqp_claims endpoint, do this
             return redirect()->route('rqp_claims');
+        } elseif ($request->session()->get('oauth_response_type') == 'code') {
+            $client_id = $request->session()->get('oauth_client_id');
+            $authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
+            if ($authorized) {
+                $request->session()->put('is_authorized', 'true');
+                $owner_query = DB::table('owner')->first();
+                if ($owner->login_md_nosh == 1) {
+                    // Add user if not added already
+                    $sub_query = DB::table('oauth_users')->where('sub', '=', $sub)->first();
+                    if (!$sub_query) {
+                        $user_data = [
+                            'username' => $sub,
+                            'password' => sha1($sub),
+                            'first_name' => $firstname,
+                            'last_name' => $lastname,
+                            'sub' => $sub,
+                            'email' => $email,
+                            'npi' => $npi
+                        ];
+                        DB::table('oauth_users')->insert($user_data);
+                        $user_data1 = [
+                            'name' => $sub,
+                            'email' => $email
+                        ];
+                        DB::table('users')->insert($user_data1);
+                    }
+                    $request->session()->put('sub', $sub);
+                    return redirect()->route('authorize');
+                } else {
+                    return redirect()->route('login')->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
+                }
+            } else {
+                return redirect()->route('login')->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
+            }
         } else {
             $this->oauth_authenticate($oidc->requestUserInfo('email'));
             return redirect()->route('home');
