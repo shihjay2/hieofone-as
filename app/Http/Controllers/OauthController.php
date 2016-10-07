@@ -322,6 +322,13 @@ class OauthController extends Controller
         return redirect()->route('welcome');
     }
 
+    public function remote_logout(Request $request)
+    {
+        $request->session()->flush();
+        Auth::logout();
+        return redirect($request->input('url'));
+    }
+
     public function oauth_login(Request $request)
     {
         $code = $request->input('code');
