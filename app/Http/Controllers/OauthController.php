@@ -326,7 +326,7 @@ class OauthController extends Controller
     {
         $request->session()->flush();
         Auth::logout();
-        return redirect($request->input('url'));
+        return redirect($request->input('redirect_uri'));
     }
 
     public function oauth_login(Request $request)
