@@ -319,6 +319,16 @@ class OauthController extends Controller
     {
         $request->session()->flush();
         Auth::logout();
+        // Ensure pNOSH logs out too for safety
+        $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
+        if ($pnosh) {
+            $redirect_uri = URL::to('/') . '/nosh';
+            $params = [
+    			'redirect_uri' => URL::to('welcome')
+    		];
+    		$redirect_uri .= '/remote_logout?' . http_build_query($params, null, '&');
+            return redirect($redirect_uri);
+        }
         return redirect()->route('welcome');
     }
 
