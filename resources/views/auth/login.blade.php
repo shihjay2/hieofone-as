@@ -73,7 +73,7 @@
 						<div class="form-group">
 							<div class="col-md-6 col-md-offset-3">
 								<a class="btn btn-primary btn-block" href="{{ url('/mdnosh') }}">
-									<i class="fa fa-btn fa-openid"></i> Login with mdNOSH Gateway
+									<i class="fa fa-btn fa-openid"></i> Login with mdNOSH
 								</a>
 								@if (isset($google))
 									<a class="btn btn-primary btn-block" href="{{ url('/google') }}">

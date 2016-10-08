@@ -36,11 +36,11 @@
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
-									<label><input type="checkbox" name="consent_login_md_nosh" {!! $login_md_nosh !!}> Anyone signed in via mdNOSH Gateway sees these Resources</label>
+									<label><input type="checkbox" name="consent_login_md_nosh" {!! $login_md_nosh !!}> Anyone signed in via mdNOSH sees these Resources</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#login_md_nosh_detail" style="margin-left:20px">Details</button>
 								</div>
 								<div id="login_md_nosh_detail" class="collapse">
-									<p>mdNOSH Gateway is single sign-on solution for healthcare providers.  This allows the providers to access many pNOSH patient centric health records without having to remember different usernames and passwords.</p>
+									<p>mdNOSH is single sign-on solution for healthcare providers.  This allows the providers to access many pNOSH patient centric health records without having to remember different usernames and passwords.</p>
 								</div>
 							</div>
 						</div>
