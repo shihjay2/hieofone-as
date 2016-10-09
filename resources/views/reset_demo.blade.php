@@ -18,6 +18,10 @@
 						<form class="form-horizontal" role="form" method="POST" action="{{ url('/reset_demo') }}">
 							{{ csrf_field() }}
 
+							<div class="alert alert-warning">
+								<strong>CAUTION!</strong> The open source code associated with this demo is intended to inform standards and regulations and is NOT SECURE and NOT TESTED FOR CLINICAL USE. We hope you will join our GitHub communities and contribute
+							</div>
+
 							<div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">
 								<label for="email" class="col-md-4 control-label">E-Mail Address</label>
 
