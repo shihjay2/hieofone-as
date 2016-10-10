@@ -19,7 +19,7 @@
 							{{ csrf_field() }}
 
 							<div class="alert alert-warning">
-								<strong>CAUTION!</strong> The open source code associated with this demo is intended to inform standards and regulations and is NOT SECURE and NOT TESTED FOR CLINICAL USE. We hope you will join our GitHub communities and contribute
+								<strong>CAUTION!</strong> The open source code associated with this demo is intended to inform standards and regulations and is NOT SECURE and NOT TESTED FOR CLINICAL USE. We hope you will join our GitHub communities and contribute.
 							</div>
 
 							<div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">
