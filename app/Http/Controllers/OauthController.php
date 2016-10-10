@@ -324,7 +324,7 @@ class OauthController extends Controller
         if ($pnosh) {
             $redirect_uri = URL::to('/') . '/nosh';
             $params = [
-    			'redirect_uri' => URL::to('welcome')
+    			'redirect_uri' => URL::to('/')
     		];
     		$redirect_uri .= '/remote_logout?' . http_build_query($params, null, '&');
             return redirect($redirect_uri);
