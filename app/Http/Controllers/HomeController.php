@@ -32,7 +32,7 @@ class HomeController extends Controller
         $data['name'] = $request->session()->get('owner');
         $data['title'] = 'My Resource Services';
         $data['content'] = 'No resource services yet.';
-        $mdnosh = DB::table('oauth_clients')->where('client_name', '=', 'mdNOSH')->first();
+        $mdnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', '%mdNOSH%')->first();
         if (! $mdnosh) {
             $data['mdnosh'] = true;
         }
