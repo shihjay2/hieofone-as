@@ -419,9 +419,9 @@ class HomeController extends Controller
                 DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data);
                 $request->session()->put('is_authorized', 'true');
             }
-            $request->session()->put('message_action', 'Authorized resource server named ' . $client->client_name);
+            $request->session()->put('message_action', 'You just authorized a resource server named ' . $client->client_name);
         } else {
-            $request->session()->put('message_action', 'Unauthorized resource server named ' . $client->client_name);
+            $request->session()->put('message_action', 'You just unauthorized a resource server named ' . $client->client_name);
             if ($request->session()->get('oauth_response_type') == 'code') {
                 $request->session()->put('is_authorized', 'false');
             } else {
@@ -479,14 +479,14 @@ class HomeController extends Controller
         ];
         DB::table('oauth_clients')->where('client_id', '=', $id)->update($data);
         $query = DB::table('oauth_clients')->where('client_id', '=', $id)->first();
-        $request->session()->put('message_action', 'Authorized Client named ' . $query->client_name);
+        $request->session()->put('message_action', 'You just authorized a client named ' . $query->client_name);
         return redirect()->route('authorize_client');
     }
 
     public function authorize_client_disable(Request $request, $id)
     {
         $query = DB::table('oauth_clients')->where('client_id', '=', $id)->first();
-        $request->session()->put('message_action', 'Unauthorized Client named ' . $query->client_name);
+        $request->session()->put('message_action', 'You just unauthorized a client named ' . $query->client_name);
         DB::table('oauth_clients')->where('client_id', '=', $id)->delete();
         return redirect()->route('authorize_client');
     }
