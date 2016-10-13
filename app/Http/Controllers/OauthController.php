@@ -1033,7 +1033,7 @@ class OauthController extends Controller
                     $data['timer'] = false;
                 }
                 if ($data['timer'] == true) {
-                    $left = ($arr[0] - time()) * 60;
+                    $left = ($arr[0] - time()) / 60;
                     $data['timer_val'] = round($left);
                 }
                 return view('reset_demo', $data);
@@ -1048,7 +1048,7 @@ class OauthController extends Controller
         $file = File::get(__DIR__ . "/../../../.timer");
         $arr = explode(',', $file);
         if (time() < $arr[0]) {
-            $left = ($arr[0] - time()) * 60;
+            $left = ($arr[0] - time()) / 60;
             $return = round($left) . ',' . $arr[1];
             return $return;
         } else {
