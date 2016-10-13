@@ -1048,7 +1048,7 @@ class OauthController extends Controller
         $file = File::get(__DIR__ . "/../../../.timer");
         $arr = explode(',', $file);
         if (time() < $arr[0]) {
-            return $arr[1];
+            return $file;
         } else {
             return 'OK';
         }
