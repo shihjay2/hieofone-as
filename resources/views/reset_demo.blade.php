@@ -12,7 +12,7 @@
 					</div>
 					@if ($timer == true)
 						<span class="help-block">
-							<strong>Retry in about 10 minutes as the demo is being used by another person right now!</strong>
+							<strong>Retry in about {{ $timer_val }} minutes as the demo is being used by another person right now!</strong>
 						</span>
 					@else
 						<form class="form-horizontal" role="form" method="POST" action="{{ url('/reset_demo') }}">

@@ -78,6 +78,7 @@ Route::any('my_info_edit', array('as' => 'my_info_edit', 'uses' => 'HomeControll
 Route::get('default_policies', array('as' => 'default_policies', 'uses' => 'HomeController@default_policies'));
 Route::post('change_policy', array('as' => 'change_policy', 'uses' => 'HomeController@change_policy'));
 Route::any('reset_demo', array('as' => 'reset_demo', 'uses' => 'OauthController@reset_demo'));
+Route::get('check_demo', array('as' => 'check_demo', 'uses' => 'OauthController@check_demo'));
 
 Route::post('token', array('as' => 'token', function () {
     $bridgedRequest = OAuth2\HttpFoundationBridge\Request::createFromRequest(Request::instance());

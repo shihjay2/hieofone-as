@@ -1016,7 +1016,9 @@ class OauthController extends Controller
                 //$postBody = '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended"><gsx:email>' . $request->input('email') . '</gsx:email></entry>';
                 $httpClient = new GuzzleHttp\Client(['headers' => $headers]);
                 $resp = $httpClient->request($method, $url, ['body' => $postBody]);
-                File::put(__DIR__ . "/../../../.timer", time() + 600);
+                $time = time() + 600;
+                $file = $time . ',' . $request->ip();
+                File::put(__DIR__ . "/../../../.timer", $file);
                 $request->session()->flush();
                 Auth::logout();
                 return redirect('https://shihjay.xyz/nosh/reset_demo');
@@ -1025,14 +1027,30 @@ class OauthController extends Controller
                     'noheader' => true,
                     'timer' => true
                 ];
-                $time = File::get(__DIR__ . "/../../../.timer");
-                if (time() > $time) {
+                $file = File::get(__DIR__ . "/../../../.timer");
+                $arr = explode(',', $file);
+                if (time() > $arr[0]) {
                     $data['timer'] = false;
+                }
+                if ($data['timer'] == true) {
+                    $left = ($arr[0] - time()) * 60;
+                    $data['timer_val'] = round($left);
                 }
                 return view('reset_demo', $data);
             }
         } else {
             return redirect()->route('welcome');
+        }
+    }
+
+    public function check_demo(Request $request)
+    {
+        $file = File::get(__DIR__ . "/../../../.timer");
+        $arr = explode(',', $file);
+        if (time() < $arr[0]) {
+            return $arr[1];
+        } else {
+            return 'OK';
         }
     }
 
