@@ -17,7 +17,7 @@
 						<div style="text-align: center;">
 							<a href="#" id="advanced">Advanced</a>
 						</div>
-						<form class="form-horizontal" role="form" method="POST" action="{{ url('/reset_demo') }}" style="display:none">
+						<form id="hidden_form" class="form-horizontal" role="form" method="POST" action="{{ url('/reset_demo') }}" style="display:none">
 							{{ csrf_field() }}
 
 							<div class="alert alert-warning">
@@ -88,6 +88,9 @@
 <script type="text/javascript">
 	$(document).ready(function() {
 		$("#email").focus();
+		$("#advanced").click(function(){
+			$("#hidden_form").show();
+		});
 	});
 </script>
 @endsection
