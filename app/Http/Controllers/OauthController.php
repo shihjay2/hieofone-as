@@ -1035,6 +1035,7 @@ class OauthController extends Controller
                 if ($data['timer'] == true) {
                     $left = ($arr[0] - time()) / 60;
                     $data['timer_val'] = round($left);
+                    $data['timer_val1'] = 10 - $data['timer_val'];
                     $newfile = $arr[0] . ',' . $request->ip();
                     File::put(__DIR__ . "/../../../.timer", $newfile);
                 }

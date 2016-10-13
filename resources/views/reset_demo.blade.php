@@ -12,8 +12,40 @@
 					</div>
 					@if ($timer == true)
 						<span class="help-block">
-							<strong>Retry in about {{ $timer_val }} minutes as the demo is being used by another person right now!</strong>
+							<strong>Another person was using the demo {{ $timer_val1 }} minutes ago.  Please try again in {{ $timer_val }} minutes or more.</strong>
 						</span>
+						<div style="text-align: center;">
+							<a href="#" id="advanced">Advanced</a>
+						</div>
+						<form class="form-horizontal" role="form" method="POST" action="{{ url('/reset_demo') }}" style="display:none">
+							{{ csrf_field() }}
+
+							<div class="alert alert-warning">
+								<strong>CAUTION!</strong> The open source code associated with this demo is intended to inform standards and regulations and is NOT SECURE and NOT TESTED FOR CLINICAL USE. We hope you will join our GitHub communities and contribute.
+							</div>
+
+							<div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">
+								<label for="email" class="col-md-4 control-label">E-Mail Address</label>
+
+								<div class="col-md-6">
+									<input id="email" type="email" class="form-control" name="email" value="{{ old('email') }}">
+
+									@if ($errors->has('email'))
+										<span class="help-block">
+											<strong>{{ $errors->first('email') }}</strong>
+										</span>
+									@endif
+								</div>
+							</div>
+
+							<div class="form-group">
+								<div class="col-md-6 col-md-offset-4">
+									<button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure?')">
+										<i class="fa fa-btn fa-sign-in"></i> Force Reset Demo
+									</button>
+								</div>
+							</div>
+						</form>
 					@else
 						<form class="form-horizontal" role="form" method="POST" action="{{ url('/reset_demo') }}">
 							{{ csrf_field() }}

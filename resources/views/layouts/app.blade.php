@@ -98,24 +98,24 @@
 	{{-- <script src="{{ elixir('js/app.js') }}"></script> --}}
 	@yield('view.scripts')
 	<script type="text/javascript">
-		var check_demo = false;
-		setInterval(function() {
-			$.ajax({
-				type: "GET",
-				url: "check_demo_self",
-				beforeSend: function(request) {
-					return request.setRequestHeader("X-CSRF-Token", $("meta[name='csrf-token']").attr('content'));
-				},
-				success: function(data){
-					if (data !== 'OK') {
-						if (check_demo === false) {
-							alert(data);
-							check_demo = true;
-						}
-					}
-				}
-			});
-		}, 3000);
+		// var check_demo = false;
+		// setInterval(function() {
+		// 	$.ajax({
+		// 		type: "GET",
+		// 		url: "check_demo_self",
+		// 		beforeSend: function(request) {
+		// 			return request.setRequestHeader("X-CSRF-Token", $("meta[name='csrf-token']").attr('content'));
+		// 		},
+		// 		success: function(data){
+		// 			if (data !== 'OK') {
+		// 				if (check_demo === false) {
+		// 					alert(data);
+		// 					check_demo = true;
+		// 				}
+		// 			}
+		// 		}
+		// 	});
+		// }, 3000);
 	</script>
 </body>
 </html>
