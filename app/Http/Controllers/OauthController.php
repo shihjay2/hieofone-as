@@ -1035,6 +1035,8 @@ class OauthController extends Controller
                 if ($data['timer'] == true) {
                     $left = ($arr[0] - time()) / 60;
                     $data['timer_val'] = round($left);
+                    $newfile = $arr[0] . ',' . $request->ip();
+                    File::put(__DIR__ . "/../../../.timer", $newfile);
                 }
                 return view('reset_demo', $data);
             }
@@ -1055,6 +1057,25 @@ class OauthController extends Controller
             return 'OK';
         }
     }
+
+    public function check_demo_self(Request $request)
+	{
+        $return = 'OK';
+        $file = File::get(__DIR__ . "/../../../.timer");
+        $arr = explode(',', $file);
+        if (time() < $arr[0]) {
+            $left = ($arr[0] - time()) / 60;
+            $return = round($left) . ',' . $arr[1];
+        }
+		if ($return !== 'OK') {
+			$arr = explode(',', $return);
+			if ($arr[1] !== $request->ip()) {
+				// Alert
+				$return = 'You have ' . $arr[0] . ' minutes left to finish the demo.';
+			}
+		}
+		return $return;
+	}
 
     public function test1(Request $request)
     {

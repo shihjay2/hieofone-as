@@ -4,6 +4,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="csrf-token" content="{{ csrf_token() }}">
 
 	<title>HIE of One Authorization Server</title>
 
@@ -96,5 +97,25 @@
 	<script src="{{ asset('assets/js/jquery.maskedinput.min.js') }}"></script>
 	{{-- <script src="{{ elixir('js/app.js') }}"></script> --}}
 	@yield('view.scripts')
+	<script type="text/javascript">
+		var check_demo = false;
+		setInterval(function() {
+			$.ajax({
+				type: "GET",
+				url: "check_demo_self",
+				beforeSend: function(request) {
+					return request.setRequestHeader("X-CSRF-Token", $("meta[name='csrf-token']").attr('content'));
+				},
+				success: function(data){
+					if (data !== 'OK') {
+						if (check_demo === false) {
+							alert(data);
+							check_demo = true;
+						}
+					}
+				}
+			});
+		}, 3000);
+	</script>
 </body>
 </html>

@@ -79,6 +79,7 @@ Route::get('default_policies', array('as' => 'default_policies', 'uses' => 'Home
 Route::post('change_policy', array('as' => 'change_policy', 'uses' => 'HomeController@change_policy'));
 Route::any('reset_demo', array('as' => 'reset_demo', 'uses' => 'OauthController@reset_demo'));
 Route::get('check_demo', array('as' => 'check_demo', 'uses' => 'OauthController@check_demo'));
+Route::get('check_demo_self', array('as' => 'check_demo_self', 'middleware' => 'csrf', 'uses' => 'OauthController@check_demo_self'));
 
 Route::post('token', array('as' => 'token', function () {
     $bridgedRequest = OAuth2\HttpFoundationBridge\Request::createFromRequest(Request::instance());
