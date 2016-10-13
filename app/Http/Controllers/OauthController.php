@@ -1061,6 +1061,7 @@ class OauthController extends Controller
     public function check_demo_self(Request $request)
 	{
         $return = 'OK';
+        $return1 = 'OK';
         $file = File::get(__DIR__ . "/../../../.timer");
         $arr = explode(',', $file);
         if (time() < $arr[0]) {
@@ -1071,10 +1072,10 @@ class OauthController extends Controller
 			$arr = explode(',', $return);
 			if ($arr[1] !== $request->ip()) {
 				// Alert
-				$return = 'You have ' . $arr[0] . ' minutes left to finish the demo.';
+				$return1 = 'You have ' . $arr[0] . ' minutes left to finish the demo.';
 			}
 		}
-		return $return;
+		return $return1;
 	}
 
     public function test1(Request $request)
