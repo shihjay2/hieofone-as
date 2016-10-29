@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class ChangeUserIdInOauthClientsTable extends Migration
+class ChangeUserIdLengthInOauthClientsTable extends Migration
 {
     /**
      * Run the migrations.
