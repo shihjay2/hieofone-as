@@ -924,8 +924,7 @@ class OauthController extends Controller
             $response = [
                 'subject' => $request->input('resource'),
                 'links' => [
-                    'rel' => $rel,
-                    'href' => URL::to('/')
+                    ['rel' => $rel, 'href' => URL::to('/')]
                 ]
             ];
             return $response;
