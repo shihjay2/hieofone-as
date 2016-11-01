@@ -5,8 +5,9 @@
 	<div class="row">
 		<div class="col-md-8 col-md-offset-2">
 			<div class="panel panel-default">
-				<div class="panel-heading">Invite a user to access your all of your resources</div>
+				<div class="panel-heading">Invite a user to access your resources</div>
 				<div class="panel-body">
+
 					<div style="text-align: center;">
 					  <i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i>
 					</div>
@@ -55,6 +56,10 @@
 							</div>
 						</div>
 
+						@if (isset($rs))
+							{!! $rs !!}
+						@endif
+
 						<div class="form-group">
 							<div class="col-md-6 col-md-offset-4">
 								<button type="submit" class="btn btn-primary">
@@ -74,6 +79,20 @@
 <script type="text/javascript">
 	$(document).ready(function() {
 		$("#email").focus();
+		$('#all_resources').on('click', function() {
+			if ($(this).is(':checked')) {
+				$('.client_ids').prop('checked', true);
+			} else {
+				$('.client_ids').prop('checked', false);
+			}
+			$('.client_ids').triggerHandler('change');
+		});
+		$('.client_ids').on('click', function(){
+			if (!$(this).is(':checked')) {
+				$('#all_resources').prop('checked', false);
+				$('#all_resources').triggerHandler('change');
+			}
+		});
 	});
 </script>
 @endsection

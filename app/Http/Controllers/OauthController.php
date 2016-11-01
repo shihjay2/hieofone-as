@@ -966,6 +966,40 @@ class OauthController extends Controller
                         'name' => $username
                     ];
                     DB::table('users')->insert($data1);
+                    if ($query->client_ids !== null) {
+                        // Add policies to individual client resources
+                        $client_ids = explode(',', $query->client_ids);
+                        foreach ($client_ids as $client_id) {
+                            $resource_sets = DB::table('resource_set')->where('client_id', '=', $client_id)->get();
+                            foreach ($resource_sets as $resource_set) {
+                                $data2['resource_set_id'] = $resource_set->resource_set_id;
+                                $policy_id = DB::table('policy')->insertGetId($data2);
+                                $query1 = DB::table('claim')->where('claim_value', '=', $query->email)->first();
+                                if ($query1) {
+                                    $claim_id = $query1->claim_id;
+                                } else {
+                                    $data3 = [
+                                        'name' => $query->first_name . ' ' . $query->last_name,
+                                        'claim_value' => $query->email
+                                    ];
+                                    $claim_id = DB::table('claim')->insertGetId($data3);
+                                }
+                                $data4 = [
+                                    'claim_id' => $claim_id,
+                                    'policy_id' => $policy_id
+                                ];
+                                DB::table('claim_to_policy')->insert($data4);
+                                $scopes = DB::table('resource_set_scopes')->where('resource_set_id', '=', $resource_set->resource_set_id)->get();
+                                foreach ($scopes as $scope) {
+                                    $data5 = [
+                                        'policy_id' => $policy_id,
+                                        'scope' => $scope->scope
+                                    ];
+                                    DB::table('policy_scopes')->insert($data5);
+                                }
+                            }
+                        }
+                    }
                     DB::table('invitation')->where('code', '=', $id)->delete();
                     return redirect()->route('home');
                 } else {

@@ -494,6 +494,7 @@ class HomeController extends Controller
     public function make_invitation(Request $request)
     {
         $data['name'] = $request->session()->get('owner');
+        $owner = DB::table('owner')->first();
         if ($request->isMethod('post')) {
             $this->validate($request, [
                 'email' => 'required|unique:users,email',
@@ -510,11 +511,13 @@ class HomeController extends Controller
                 'first_name' => $request->input('first_name'),
                 'last_name' => $request->input('last_name')
             ];
+            if ($request->has('client_id')) {
+                $data1['client_ids'] = implode(',', $request->input('client_id'));
+            }
             DB::table('invitation')->insert($data1);
             // Send email to invitee
             $url = URL::to('accept_invitation') . '/' . $code;
             $query0 = DB::table('oauth_rp')->where('type', '=', 'google')->first();
-            $owner = DB::table('owner')->first();
             $data2['message_data'] = 'You are invited to the HIE of One Authorization Server for ' . $owner->firstname . ' ' . $owner->lastname . '.<br>';
             $data2['message_data'] .= 'Go to ' . $url . ' to get registered.';
             $title = 'Invitation to ' . $owner->firstname . ' ' . $owner->lastname  . "'s Authorization Server";
@@ -528,6 +531,17 @@ class HomeController extends Controller
             $data3['content'] .= '</div>';
             return view('home', $data3);
         } else {
+            if ($owner->login_direct == 0) {
+                $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
+                if ($query) {
+                    $data['rs'] = '<ul class="list-group checked-list-box">';
+                    $data['rs'] .= '<li class="list-group-item"><input type="checkbox" id="all_resources" style="margin:10px;"/>All Resources</li>';
+                    foreach ($query as $client) {
+                        $data['rs'] .= '<li class="list-group-item"><input type="checkbox" name="client_id[]" class="client_ids" value="' . $client->client_id . '" style="margin:10px;"/><img src="' . $client->logo_uri . '" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $client->client_name . '</span></li>';
+                    }
+                    $data['rs'] .= '</ul>';
+                }
+            }
             return view('invite', $data);
         }
     }
