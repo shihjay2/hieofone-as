@@ -714,15 +714,23 @@ class HomeController extends Controller
         if ($request->input('submit') == 'save') {
             if ($request->input('login_direct') == 'on') {
                 $data['login_direct'] = 1;
+            } else {
+                $data['login_direct'] = 0;
             }
             if ($request->input('login_md_nosh') == 'on') {
                 $data['login_md_nosh'] = 1;
+            } else {
+                $data['login_md_nosh'] = 0;
             }
             if ($request->input('any_npi') == 'on') {
                 $data['any_npi'] = 1;
+            } else {
+                $data['any_npi'] = 0;
             }
             if ($request->input('login_google') == 'on') {
                 $data['login_google'] = 1;
+            } else {
+                $data['login_google'] = 0;
             }
             $query = DB::table('owner')->first();
             DB::table('owner')->where('id', '=', $query->id)->update($data);
