@@ -686,6 +686,23 @@ class HomeController extends Controller
         $data['message_action'] = $request->session()->get('message_action');
         $request->session()->forget('message_action');
         $data['name'] = $request->session()->get('owner');
+        $query = DB::table('owner')->first();
+        $data['login_direct'] = '';
+        $data['login_md_nosh'] = '';
+        $data['any_npi'] = '';
+        $data['login_google'] = '';
+        if ($query->login_direct == 1) {
+            $data['login_direct'] = 'checked';
+        }
+        if ($query->login_md_nosh == 1) {
+            $data['login_md_nosh'] = 'checked';
+        }
+        if ($query->any_npi == 1) {
+            $data['any_npi'] = 'checked';
+        }
+        if ($query->login_google == 1) {
+            $data['login_google'] = 'checked';
+        }
         $data['content'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
         $data['content'] .= '<h3>Resource Registration Consent Default Policies</h3>';
         $data['content'] .= '<p>You can set default policies (who gets access to your resources) whenever you have a new resource server registered to this authorization server.</p>';

@@ -14,7 +14,7 @@
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
-									<label><input type="checkbox" name="login_direct"> Anyone signed-in directly to this Authorization Server sees Everything</label>
+									<label><input type="checkbox" name="login_direct" {{ $login_direct }}> Anyone signed-in directly to this Authorization Server sees Everything</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#login_direct_detail" style="margin-left:20px">Details</button>
 								</div>
 								<div id="login_direct_detail" class="collapse">
@@ -25,7 +25,7 @@
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
-									<label><input type="checkbox" name="login_md_nosh"> Anyone signed in via mdNOSH sees these Resources</label>
+									<label><input type="checkbox" name="login_md_nosh" {{ $login_md_nosh }}> Anyone signed in via mdNOSH sees these Resources</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#login_md_nosh_detail" style="margin-left:20px">Details</button>
 								</div>
 								<div id="login_md_nosh_detail" class="collapse">
@@ -36,7 +36,7 @@
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
-									<label><input type="checkbox" name="any_npi"> Anyone that has a Google ID and National Provider Identifier (NPI) sees these Resources"</label>
+									<label><input type="checkbox" name="any_npi" {{ $any_npi }}> Anyone that has a Google ID and National Provider Identifier (NPI) sees these Resources"</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#any_npi_detail" style="margin-left:20px">Details</button>
 								</div>
 								<div id="any_npi_detail" class="collapse">
@@ -68,7 +68,7 @@
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
-									<label><input type="checkbox" name="login_google"> Anyone signed in via Google ID sees these Resources</label>
+									<label><input type="checkbox" name="login_google" {{ $login_google }}> Anyone signed in via Google ID sees these Resources</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#login_google_detail" style="margin-left:20px">Details</button>
 								</div>
 								<div id="login_google_detail" class="collapse">
