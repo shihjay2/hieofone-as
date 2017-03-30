@@ -7,3 +7,4 @@ Homestead.json
 .privkey.pem
 .pubkey.pem
 .version
+.jshintrc

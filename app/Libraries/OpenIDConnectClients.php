@@ -812,7 +812,8 @@ class OpenIDConnectClient
 						str_replace('uma_auth', 'fhir', $this->getRedirectURL()),
 						str_replace('uma_auth', 'fhir/oidc', $this->getRedirectURL()),
 						str_replace('uma_auth', 'uma_logout', $this->getRedirectURL()),
-						str_replace('uma_auth', 'uma_patient_centric', $this->getRedirectURL())
+						str_replace('uma_auth', 'uma_patient_centric', $this->getRedirectURL()),
+						str_replace('uma_auth', 'uma_register_auth', $this->getRedirectURL())
 					),
 					'client_name' => $this->getClientName(),
 					'logo_uri' => 'http://www.noshchartingsystem.com/SAAS-Logo.jpg',
@@ -823,7 +824,8 @@ class OpenIDConnectClient
 				$send_array = array(
 					'redirect_uris' => array($this->getRedirectURL(),
 						str_replace('uma_auth', 'uma_api', $this->getRedirectURL()),
-						str_replace('uma_auth', 'uma_aat', $this->getRedirectURL())
+						str_replace('uma_auth', 'uma_aat', $this->getRedirectURL()),
+						str_replace('uma_auth', 'uma_register_auth', $this->getRedirectURL())
 					),
 					'client_name' => $this->getClientName(),
 					'logo_uri' => 'http://www.noshchartingsystem.com/SAAS-Logo.jpg',

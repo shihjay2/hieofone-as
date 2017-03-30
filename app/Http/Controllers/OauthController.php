@@ -12,6 +12,7 @@ use File;
 use Google_Client;
 use Hash;
 use Illuminate\Http\Request;
+use NaviOcean\Laravel\NameParser;
 use OAuth2\HttpFoundationBridge\Request as BridgeRequest;
 use OAuth2\HttpFoundationBridge\Response as BridgeResponse;
 use Response;
@@ -69,10 +70,10 @@ class OauthController extends Controller
         // if ($query) {
         if (! $query) {
             // Tag version number for baseline prior to updating system in the future
-            if (!File::exists(__DIR__."/../../../.version")) {
+            if (!File::exists(base_path() . "/.version")) {
                 // First time after install
               $result = $this->github_all();
-                File::put(__DIR__."/../../../.version", $result[0]['sha']);
+                File::put(base_path() . "/.version", $result[0]['sha']);
             }
             // Is this from a submit request or not
             if ($request->isMethod('post')) {
@@ -172,9 +173,7 @@ class OauthController extends Controller
                 // Go register with Google to get refresh token for email setup
                 return redirect()->route('installgoogle');
             } else {
-                $data2 = [
-                'noheader' => true
-            ];
+                $data2['noheader'] = true;
                 return view('install', $data2);
             }
         }
@@ -332,6 +331,26 @@ class OauthController extends Controller
         return redirect()->route('welcome');
     }
 
+    public function login_uport(Request $request)
+    {
+        $owner_query = DB::table('owner')->first();
+        if ($request->has('uport')) {
+            // Start searching for users by checking name
+            $name = $request->input('name');
+            $parser = new NameParser();
+            $name_arr = $parser->parse_name($name);
+            $uport_user = DB::table('oauth_users')->where('first_name', '=', $name_arr['fname'])->where('last_name', '=', $name_arr['lname'])->first();
+            if ($uport_user) {
+                $this->oauth_authenticate($uport_user->email);
+                return 'OK';
+            } else {
+                return 'You are not authorized to access this authroization server';
+            }
+        } else {
+            return 'Please contact the owner of this authorization server for assistance.';
+        }
+    }
+
     public function remote_logout(Request $request)
     {
         $request->session()->flush();
@@ -400,7 +419,7 @@ class OauthController extends Controller
 
     public function update_system()
     {
-        $current_version = File::get(__DIR__."/../../../.version");
+        $current_version = File::get(base_path() . "/.version");
         $result = $this->github_all();
         if ($current_version != $result[0]['sha']) {
             $arr = array();
@@ -415,18 +434,18 @@ class OauthController extends Controller
                 $result1 = $this->github_single($sha);
                 if (isset($result1['files'])) {
                     foreach ($result1['files'] as $row1) {
-                        $filename = __DIR__."/../../../" . $row1['filename'];
+                        $filename = base_path() . "/" . $row1['filename'];
                         if ($row1['status'] == 'added' || $row1['status'] == 'modified') {
                             $github_url = str_replace(' ', '%20', $row1['raw_url']);
                             $file = file_get_contents($github_url);
                             $parts = explode('/', $row1['filename']);
                             array_pop($parts);
                             $dir = implode('/', $parts);
-                            if (!is_dir(__DIR__."/../../../" . $dir)) {
+                            if (!is_dir(base_path() . "/" . $dir)) {
                                 if ($parts[0] == 'public') {
-                                    mkdir(__DIR__."/../../../" . $dir, 0777, true);
+                                    mkdir(base_path() . "/" . $dir, 0777, true);
                                 } else {
-                                    mkdir(__DIR__."/../../../" . $dir, 0755, true);
+                                    mkdir(base_path() . "/" . $dir, 0755, true);
                                 }
                             }
                             file_put_contents($filename, $file);
@@ -440,7 +459,7 @@ class OauthController extends Controller
                 }
             }
             Artisan::call('migrate');
-            File::put(__DIR__."/../../../.version", $result[0]['sha']);
+            File::put(base_path() . "/.version", $result[0]['sha']);
             echo "System Updated with version " . $result[0]['sha'] . " from " . $current_version;
         } else {
             echo "No update needed";
@@ -849,7 +868,7 @@ class OauthController extends Controller
     public function jwks_uri(Request $request)
     {
         $rsa = new RSA();
-        $publicKey = File::get(__DIR__."/../../../.pubkey.pem");
+        $publicKey = File::get(base_path() . "/.pubkey.pem");
         $rsa->loadKey($publicKey);
         $parts = $rsa->getPublicKey(RSA::PUBLIC_FORMAT_XML);
         $values = new SimpleXMLElement($parts);

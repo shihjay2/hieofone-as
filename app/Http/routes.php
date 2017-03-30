@@ -48,6 +48,7 @@ App::singleton('oauth2', function () {
 Route::any('install', array('as' => 'install', 'uses' => 'OauthController@install'));
 Route::any('login', array('as' => 'login', 'uses' => 'OauthController@login'));
 Route::any('logout', array('as' => 'logout', 'uses' => 'OauthController@logout'));
+Route::post('login_uport', array('as' => 'login_uport', 'middleware' => 'csrf', 'uses' => 'OauthController@login_uport'));
 Route::any('remote_logout', array('as' => 'remote_logout', 'uses' => 'OauthController@remote_logout'));
 Route::get('home', array('as' => 'home', 'uses' => 'HomeController@index'));
 Route::get('resources/{id}', array('as' => 'resources', 'uses' => 'HomeController@resources'));
