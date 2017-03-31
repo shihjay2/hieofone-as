@@ -344,7 +344,7 @@ class OauthController extends Controller
                 $this->oauth_authenticate($uport_user->email);
                 return 'OK';
             } else {
-                return 'You are not authorized to access this authroization server';
+                return 'You are not authorized to access this authorization server';
             }
         } else {
             return 'Please contact the owner of this authorization server for assistance.';

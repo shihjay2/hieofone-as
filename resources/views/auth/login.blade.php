@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('view.stylesheet')
+	<link rel="stylesheet" href="{{ asset('assets/css/toastr.min.css') }}">
+@endsection
+
 @section('content')
 <div class="container">
 	<div class="row">
@@ -100,6 +104,7 @@
 @section('view.scripts')
 <script src="{{ asset('assets/js/web3.js') }}"></script>
 <script src="{{ asset('assets/js/uport-connect.js') }}"></script>
+<script src="{{ asset('assets/js/toastr.min.js') }}"></script>
 <!-- <script src="{{ asset('assets/js/uport-connect-core.js') }}"></script> -->
 <!-- <script src="{{ asset('assets/js/uportlib.js') }}"></script> -->
 <!-- <script src="{{ asset('assets/js/aes.js') }}"></script> -->
@@ -130,8 +135,8 @@
 				},
 				success: function(data){
 					if (data !== 'OK') {
-						// toastr.error(data);
-						console.log(data);
+						toastr.error(data);
+						// console.log(data);
 					} else {
 						window.location = home;
 					}
