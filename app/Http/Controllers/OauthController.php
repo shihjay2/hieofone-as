@@ -300,6 +300,12 @@ class OauthController extends Controller
                     }
                     $data['google'] = DB::table('oauth_rp')->where('type', '=', 'google')->first();
                     $data['twitter'] = DB::table('oauth_rp')->where('type', '=', 'twitter')->first();
+                    if (file_exists(base_path() . '/.version')) {
+                        $data['version'] = file_get_contents(base_path() . '/.version');
+                    } else {
+                        $version = $this->github_all();
+                        $data['version'] = $version[0]['sha'];
+                    }
                     return view('auth.login', $data);
                 } else {
                     // Not installed yet

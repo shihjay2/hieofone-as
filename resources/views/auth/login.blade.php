@@ -2,6 +2,31 @@
 
 @section('view.stylesheet')
 	<link rel="stylesheet" href="{{ asset('assets/css/toastr.min.css') }}">
+	<style>
+	html {
+		position: relative;
+		min-height: 100%;
+	}
+	body {
+	/* Margin bottom by footer height */
+		margin-bottom: 60px;
+	}
+	.footer {
+		position: absolute;
+		bottom: 0;
+		width: 100%;
+		/* Set the fixed height of the footer here */
+		height: 60px;
+		background-color: #f5f5f5;
+	}
+	.container .text-muted {
+		margin: 20px 0;
+	}
+	.footer > .container {
+		padding-right: 15px;
+		padding-left: 15px;
+	}
+	</style>
 @endsection
 
 @section('content')
@@ -99,6 +124,11 @@
 		</div>
 	</div>
 </div>
+<footer class="footer">
+	<div class="container">
+		<p class="text-muted pull-right">Version git-{{ $version }}</p>
+	</div>
+</footer>
 @endsection
 
 @section('view.scripts')
