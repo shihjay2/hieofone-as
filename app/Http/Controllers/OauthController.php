@@ -714,7 +714,7 @@ class OauthController extends Controller
         return $data;
     }
 
-    public function oauth_authenticate($email)
+    public function oauth_authenticate(Request $request, $email)
     {
         $user = User::where('email', '=', $email)->first();
         //$query = DB::table('oauth_users')->where('email', '=', $email)->first();
