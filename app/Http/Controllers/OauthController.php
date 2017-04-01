@@ -376,8 +376,8 @@ class OauthController extends Controller
                     $request->session()->put('username', $request->input('username'));
                     $request->session()->put('client_name', $client1->client_name);
                     $request->session()->put('logo_uri', $client1->logo_uri);
-                    $request->session()->put('sub', $oauth_user->sub);
-                    $request->session()->put('email', $oauth_user->email);
+                    $request->session()->put('sub', $uport_user->sub);
+                    $request->session()->put('email', $uport_user->email);
                     $request->session()->put('login_origin', 'login_direct');
                     $user = User::where('email', '=', $uport_user->email)->first();
                     Auth::login($user);
