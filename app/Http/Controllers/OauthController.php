@@ -348,8 +348,43 @@ class OauthController extends Controller
             $name_arr = $parser->parse_name($name);
             $uport_user = DB::table('oauth_users')->where('first_name', '=', $name_arr['fname'])->where('last_name', '=', $name_arr['lname'])->first();
             if ($uport_user) {
-                $this->oauth_authenticate($uport_user->email);
-                return 'OK';
+                $client = DB::table('owner')->first();
+                $client_id = $client->client_id;
+                // Get client secret
+                $client1 = DB::table('oauth_clients')->where('client_id', '=', $client_id)->first();
+                $request->merge([
+                    'client_id' => $client_id,
+                    'client_secret' => $client1->client_secret,
+                    'grant_type' => 'client_credentials'
+                ]);
+                $bridgedRequest = BridgeRequest::createFromRequest($request);
+                $bridgedResponse = new BridgeResponse();
+                $bridgedResponse = App::make('oauth2')->grantAccessToken($bridgedRequest, $bridgedResponse);
+                if (isset($bridgedResponse['access_token'])) {
+                    // Update to include JWT for introspection in the future if needed
+                    $new_token_query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->first();
+                    $jwt_data = [
+                        'jwt' => $bridgedResponse['access_token'],
+                        'expires' => $new_token_query->expires
+                    ];
+                    DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->update($jwt_data);
+                    // Access token granted, authorize login!
+                    $oauth_user = DB::table('oauth_users')->where('username', '=', $request->username)->first();
+                    $request->session()->put('access_token',  $bridgedResponse['access_token']);
+                    $request->session()->put('client_id', $client_id);
+                    $request->session()->put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
+                    $request->session()->put('username', $request->input('username'));
+                    $request->session()->put('client_name', $client1->client_name);
+                    $request->session()->put('logo_uri', $client1->logo_uri);
+                    $request->session()->put('sub', $oauth_user->sub);
+                    $request->session()->put('email', $oauth_user->email);
+                    $request->session()->put('login_origin', 'login_direct');
+                    $user = User::where('email', '=', $uport_user->email)->first();
+                    Auth::login($user);
+                    return 'OK';
+                } else {
+                    return 'You are not authorized to access this authorization server';
+                }
             } else {
                 return 'You are not authorized to access this authorization server';
             }
@@ -720,7 +755,6 @@ class OauthController extends Controller
         $user = User::where('email', '=', $email)->first();
         //$query = DB::table('oauth_users')->where('email', '=', $email)->first();
         if ($user) {
-            Session::put('username', $user->name);
             Auth::login($user);
         }
         return true;
