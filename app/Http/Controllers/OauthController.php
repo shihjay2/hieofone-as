@@ -719,6 +719,7 @@ class OauthController extends Controller
         $user = User::where('email', '=', $email)->first();
         //$query = DB::table('oauth_users')->where('email', '=', $email)->first();
         if ($user) {
+            $request->session()->put('username', $user->name);
             Auth::login($user);
         }
         return true;
