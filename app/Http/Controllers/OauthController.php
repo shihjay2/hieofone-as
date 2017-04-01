@@ -20,6 +20,7 @@ use Socialite;
 use Storage;
 use URL;
 use phpseclib\Crypt\RSA;
+use Session;
 use SimpleXMLElement;
 use GuzzleHttp;
 
@@ -714,12 +715,12 @@ class OauthController extends Controller
         return $data;
     }
 
-    public function oauth_authenticate(Request $request, $email)
+    public function oauth_authenticate($email)
     {
         $user = User::where('email', '=', $email)->first();
         //$query = DB::table('oauth_users')->where('email', '=', $email)->first();
         if ($user) {
-            $request->session()->put('username', $user->name);
+            Session::put('username', $user->name);
             Auth::login($user);
         }
         return true;
