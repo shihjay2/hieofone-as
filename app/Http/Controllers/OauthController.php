@@ -373,13 +373,14 @@ class OauthController extends Controller
                     $request->session()->put('access_token',  $bridgedResponse['access_token']);
                     $request->session()->put('client_id', $client_id);
                     $request->session()->put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
-                    $request->session()->put('username', $request->input('username'));
+                    $request->session()->put('username', $uport_user->username);
                     $request->session()->put('client_name', $client1->client_name);
                     $request->session()->put('logo_uri', $client1->logo_uri);
                     $request->session()->put('sub', $uport_user->sub);
                     $request->session()->put('email', $uport_user->email);
                     $request->session()->put('login_origin', 'login_direct');
                     $user = User::where('email', '=', $uport_user->email)->first();
+
                     Auth::login($user);
                     return 'OK';
                 } else {
@@ -619,8 +620,43 @@ class OauthController extends Controller
             }
         } else {
             // Login user
-            $this->oauth_authenticate($user->getEmail());
-            return redirect()->route('home');
+            $sub = $user->getId();
+            $google_user = DB::table('oauth_users')->where('sub', '=', $sub)->first();
+            $client = DB::table('owner')->first();
+            $client_id = $client->client_id;
+            // Get client secret
+            $client1 = DB::table('oauth_clients')->where('client_id', '=', $client_id)->first();
+            $request->merge([
+                'client_id' => $client_id,
+                'client_secret' => $client1->client_secret,
+                'grant_type' => 'client_credentials'
+            ]);
+            $bridgedRequest = BridgeRequest::createFromRequest($request);
+            $bridgedResponse = new BridgeResponse();
+            $bridgedResponse = App::make('oauth2')->grantAccessToken($bridgedRequest, $bridgedResponse);
+            if (isset($bridgedResponse['access_token'])) {
+                // Update to include JWT for introspection in the future if needed
+                $new_token_query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->first();
+                $jwt_data = [
+                    'jwt' => $bridgedResponse['access_token'],
+                    'expires' => $new_token_query->expires
+                ];
+                DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->update($jwt_data);
+                // Access token granted, authorize login!
+                $oauth_user = DB::table('oauth_users')->where('username', '=', $request->username)->first();
+                $request->session()->put('access_token',  $bridgedResponse['access_token']);
+                $request->session()->put('client_id', $client_id);
+                $request->session()->put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
+                $request->session()->put('username', $google_user->username);
+                $request->session()->put('client_name', $client1->client_name);
+                $request->session()->put('logo_uri', $client1->logo_uri);
+                $request->session()->put('sub', $google_user->sub);
+                $request->session()->put('email', $google_user->email);
+                $request->session()->put('login_origin', 'login_direct');
+                $user = User::where('email', '=', $google_user->email)->first();
+                Auth::login($user);
+                return redirect()->route('home');
+            }
         }
     }
 
