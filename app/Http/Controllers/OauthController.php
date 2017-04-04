@@ -465,7 +465,7 @@ class OauthController extends Controller
         $current_version = File::get(base_path() . "/.version");
         $result = $this->github_all();
         if ($current_version != $result[0]['sha']) {
-            $arr = array();
+            $arr = [];
             foreach ($result as $row) {
                 $arr[] = $row['sha'];
                 if ($current_version == $row['sha']) {
