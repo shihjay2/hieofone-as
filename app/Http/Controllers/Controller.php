@@ -217,7 +217,7 @@ class Controller extends BaseController
     */
     protected function textbelt($number, $message)
     {
-        $url = 'http://textbelt.com/text';
+        $url = "http://cloud.noshchartingsystem.com:9090/text";
         $message = http_build_query([
             'number' => $number,
             'message' => $message
