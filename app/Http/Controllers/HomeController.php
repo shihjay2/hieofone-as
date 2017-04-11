@@ -642,37 +642,48 @@ class HomeController extends Controller
 
     public function my_info_edit(Request $request)
     {
+        $owner_query = DB::table('owner')->first();
+        $query = DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->first();
         if ($request->isMethod('post')) {
-            $this->validate($request, [
-                'email' => 'required',
-                'first_name' => 'required',
-                'last_name' => 'required',
-                'date_of_birth' => 'required'
-            ]);
+            if ($owner_query->sub == $query->sub) {
+                $this->validate($request, [
+                    'email' => 'required',
+                    'first_name' => 'required',
+                    'last_name' => 'required',
+                    'date_of_birth' => 'required'
+                ]);
+            } else {
+                $this->validate($request, [
+                    'email' => 'required',
+                    'first_name' => 'required',
+                    'last_name' => 'required'
+                ]);
+            }
             $data1 = [
                 'first_name' => $request->input('first_name'),
                 'last_name' => $request->input('last_name'),
                 'email' => $request->input('email')
             ];
-            $owner_data = [
-                'lastname' => $request->input('last_name'),
-                'firstname' => $request->input('first_name'),
-                'DOB' => date('Y-m-d', strtotime($request->input('date_of_birth'))),
-                'email' => $request->input('email'),
-                'mobile' => $request->input('mobile')
-            ];
             DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->update($data1);
-            DB::table('owner')->where('id', '=', '1')->update($owner_data);
+            if ($owner_query->sub == $query->sub) {
+                $owner_data = [
+                    'lastname' => $request->input('last_name'),
+                    'firstname' => $request->input('first_name'),
+                    'DOB' => date('Y-m-d', strtotime($request->input('date_of_birth'))),
+                    'email' => $request->input('email'),
+                    'mobile' => $request->input('mobile')
+                ];
+                DB::table('owner')->where('id', '=', '1')->update($owner_data);
+            }
             $request->session()->put('message_action', 'Information Updated.');
             return redirect()->route('my_info');
         } else {
-            $query = DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->first();
             $data = [
                 'first_name' => $query->first_name,
                 'last_name' => $query->last_name,
                 'email' => $query->email
             ];
-            $owner_query = DB::table('owner')->first();
+
             if ($owner_query->sub == $query->sub) {
                 $data['date_of_birth'] = date('m/d/Y', strtotime($owner_query->DOB));
                 $data['mobile'] = $owner_query->mobile;
