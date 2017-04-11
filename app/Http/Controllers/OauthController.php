@@ -1066,12 +1066,14 @@ class OauthController extends Controller
                         $password = sha1($request->input('password'));
                     }
                     // Add user
+                    $sub = $this->gen_uuid();
                     $data = [
                         'username' => $username,
                         'first_name' => $query->first_name,
                         'last_name' => $query->last_name,
                         'password' => $password,
-                        'email' => $query->email
+                        'email' => $query->email,
+                        'sub' => $sub
                     ];
                     DB::table('oauth_users')->insert($data);
                     $data1 = [
