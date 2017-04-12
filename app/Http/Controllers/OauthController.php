@@ -396,8 +396,8 @@ class OauthController extends Controller
                     $request->session()->put('sub', $uport_user->sub);
                     $request->session()->put('email', $uport_user->email);
                     $request->session()->put('login_origin', 'login_direct');
-                    $user = User::where('email', '=', $uport_user->email)->first();
-                    Auth::login($user);
+                    $user = DB::table('users')->where('email', '=', $uport_user->email)->first();
+                    Auth::loginUsingId($user->id);
                     $request->session()->save();
                     $return['message'] = 'OK';
                     if ($request->session()->has('uma_permission_ticket') && $request->session()->has('uma_redirect_uri') && $request->session()->has('uma_client_id') && $request->session()->has('email')) {
