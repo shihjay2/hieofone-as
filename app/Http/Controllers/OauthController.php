@@ -361,8 +361,13 @@ class OauthController extends Controller
             $name_arr = $parser->parse_name($name);
             $uport_user = DB::table('oauth_users')->where('first_name', '=', $name_arr['fname'])->where('last_name', '=', $name_arr['lname'])->first();
             if ($uport_user) {
-                $client = DB::table('owner')->first();
-                $client_id = $client->client_id;
+                if ($request->session()->get('oauth_response_type') == 'code') {
+                    $client_id = $request->session()->get('oauth_client_id');
+                    $data['nooauth'] = true;
+                } else {
+                    $client = DB::table('owner')->first();
+                    $client_id = $client->client_id;
+                }
                 // Get client secret
                 $client1 = DB::table('oauth_clients')->where('client_id', '=', $client_id)->first();
                 $request->merge([
