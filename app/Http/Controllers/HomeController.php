@@ -635,6 +635,9 @@ class HomeController extends Controller
             $data['content'] .= '<li class="list-group-item">Date of Birth: ' . date('m/d/Y', strtotime($owner_query->DOB)) . '</li>';
             $data['content'] .= '<li class="list-group-item">Mobile Number: ' . $owner_query->mobile . '</li>';
         }
+        if ($query->npi !== null && $query->npi !== '') {
+            $data['content'] .= '<li class="list-group-item">NPI: ' . $query->npi . '</li>';
+        }
         $data['content'] .= '</ul>';
         $data['back'] = '<a href="' . URL::to('my_info_edit') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-pencil"></i> Edit</a>';
         return view('home', $data);
