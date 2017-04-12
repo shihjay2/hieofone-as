@@ -154,6 +154,7 @@
 	const loginBtnClick = () => {
 		connect.requestCredentials().then((credentials) => {
 			console.log(credentials);
+			var uport_url = '<?php echo route("login_uport"); ?>';
 			$.ajax({
 				type: "POST",
 				url: uport_url,
