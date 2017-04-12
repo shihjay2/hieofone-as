@@ -382,7 +382,6 @@ class OauthController extends Controller
                     ];
                     DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->update($jwt_data);
                     // Access token granted, authorize login!
-                    $oauth_user = DB::table('oauth_users')->where('username', '=', $request->username)->first();
                     $request->session()->put('access_token',  $bridgedResponse['access_token']);
                     $request->session()->put('client_id', $client_id);
                     $request->session()->put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
@@ -406,7 +405,7 @@ class OauthController extends Controller
                         if ($authorized) {
                             // This call is from authorization endpoint and client is authorized.  Check if user is associated with client
                             $user_array = explode(' ', $authorized->user_id);
-                            if (in_array($request->username, $user_array)) {
+                            if (in_array($uport_user->username, $user_array)) {
                                 // Go back to authorize route
                                 $request->session()->put('is_authorized', 'true');
                                 $return['url'] = route('authorize');
@@ -417,7 +416,7 @@ class OauthController extends Controller
                         } else {
                             // Get owner permission if owner is logging in from new client/registration server
                             if ($oauth_user) {
-                                if ($owner_query->sub == $oauth_user->sub) {
+                                if ($owner_query->sub == $uport_user->sub) {
                                     $return['url'] = route('authorize_resource_server');
                                 } else {
                                     // Somehow, this is a registered user, but not the owner, and is using an unauthorized client - return back to login screen
