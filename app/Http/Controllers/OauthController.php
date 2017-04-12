@@ -265,7 +265,6 @@ class OauthController extends Controller
                             if (in_array($request->username, $user_array)) {
                                 // Go back to authorize route
                                 $request->session()->put('is_authorized', 'true');
-
                                 return redirect()->route('authorize');
                             } else {
                                 // Get user permission
@@ -394,18 +393,55 @@ class OauthController extends Controller
                     $request->session()->put('email', $uport_user->email);
                     $request->session()->put('login_origin', 'login_direct');
                     $user = User::where('email', '=', $uport_user->email)->first();
-
                     Auth::login($user);
-                    return 'OK';
+                    $request->session()->save();
+                    $return['message'] = 'OK';
+                    if ($request->session()->has('uma_permission_ticket') && $request->session()->has('uma_redirect_uri') && $request->session()->has('uma_client_id') && $request->session()->has('email')) {
+                        // If generated from rqp_claims endpoint, do this
+                        $return['url'] = route('rqp_claims');
+                    }
+                    if ($request->session()->get('oauth_response_type') == 'code') {
+                        // Confirm if client is authorized
+                        $authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
+                        if ($authorized) {
+                            // This call is from authorization endpoint and client is authorized.  Check if user is associated with client
+                            $user_array = explode(' ', $authorized->user_id);
+                            if (in_array($request->username, $user_array)) {
+                                // Go back to authorize route
+                                $request->session()->put('is_authorized', 'true');
+                                $return['url'] = route('authorize');
+                            } else {
+                                // Get user permission
+                                $return['url'] = route('login_authorize');
+                            }
+                        } else {
+                            // Get owner permission if owner is logging in from new client/registration server
+                            if ($oauth_user) {
+                                if ($owner_query->sub == $oauth_user->sub) {
+                                    $return['url'] = route('authorize_resource_server');
+                                } else {
+                                    // Somehow, this is a registered user, but not the owner, and is using an unauthorized client - return back to login screen
+                                    $return['message'] = 'Please contact the owner of this authorization server for assistance.';
+                                }
+                            } else {
+                                // Not a registered user
+                                $return['message'] = 'Please contact the owner of this authorization server for assistance.';
+                            }
+                        }
+                    } else {
+                        //  This call is directly from the home route.
+                        $return['url'] = route('home');
+                    }
                 } else {
-                    return 'You are not authorized to access this authorization server';
+                    $return['message'] = 'You are not authorized to access this authorization server';
                 }
             } else {
-                return 'You are not authorized to access this authorization server';
+                $return['message'] = 'You are not authorized to access this authorization server';
             }
         } else {
-            return 'Please contact the owner of this authorization server for assistance.';
+            $return['message'] =  'Please contact the owner of this authorization server for assistance.';
         }
+        return $return;
     }
 
     public function remote_logout(Request $request)

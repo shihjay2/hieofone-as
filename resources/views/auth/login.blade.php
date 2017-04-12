@@ -154,21 +154,20 @@
 	const loginBtnClick = () => {
 		connect.requestCredentials().then((credentials) => {
 			console.log(credentials);
-			var uport_url = '<?php echo route("login_uport"); ?>';
-			var home = '<?php echo route("home"); ?>';
 			$.ajax({
 				type: "POST",
 				url: uport_url,
 				data: 'name=' + credentials.name + '&uport=' + credentials.address,
+				dataType: 'json',
 				beforeSend: function(request) {
 					return request.setRequestHeader("X-CSRF-Token", $("meta[name='csrf-token']").attr('content'));
 				},
 				success: function(data){
-					if (data !== 'OK') {
-						toastr.error(data);
+					if (data.message !== 'OK') {
+						toastr.error(data.message);
 						// console.log(data);
 					} else {
-						window.location = home;
+						window.location = data.url;
 					}
 				}
 			});
