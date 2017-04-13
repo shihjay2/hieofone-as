@@ -24,16 +24,15 @@ App::singleton('oauth2', function () {
     $config['refresh_token_lifetime'] = 0;
     $refresh_config['always_issue_new_refresh_token'] = false;
     $refresh_config['unset_refresh_token_after_use'] = false;
-
     // create server
     $server = new OAuth2\Server($storage, $config);
-    $publicKey  = File::get(__DIR__."/../../.pubkey.pem");
-    $privateKey = File::get(__DIR__."/../../.privkey.pem");
+    $publicKey  = File::get(base_path() . "/.pubkey.pem");
+    $privateKey = File::get(base_path() . "/.privkey.pem");
     // create storage for OpenID Connect
-    $keyStorage = new OAuth2\Storage\Memory(array('keys' => array(
+    $keyStorage = new OAuth2\Storage\Memory(['keys' => [
         'public_key'  => $publicKey,
         'private_key' => $privateKey
-    )));
+    ]]);
     $server->addStorage($keyStorage, 'public_key');
     // set grant types
     $server->addGrantType(new OAuth2\GrantType\ClientCredentials($storage));
@@ -45,61 +44,62 @@ App::singleton('oauth2', function () {
 });
 
 // Core pages
-Route::any('install', array('as' => 'install', 'uses' => 'OauthController@install'));
-Route::any('login', array('as' => 'login', 'uses' => 'OauthController@login'));
-Route::any('logout', array('as' => 'logout', 'uses' => 'OauthController@logout'));
-Route::post('login_uport', array('as' => 'login_uport', 'middleware' => 'csrf', 'uses' => 'OauthController@login_uport'));
-Route::any('remote_logout', array('as' => 'remote_logout', 'uses' => 'OauthController@remote_logout'));
-Route::get('home', array('as' => 'home', 'uses' => 'HomeController@index'));
-Route::get('resources/{id}', array('as' => 'resources', 'uses' => 'HomeController@resources'));
-Route::get('login_authorize', array('as' => 'login_authorize', 'uses' => 'HomeController@login_authorize'));
-Route::get('login_authorize_action/{type}', array('as' => 'login_authorize_action', 'uses' => 'HomeController@login_authorize_action'));
-Route::any('client_register', array('as' => 'client_register', 'uses' => 'OauthController@client_register'));
-Route::any('oauth_login', array('as' => 'oauth_login', 'uses' => 'OauthController@oauth_login'));
-Route::get('clients', array('as' => 'clients', 'uses' => 'HomeController@clients'));
-Route::get('resource_view/{id}', array('as' => 'resource_view', 'uses' => 'HomeController@resource_view'));
-Route::get('change_permission/{id}', array('as' => 'change_permission', 'uses' => 'HomeController@change_permission'));
-Route::get('change_permission_add_edit/{id}', array('as' => 'change_permission_add_edit', 'uses' => 'HomeController@change_permission_add_edit'));
-Route::get('change_permission_remove_edit/{id}', array('as' => 'change_permission_remove_edit', 'uses' => 'HomeController@change_permission_remove_edit'));
-Route::get('change_permission_delete/{id}', array('as' => 'change_permission_delete', 'uses' => 'HomeController@change_permission_delete'));
-Route::get('consents_resource_server', array('as' => 'consents_resource_server', 'uses' => 'HomeController@consents_resource_server'));
-Route::get('authorize_resource_server', array('as' => 'authorize_resource_server', 'uses' => 'HomeController@authorize_resource_server'));
-Route::post('rs_authorize_action', array('as' => 'rs_authorize_action', 'uses' => 'HomeController@rs_authorize_action'));
-Route::get('authorize_client', array('as' => 'authorize_client', 'uses' => 'HomeController@authorize_client'));
-Route::get('authorize_client_action/{id}', array('as' => 'authorize_client_action', 'uses' => 'HomeController@authorize_client_action'));
-Route::get('authorize_client_disable/{id}', array('as' => 'authorize_client_disable', 'uses' => 'HomeController@authorize_client_disable'));
-Route::any('make_invitation', array('as' => 'make_invitation', 'uses' => 'HomeController@make_invitation'));
-Route::any('accept_invitation/{id}', array('as' => 'accept_invitation', 'uses' => 'OauthController@accept_invitation'));
-Route::any('process_invitation', array('as' => 'process_invitation', 'uses' => 'HomeController@process_invitation'));
-Route::any('password_email', array('as' => 'password_email', 'uses' => 'OauthController@password_email'));
-Route::any('password_reset/{id}', array('as' => 'password_reset', 'uses' => 'OauthController@password_reset'));
-Route::any('change_password', array('as' => 'change_password', 'uses' => 'HomeController@change_password'));
-Route::get('my_info', array('as' => 'my_info', 'uses' => 'HomeController@my_info'));
-Route::any('my_info_edit', array('as' => 'my_info_edit', 'uses' => 'HomeController@my_info_edit'));
-Route::get('default_policies', array('as' => 'default_policies', 'uses' => 'HomeController@default_policies'));
-Route::post('change_policy', array('as' => 'change_policy', 'uses' => 'HomeController@change_policy'));
-Route::any('reset_demo', array('as' => 'reset_demo', 'uses' => 'OauthController@reset_demo'));
-Route::get('check_demo', array('as' => 'check_demo', 'uses' => 'OauthController@check_demo'));
-Route::get('check_demo_self', array('as' => 'check_demo_self', 'middleware' => 'csrf', 'uses' => 'OauthController@check_demo_self'));
+Route::any('install', ['as' => 'install', 'uses' => 'OauthController@install']);
+Route::any('login', ['as' => 'login', 'uses' => 'OauthController@login']);
+Route::any('logout', ['as' => 'logout', 'uses' => 'OauthController@logout']);
+Route::post('login_uport', ['as' => 'login_uport', 'middleware' => 'csrf', 'uses' => 'OauthController@login_uport']);
+Route::any('remote_logout', ['as' => 'remote_logout', 'uses' => 'OauthController@remote_logout']);
+Route::get('home', ['as' => 'home', 'uses' => 'HomeController@index']);
+Route::get('resources/{id}', ['as' => 'resources', 'uses' => 'HomeController@resources']);
+Route::get('login_authorize', ['as' => 'login_authorize', 'uses' => 'HomeController@login_authorize']);
+Route::get('login_authorize_action/{type}', ['as' => 'login_authorize_action', 'uses' => 'HomeController@login_authorize_action']);
+Route::any('client_register', ['as' => 'client_register', 'uses' => 'OauthController@client_register']);
+Route::any('oauth_login', ['as' => 'oauth_login', 'uses' => 'OauthController@oauth_login']);
+Route::get('clients', ['as' => 'clients', 'uses' => 'HomeController@clients']);
+Route::get('resource_view/{id}', ['as' => 'resource_view', 'uses' => 'HomeController@resource_view']);
+Route::get('change_permission/{id}', ['as' => 'change_permission', 'uses' => 'HomeController@change_permission']);
+Route::get('change_permission_add_edit/{id}', ['as' => 'change_permission_add_edit', 'uses' => 'HomeController@change_permission_add_edit']);
+Route::get('change_permission_remove_edit/{id}', ['as' => 'change_permission_remove_edit', 'uses' => 'HomeController@change_permission_remove_edit']);
+Route::get('change_permission_delete/{id}', ['as' => 'change_permission_delete', 'uses' => 'HomeController@change_permission_delete']);
+Route::get('consents_resource_server', ['as' => 'consents_resource_server', 'uses' => 'HomeController@consents_resource_server']);
+Route::get('authorize_resource_server', ['as' => 'authorize_resource_server', 'uses' => 'HomeController@authorize_resource_server']);
+Route::post('rs_authorize_action', ['as' => 'rs_authorize_action', 'uses' => 'HomeController@rs_authorize_action']);
+Route::get('authorize_client', ['as' => 'authorize_client', 'uses' => 'HomeController@authorize_client']);
+Route::get('authorize_client_action/{id}', ['as' => 'authorize_client_action', 'uses' => 'HomeController@authorize_client_action']);
+Route::get('authorize_client_disable/{id}', ['as' => 'authorize_client_disable', 'uses' => 'HomeController@authorize_client_disable']);
+Route::any('make_invitation', ['as' => 'make_invitation', 'uses' => 'HomeController@make_invitation']);
+Route::any('accept_invitation/{id}', ['as' => 'accept_invitation', 'uses' => 'OauthController@accept_invitation']);
+Route::any('process_invitation', ['as' => 'process_invitation', 'uses' => 'HomeController@process_invitation']);
+Route::any('password_email', ['as' => 'password_email', 'uses' => 'OauthController@password_email']);
+Route::any('password_reset/{id}', ['as' => 'password_reset', 'uses' => 'OauthController@password_reset']);
+Route::any('change_password', ['as' => 'change_password', 'uses' => 'HomeController@change_password']);
+Route::get('my_info', ['as' => 'my_info', 'uses' => 'HomeController@my_info']);
+Route::any('my_info_edit', ['as' => 'my_info_edit', 'uses' => 'HomeController@my_info_edit']);
+Route::get('default_policies', ['as' => 'default_policies', 'uses' => 'HomeController@default_policies']);
+Route::post('change_policy', ['as' => 'change_policy', 'uses' => 'HomeController@change_policy']);
+Route::any('reset_demo', ['as' => 'reset_demo', 'uses' => 'OauthController@reset_demo']);
+Route::any('reset_demo1', ['as' => 'reset_demo1', 'uses' => 'OauthController@reset_demo1']);
+Route::get('check_demo', ['as' => 'check_demo', 'uses' => 'OauthController@check_demo']);
+Route::get('check_demo_self', ['as' => 'check_demo_self', 'middleware' => 'csrf', 'uses' => 'OauthController@check_demo_self']);
 
-Route::post('token', array('as' => 'token', function () {
+Route::post('token', ['as' => 'token', function () {
     $bridgedRequest = OAuth2\HttpFoundationBridge\Request::createFromRequest(Request::instance());
     $bridgedResponse = new OAuth2\HttpFoundationBridge\Response();
     $bridgedResponse = App::make('oauth2')->handleTokenRequest($bridgedRequest, $bridgedResponse);
     return $bridgedResponse;
-}));
+}]);
 
-Route::get('authorize', array('as' => 'authorize', 'uses' => 'OauthController@oauth_authorize'));
+Route::get('authorize', ['as' => 'authorize', 'uses' => 'OauthController@oauth_authorize']);
 
-Route::get('jwks_uri', array('as' => 'jwks_uri', 'uses' => 'OauthController@jwks_uri'));
+Route::get('jwks_uri', ['as' => 'jwks_uri', 'uses' => 'OauthController@jwks_uri']);
 
-Route::get('userinfo', array('as' => 'userinfo', 'uses' => 'OauthController@userinfo'));
+Route::get('userinfo', ['as' => 'userinfo', 'uses' => 'OauthController@userinfo']);
 
 // Dynamic client registration
-Route::post('register', array('as' => 'register', 'uses' => 'UmaController@register'));
+Route::post('register', ['as' => 'register', 'uses' => 'UmaController@register']);
 
 // Requesting party claims endpoint
-Route::get('rqp_claims', array('as' => 'rqp_claims', 'uses' => 'UmaController@rqp_claims'));
+Route::get('rqp_claims', ['as' => 'rqp_claims', 'uses' => 'UmaController@rqp_claims']);
 
 // Following routes need token authentiation
 Route::group(['middleware' => 'token'], function () {
@@ -110,28 +110,28 @@ Route::group(['middleware' => 'token'], function () {
     Route::resource('policy', 'PolicyController');
 
     // Permission request
-    Route::post('permission', array('as' => 'permission', 'uses' => 'UmaController@permission'));
+    Route::post('permission', ['as' => 'permission', 'uses' => 'UmaController@permission']);
 
     // Requesting party token request
-    Route::post('authz_request', array('as' => 'authz_request', 'uses' => 'UmaController@authz_request'));
+    Route::post('authz_request', ['as' => 'authz_request', 'uses' => 'UmaController@authz_request']);
 
     // introspection
-    Route::post('introspect', array('as'=> 'introspect', 'uses' => 'OauthController@introspect'));
+    Route::post('introspect', ['as'=> 'introspect', 'uses' => 'OauthController@introspect']);
 
     // Revocation
-    Route::post('revoke', array('as' => 'revoke', 'uses' => 'OauthController@revoke'));
+    Route::post('revoke', ['as' => 'revoke', 'uses' => 'OauthController@revoke']);
 });
 
 // OpenID Connect relying party routes
-Route::get('google', array('as' => 'google', 'uses' => 'OauthController@google_redirect'));
-Route::get('account/google', array('as' => 'account/google', 'uses' => 'OauthController@google'));
-Route::get('twitter', array('as' => 'twitter', 'uses' => 'OauthController@twitter_redirect'));
-Route::get('account/twitter', array('as' => 'account/twitter', 'uses' => 'OauthController@twitter'));
-Route::get('mdnosh', array('as' => 'mdnosh', 'uses' => 'OauthController@mdnosh'));
-Route::get('installgoogle', array('as' => 'installgoogle', 'uses' => 'OauthController@installgoogle'));
+Route::get('google', ['as' => 'google', 'uses' => 'OauthController@google_redirect']);
+Route::get('account/google', ['as' => 'account/google', 'uses' => 'OauthController@google']);
+Route::get('twitter', ['as' => 'twitter', 'uses' => 'OauthController@twitter_redirect']);
+Route::get('account/twitter', ['as' => 'account/twitter', 'uses' => 'OauthController@twitter']);
+Route::get('mdnosh', ['as' => 'mdnosh', 'uses' => 'OauthController@mdnosh']);
+Route::get('installgoogle', ['as' => 'installgoogle', 'uses' => 'OauthController@installgoogle']);
 
 // Configuration endpoints
-Route::get('.well-known/openid-configuration', array('as' => 'openid-configuration', function () {
+Route::get('.well-known/openid-configuration', ['as' => 'openid-configuration', function () {
     $scopes = DB::table('oauth_scopes')->get();
     $config = [
         'issuer' => URL::to('/'),
@@ -153,7 +153,7 @@ Route::get('.well-known/openid-configuration', array('as' => 'openid-configurati
         'revocation_endpoint' => URL::to('revoke')
     ];
     return $config;
-}));
+}]);
 
 Route::get('.well-known/uma-configuration', function () {
     $config = [
@@ -200,15 +200,15 @@ Route::get('.well-known/uma-configuration', function () {
 });
 
 // Webfinger
-Route::get('.well-known/webfinger', array('as' => 'webfinger', 'uses' => 'OauthController@webfinger'));
+Route::get('.well-known/webfinger', ['as' => 'webfinger', 'uses' => 'OauthController@webfinger']);
 
 // Update system call
-Route::get('update_system', array('as' => 'update_system', 'uses' => 'OauthController@update_system'));
+Route::get('update_system', ['as' => 'update_system', 'uses' => 'OauthController@update_system']);
 
 // test
-Route::any('test1', array('as' => 'test1', 'uses' => 'OauthController@test1'));
+Route::any('test1', ['as' => 'test1', 'uses' => 'OauthController@test1']);
 
-Route::get('/', array('as' => 'welcome', function () {
+Route::get('/', ['as' => 'welcome', function () {
     $query = DB::table('owner')->first();
     if ($query) {
         if (Auth::check()) {
@@ -221,4 +221,4 @@ Route::get('/', array('as' => 'welcome', function () {
     } else {
         return redirect()->route('install');
     }
-}));
+}]);

@@ -8,6 +8,7 @@ use DB;
 use Form;
 use Illuminate\Http\Request;
 use QrCode;
+use Session;
 use URL;
 
 class HomeController extends Controller
@@ -29,7 +30,7 @@ class HomeController extends Controller
      */
     public function index(Request $request)
     {
-        $data['name'] = $request->session()->get('owner');
+        $data['name'] = Session::get('owner');
         $data['title'] = 'My Resource Services';
         $data['content'] = 'No resource services yet.';
         $mdnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', '%mdNOSH%')->first();
@@ -45,10 +46,10 @@ class HomeController extends Controller
             setcookie('pnosh_lastname', $owner->lastname);
             setcookie('pnosh_dob', date("m/d/Y", strtotime($owner->DOB)));
             setcookie('pnosh_email', $owner->email);
-            setcookie('pnosh_username', $request->session()->get('username'));
+            setcookie('pnosh_username', Session::get('username'));
         }
-        $data['message_action'] = $request->session()->get('message_action');
-        $request->session()->forget('message_action');
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
         $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
         if ($query) {
             $data['content'] = '<div class="list-group">';
@@ -73,12 +74,12 @@ class HomeController extends Controller
      */
     public function resources(Request $request, $id)
     {
-        $data['name'] = $request->session()->get('owner');
+        $data['name'] = Session::get('owner');
         $client = DB::table('oauth_clients')->where('client_id', '=', $id)->first();
         $data['title'] = 'My Resources from ' . $client->client_name;
         $data['content'] = 'No resources registered yet.';
-        $data['message_action'] = $request->session()->get('message_action');
-        $request->session()->forget('message_action');
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
         $default_policy_type = [
             'login_direct',
             'login_md_nosh',
@@ -127,7 +128,7 @@ class HomeController extends Controller
             }
             $data['content'] .= '</div>';
         }
-        $request->session()->put('current_client_id', $id);
+        Session::put('current_client_id', $id);
         return view('home', $data);
     }
 
@@ -140,9 +141,9 @@ class HomeController extends Controller
      */
     public function resource_view(Request $request, $id)
     {
-        $data['name'] = $request->session()->get('owner');
-        $data['message_action'] = $request->session()->get('message_action');
-        $request->session()->forget('message_action');
+        $data['name'] = Session::get('owner');
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
         $uma_scope_array = [
             'view' => 'View',
             'edit' => 'Edit'
@@ -156,7 +157,7 @@ class HomeController extends Controller
         $query = DB::table('resource_set')->where('resource_set_id', '=', $id)->first();
         $data['title'] = 'Permissions for ' . $query->name;
         $data['content'] = 'No policies registered for this resource.';
-        $data['back'] = '<a href="' . URL::to('resources') . '/' . $request->session()->get('current_client_id') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resources</a>';
+        $data['back'] = '<a href="' . URL::to('resources') . '/' . Session::get('current_client_id') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resources</a>';
         $query1 = DB::table("policy")->where('resource_set_id', '=', $id)->get();
         if ($query1) {
             $data['content'] = '<table class="table table-striped"><thead><tr><th>User</th><th>Permissions</th><th></th></thead><tbody>';
@@ -190,7 +191,7 @@ class HomeController extends Controller
 
     public function change_permission(Request $request, $id)
     {
-        $data['name'] = $request->session()->get('owner');
+        $data['name'] = Session::get('owner');
         $uma_scope_array = [
             'view' => 'view',
             'edit' => 'edit'
@@ -240,7 +241,7 @@ class HomeController extends Controller
         DB::table('policy_scopes')->insert($data);
         $query = DB::table("policy")->where('policy_id', '=', $id)->first();
         $url = URL::to('resource_view') . '/' . $query->resource_set_id;
-        $request->session()->put('message_action', 'Added permission to edit resource');
+        Session::put('message_action', 'Added permission to edit resource');
         return redirect($url);
     }
 
@@ -249,7 +250,7 @@ class HomeController extends Controller
         DB::table('policy_scopes')->where('policy_id', '=', $id)->where('scope', '=', 'edit')->delete();
         $query = DB::table("policy")->where('policy_id', '=', $id)->first();
         $url = URL::to('resource_view') . '/' . $query->resource_set_id;
-        $request->session()->put('message_action', 'Removed permission to edit resource');
+        Session::put('message_action', 'Removed permission to edit resource');
         return redirect($url);
     }
 
@@ -260,7 +261,7 @@ class HomeController extends Controller
         $query = DB::table("policy")->where('policy_id', '=', $id)->first();
         $url = URL::to('resource_view') . '/' . $query->resource_set_id;
         DB::table('policy')->where('policy_id', '=', $id)->delete();
-        $request->session()->put('message_action', 'Removed all permissions to access the resource');
+        Session::put('message_action', 'Removed all permissions to access the resource');
         return redirect($url);
     }
 
@@ -273,11 +274,11 @@ class HomeController extends Controller
      */
     public function clients(Request $request)
     {
-        $data['name'] = $request->session()->get('owner');
+        $data['name'] = Session::get('owner');
         $data['title'] = 'Authorized Clients';
         $data['content'] = 'No authorized clients.';
-        $data['message_action'] = $request->session()->get('message_action');
-        $request->session()->forget('message_action');
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
         $oauth_scope_array = [
             'openid' => 'OpenID Connect',
             'uma_authorization' => 'Access Resources',
@@ -307,12 +308,12 @@ class HomeController extends Controller
 
     public function consents_resource_server(Request $request)
     {
-        $data['name'] = $request->session()->get('owner');
+        $data['name'] = Session::get('owner');
         $data['title'] = 'Resource Registration Consent';
-        $data['message_action'] = $request->session()->get('message_action');
-        $data['back'] = '<a href="' . URL::to('resources') . '/' . $request->session()->get('current_client_id') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resources</a>';
-        $request->session()->forget('message_action');
-        $query = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('current_client_id'))->first();
+        $data['message_action'] = Session::get('message_action');
+        $data['back'] = '<a href="' . URL::to('resources') . '/' . Session::get('current_client_id') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resources</a>';
+        Session::forget('message_action');
+        $query = DB::table('oauth_clients')->where('client_id', '=', Session::get('current_client_id'))->first();
         $scopes_array = explode(' ', $query->scope);
         if ($query->logo_uri == '') {
             $data['content'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
@@ -344,12 +345,12 @@ class HomeController extends Controller
 
     public function authorize_resource_server(Request $request)
     {
-        $data['name'] = $request->session()->get('owner');
+        $data['name'] = Session::get('owner');
         $data['title'] = 'Resource Registration Consent';
         $data['content'] = 'No resource servers pending authorization.';
-        $data['message_action'] = $request->session()->get('message_action');
-        $request->session()->forget('message_action');
-        $query = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('oauth_client_id'))->first();
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
+        $query = DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->first();
         if ($query) {
             $scopes_array = explode(' ', $query->scope);
             if ($query->logo_uri == '') {
@@ -412,38 +413,38 @@ class HomeController extends Controller
             DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data);
             $client = DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->first();
             $this->group_policy($request->input('client_id'), $types, 'update');
-            if ($request->session()->get('oauth_response_type') == 'code') {
+            if (Session::get('oauth_response_type') == 'code') {
                 $user_array = explode(' ', $client->user_id);
-                $user_array[] = $request->session()->get('username');
+                $user_array[] = Session::get('username');
                 $data['user_id'] = implode(' ', $user_array);
                 DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data);
-                $request->session()->put('is_authorized', 'true');
+                Session::put('is_authorized', 'true');
             }
-            $request->session()->put('message_action', 'You just authorized a resource server named ' . $client->client_name);
+            Session::put('message_action', 'You just authorized a resource server named ' . $client->client_name);
         } else {
-            $request->session()->put('message_action', 'You just unauthorized a resource server named ' . $client->client_name);
-            if ($request->session()->get('oauth_response_type') == 'code') {
-                $request->session()->put('is_authorized', 'false');
+            Session::put('message_action', 'You just unauthorized a resource server named ' . $client->client_name);
+            if (Session::get('oauth_response_type') == 'code') {
+                Session::put('is_authorized', 'false');
             } else {
                 $data1['authorized'] = 0;
                 DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data1);
                 $this->group_policy($request->input('client_id'), $types, 'delete');
             }
         }
-        if ($request->session()->get('oauth_response_type') == 'code') {
+        if (Session::get('oauth_response_type') == 'code') {
             return redirect()->route('authorize');
         } else {
-            return redirect()->route('resources', ['id' => $request->session()->get('current_client_id')]);
+            return redirect()->route('resources', ['id' => Session::get('current_client_id')]);
         }
     }
 
     public function authorize_client(Request $request)
     {
-        $data['name'] = $request->session()->get('owner');
+        $data['name'] = Session::get('owner');
         $data['title'] = 'Clients Pending Authorization';
         $data['content'] = 'No clients pending authorization.';
-        $data['message_action'] = $request->session()->get('message_action');
-        $request->session()->forget('message_action');
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
         $oauth_scope_array = [
             'openid' => 'OpenID Connect',
             'uma_authorization' => 'Access Resources',
@@ -474,27 +475,25 @@ class HomeController extends Controller
 
     public function authorize_client_action(Request $request, $id)
     {
-        $data = [
-            'authorized' => 1
-        ];
+        $data['authorized'] = 1;
         DB::table('oauth_clients')->where('client_id', '=', $id)->update($data);
         $query = DB::table('oauth_clients')->where('client_id', '=', $id)->first();
-        $request->session()->put('message_action', 'You just authorized a client named ' . $query->client_name);
+        Session::put('message_action', 'You just authorized a client named ' . $query->client_name);
         return redirect()->route('authorize_client');
     }
 
     public function authorize_client_disable(Request $request, $id)
     {
         $query = DB::table('oauth_clients')->where('client_id', '=', $id)->first();
-        $request->session()->put('message_action', 'You just unauthorized a client named ' . $query->client_name);
+        Session::put('message_action', 'You just unauthorized a client named ' . $query->client_name);
         DB::table('oauth_clients')->where('client_id', '=', $id)->delete();
         return redirect()->route('authorize_client');
     }
 
     public function make_invitation(Request $request)
     {
-        $data['name'] = $request->session()->get('owner');
         $owner = DB::table('owner')->first();
+        $data['name'] = Session::get('owner');
         if ($request->isMethod('post')) {
             $this->validate($request, [
                 'email' => 'required|unique:users,email',
@@ -523,7 +522,7 @@ class HomeController extends Controller
             $title = 'Invitation to ' . $owner->firstname . ' ' . $owner->lastname  . "'s Authorization Server";
             $to = $request->input('email');
             $this->send_mail('auth.emails.generic', $data2, $title, $to);
-            $data3['name'] = $request->session()->get('owner');
+            $data3['name'] = Session::get('owner');
             $data3['title'] = 'Invitation Code';
             $data3['content'] = '<p>Invitation sent to ' . $request->input('first_name') . ' ' . $request->input('last_name') . ' (' . $to . ')</p>';
             $data3['content'] .= '<p>Alternatively, show the recently invited guest your QR code:</p><div style="text-align: center;">';
@@ -563,14 +562,14 @@ class HomeController extends Controller
             'offline_access' => 'fa-share-alt',
             'uma_authorization' => 'fa-key'
         ];
-        if ($request->session()->get('logo_uri') == '') {
+        if (Session::get('logo_uri') == '') {
             $data['permissions'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
         } else {
-            $data['permissions'] = '<div><img src="' . $request->session()->get('logo_uri') . '" style="margin:20px;text-align: center;"></div>';
+            $data['permissions'] = '<div><img src="' . Session::get('logo_uri') . '" style="margin:20px;text-align: center;"></div>';
         }
-        $data['permissions'] .= '<h2>' . $request->session()->get('client_name') . ' would like to:</h2>';
+        $data['permissions'] .= '<h2>' . Session::get('client_name') . ' would like to:</h2>';
         $data['permissions'] .= '<ul class="list-group">';
-        $client = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('oauth_client_id'))->first();
+        $client = DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->first();
         $scopes_array = explode(' ', $client->scope);
         foreach ($scopes_array as $scope) {
             if (array_key_exists($scope, $scope_array)) {
@@ -585,32 +584,32 @@ class HomeController extends Controller
     {
         if ($type == 'yes') {
             // Add user to client
-            $client = DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('oauth_client_id'))->first();
+            $client = DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->first();
             $user_array = explode(' ', $client->user_id);
-            $user_array[] = $request->session()->get('username');
+            $user_array[] = Session::get('username');
             $data['user_id'] = implode(' ', $user_array);
-            DB::table('oauth_clients')->where('client_id', '=', $request->session()->get('oauth_client_id'))->update($data);
-            $request->session()->put('is_authorized', true);
+            DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->update($data);
+            Session::put('is_authorized', true);
         } else {
-            $request->session()->put('is_authorized', false);
+            Session::put('is_authorized', false);
         }
         return redirect()->route('authorize');
     }
 
     public function change_password(Request $request)
     {
-        $data['name'] = $request->session()->get('owner');
+        $data['name'] = Session::get('owner');
         if ($request->isMethod('post')) {
             $this->validate($request, [
                 'old_password' => 'required',
                 'password' => 'required|min:4',
                 'confirm_password' => 'required|min:4|same:password',
             ]);
-            $query = DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->first();
+            $query = DB::table('oauth_users')->where('username', '=', Session::get('username'))->first();
             if ($query->password == sha1($request->input('old_password'))) {
                 $data1['password'] = sha1($request->input('password'));
-                DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->update($data1);
-                $request->session()->put('message_action', 'Password changed!');
+                DB::table('oauth_users')->where('username', '=', Session::get('username'))->update($data1);
+                Session::put('message_action', 'Password changed!');
                 return redirect()->route('home');
             } else {
                 return redirect()->back()->withErrors(['tryagain' => 'Your old password was incorrect.  Try again.']);
@@ -622,9 +621,9 @@ class HomeController extends Controller
 
     public function my_info(Request $request)
     {
-        $query = DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->first();
-        $data['message_action'] = $request->session()->get('message_action');
-        $request->session()->forget('message_action');
+        $query = DB::table('oauth_users')->where('username', '=', Session::get('username'))->first();
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
         $data['title'] = 'My Information';
         $data['content'] = '<ul class="list-group">';
         $data['content'] .= '<li class="list-group-item">First Name: ' . $query->first_name . '</li>';
@@ -646,7 +645,7 @@ class HomeController extends Controller
     public function my_info_edit(Request $request)
     {
         $owner_query = DB::table('owner')->first();
-        $query = DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->first();
+        $query = DB::table('oauth_users')->where('username', '=', Session::get('username'))->first();
         if ($request->isMethod('post')) {
             if ($owner_query->sub == $query->sub) {
                 $this->validate($request, [
@@ -667,7 +666,7 @@ class HomeController extends Controller
                 'last_name' => $request->input('last_name'),
                 'email' => $request->input('email')
             ];
-            DB::table('oauth_users')->where('username', '=', $request->session()->get('username'))->update($data1);
+            DB::table('oauth_users')->where('username', '=', Session::get('username'))->update($data1);
             if ($owner_query->sub == $query->sub) {
                 $owner_data = [
                     'lastname' => $request->input('last_name'),
@@ -678,7 +677,7 @@ class HomeController extends Controller
                 ];
                 DB::table('owner')->where('id', '=', '1')->update($owner_data);
             }
-            $request->session()->put('message_action', 'Information Updated.');
+            Session::put('message_action', 'Information Updated.');
             return redirect()->route('my_info');
         } else {
             $data = [
@@ -697,9 +696,9 @@ class HomeController extends Controller
 
     public function default_policies(Request $request)
     {
-        $data['message_action'] = $request->session()->get('message_action');
-        $request->session()->forget('message_action');
-        $data['name'] = $request->session()->get('owner');
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
+        $data['name'] = Session::get('owner');
         $query = DB::table('owner')->first();
         $data['login_direct'] = '';
         $data['login_md_nosh'] = '';
@@ -748,7 +747,7 @@ class HomeController extends Controller
             }
             $query = DB::table('owner')->first();
             DB::table('owner')->where('id', '=', $query->id)->update($data);
-            $request->session()->put('message_action', 'Default policies saved!');
+            Session::put('message_action', 'Default policies saved!');
             return redirect()->route('home');
         } else {
             return redirect()->route('home');
