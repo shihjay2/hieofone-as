@@ -401,7 +401,7 @@ class OauthController extends Controller
                     Session::put('email', $uport_user->email);
                     Session::put('login_origin', 'login_direct');
                     Session::put('invite', 'no');
-                    if ($owner_query->sub == $oauth_user->sub) {
+                    if ($owner_query->sub == $uport_user->sub) {
                         Session::put('invite', 'yes');
                     }
                     $user = DB::table('users')->where('email', '=', $uport_user->email)->first();
@@ -668,7 +668,6 @@ class OauthController extends Controller
                 ];
                 DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->update($jwt_data);
                 // Access token granted, authorize login!
-                $oauth_user = DB::table('oauth_users')->where('username', '=', $request->username)->first();
                 Session::put('access_token',  $bridgedResponse['access_token']);
                 Session::put('client_id', $client_id);
                 Session::put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
@@ -679,7 +678,7 @@ class OauthController extends Controller
                 Session::put('email', $google_user->email);
                 Session::put('login_origin', 'login_direct');
                 Session::put('invite', 'no');
-                if ($owner_query->sub == $oauth_user->sub) {
+                if ($owner_query->sub == $google_user->sub) {
                     Session::put('invite', 'yes');
                 }
                 $user = DB::table('users')->where('email', '=', $google_user->email)->first();
@@ -1266,6 +1265,8 @@ class OauthController extends Controller
                 $data['email'] = $request->input('email');
                 $owner = DB::table('owner')->first();
                 DB::table('oauth_users')->where('sub', '=', $owner->sub)->update($data);
+                $oauth_user = DB::table('oauth_users')->where('sub', '=', $owner->sub)->first();
+                DB::table('users')->where('name', '=', $oauth_user->username)->update($data);
                 $time = time() + 600;
                 $file = $time . ',' . $request->ip();
                 File::put(base_path() . "/.timer", $file);
