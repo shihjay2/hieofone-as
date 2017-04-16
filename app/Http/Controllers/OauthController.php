@@ -681,8 +681,8 @@ class OauthController extends Controller
                 if ($owner_query->sub == $google_user->sub) {
                     Session::put('invite', 'yes');
                 }
-                $user = DB::table('users')->where('email', '=', $google_user->email)->first();
-                Auth::loginUsingId($user->id);
+                $local_user = DB::table('users')->where('email', '=', $google_user->email)->first();
+                Auth::loginUsingId($local_user->id);
                 Session::save();
                 if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
                     // If generated from rqp_claims endpoint, do this
