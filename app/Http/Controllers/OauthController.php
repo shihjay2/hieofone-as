@@ -728,7 +728,7 @@ class OauthController extends Controller
                     return redirect()->route('home');
                 }
             } else {
-                return redirect()->route('login')->withErrors(['tryagain' => 'Client ID:' . $client_id . '.  OAuth authentication failed.  Please contact the owner of this authorization server for assistance.']);
+                return redirect()->route('login')->withErrors(['tryagain' => 'Client ID:' . $client_id . json_encode($bridgedResponse) . '.  OAuth authentication failed.  Please contact the owner of this authorization server for assistance.']);
             }
         } else {
             return redirect()->route('login')->withErrors(['tryagain' => 'User does not exist.  Please contact the owner of this authorization server for assistance.']);
