@@ -102,6 +102,8 @@
 						<div class="form-group">
 							<div class="col-md-6 col-md-offset-3">
 								<button type="button" class="btn btn-primary btn-block" id="connectUportBtn" onclick="loginBtnClick()">Login with uPort</button>
+								<!-- <button type="button" class="btn btn-primary btn-block" id="connectUportBtn1" onclick="uportConnect()">Connect uPort</button> -->
+								<!-- <button type="button" class="btn btn-primary btn-block" id="connectUportBtn2" onclick="sendEther()">Send Ether</button> -->
 								<a class="btn btn-primary btn-block" href="{{ url('/mdnosh') }}">
 									<i class="fa fa-btn fa-openid"></i> Login with mdNOSH
 								</a>
