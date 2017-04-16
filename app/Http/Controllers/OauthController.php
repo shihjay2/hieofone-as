@@ -682,49 +682,54 @@ class OauthController extends Controller
                     Session::put('invite', 'yes');
                 }
                 $local_user = DB::table('users')->where('email', '=', $google_user->email)->first();
-                Auth::loginUsingId($local_user->id);
-                Session::save();
                 if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
                     // If generated from rqp_claims endpoint, do this
                     return redirect()->route('rqp_claims');
                 } elseif (Session::get('oauth_response_type') == 'code') {
-                    $client_id = Session::get('oauth_client_id');
                     $authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
                     if ($authorized) {
                         Session::put('is_authorized', 'true');
-                        if ($owner_query->any_npi == 1 || $owner_query->login_google == 1) {
-                            // Add user if not added already
-                            $sub = $user->getId();
-                            $sub_query = DB::table('oauth_users')->where('sub', '=', $sub)->first();
-                            if (!$sub_query) {
-                                $name_arr = explode(' ', $user->getName());
-                                $user_data = [
-                                    'username' => $sub,
-                                    'password' => sha1($sub),
-                                    'first_name' => $name_arr[0],
-                                    'last_name' => $name_arr[1],
-                                    'sub' => $sub,
-                                    'email' => $user->getEmail()
-                                ];
-                                DB::table('oauth_users')->insert($user_data);
-                                $user_data1 = [
-                                    'name' => $sub,
-                                    'email' => $user->getEmail()
-                                ];
-                                DB::table('users')->insert($user_data1);
-                            }
-                            Session::put('sub', $sub);
+                        if ($local_user) {
+                            Auth::loginUsingId($local_user->id);
                             Session::save();
-                            $user1 = DB::table('users')->where('name', '=', $sub)->first();
-                            Auth::loginUsingId($user1->id);
                             return redirect()->route('authorize');
                         } else {
-                            return redirect()->route('login')->withErrors(['tryagain' => 'Any NPI or Any Google not set.  Please contact the owner of this authorization server for assistance.']);
+                            if ($owner_query->any_npi == 1 || $owner_query->login_google == 1) {
+                                // Add user if not added already
+                                $sub = $user->getId();
+                                $sub_query = DB::table('oauth_users')->where('sub', '=', $sub)->first();
+                                if (!$sub_query) {
+                                    $name_arr = explode(' ', $user->getName());
+                                    $user_data = [
+                                        'username' => $sub,
+                                        'password' => sha1($sub),
+                                        'first_name' => $name_arr[0],
+                                        'last_name' => $name_arr[1],
+                                        'sub' => $sub,
+                                        'email' => $user->getEmail()
+                                    ];
+                                    DB::table('oauth_users')->insert($user_data);
+                                    $user_data1 = [
+                                        'name' => $sub,
+                                        'email' => $user->getEmail()
+                                    ];
+                                    DB::table('users')->insert($user_data1);
+                                }
+                                Session::put('sub', $sub);
+                                $local_user1 = DB::table('users')->where('name', '=', $sub)->first();
+                                Auth::loginUsingId($local_user1->id);
+                                Session::save();
+                                return redirect()->route('authorize');
+                            } else {
+                                return redirect()->route('login')->withErrors(['tryagain' => 'Any NPI or Any Google not set.  Please contact the owner of this authorization server for assistance.']);
+                            }
                         }
                     } else {
                         return redirect()->route('login')->withErrors(['tryagain' => 'OAuth client not authorized.  Please contact the owner of this authorization server for assistance.']);
                     }
                 } else {
+                    Auth::loginUsingId($local_user->id);
+                    Session::save();
                     return redirect()->route('home');
                 }
             // } else {
