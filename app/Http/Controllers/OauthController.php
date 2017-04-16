@@ -651,24 +651,24 @@ class OauthController extends Controller
             }
             // Get client secret
             $client1 = DB::table('oauth_clients')->where('client_id', '=', $client_id)->first();
-            $request->merge([
-                'client_id' => $client_id,
-                'client_secret' => $client1->client_secret,
-                'grant_type' => 'client_credentials'
-            ]);
-            $bridgedRequest = BridgeRequest::createFromRequest($request);
-            $bridgedResponse = new BridgeResponse();
-            $bridgedResponse = App::make('oauth2')->grantAccessToken($bridgedRequest, $bridgedResponse);
-            if (isset($bridgedResponse['access_token'])) {
+            // $request->merge([
+            //     'client_id' => $client_id,
+            //     'client_secret' => $client1->client_secret,
+            //     'grant_type' => 'client_credentials'
+            // ]);
+            // $bridgedRequest = BridgeRequest::createFromRequest($request);
+            // $bridgedResponse = new BridgeResponse();
+            // $bridgedResponse = App::make('oauth2')->grantAccessToken($bridgedRequest, $bridgedResponse);
+            // if (isset($bridgedResponse['access_token'])) {
                 // Update to include JWT for introspection in the future if needed
-                $new_token_query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->first();
-                $jwt_data = [
-                    'jwt' => $bridgedResponse['access_token'],
-                    'expires' => $new_token_query->expires
-                ];
-                DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->update($jwt_data);
+                // $new_token_query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->first();
+                // $jwt_data = [
+                //     'jwt' => $bridgedResponse['access_token'],
+                //     'expires' => $new_token_query->expires
+                // ];
+                // DB::table('oauth_access_tokens')->where('access_token', '=', substr($bridgedResponse['access_token'], 0, 255))->update($jwt_data);
                 // Access token granted, authorize login!
-                Session::put('access_token',  $bridgedResponse['access_token']);
+                // Session::put('access_token',  $bridgedResponse['access_token']);
                 Session::put('client_id', $client_id);
                 Session::put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
                 Session::put('username', $google_user->username);
@@ -727,9 +727,9 @@ class OauthController extends Controller
                 } else {
                     return redirect()->route('home');
                 }
-            } else {
-                return redirect()->route('login')->withErrors(['tryagain' => 'Client ID:' . $client_id . '.  Response: ' . json_encode($bridgedResponse) . '.  Request: ' . json_encode($request->all()) . '.  OAuth authentication failed.  Please contact the owner of this authorization server for assistance.']);
-            }
+            // } else {
+            //     return redirect()->route('login')->withErrors(['tryagain' => 'Client ID:' . $client_id . '.  Response: ' . json_encode($bridgedResponse) . '.  Request: ' . json_encode($request->all()) . '.  OAuth authentication failed.  Please contact the owner of this authorization server for assistance.']);
+            // }
         } else {
             return redirect()->route('login')->withErrors(['tryagain' => 'User does not exist.  Please contact the owner of this authorization server for assistance.']);
         }
