@@ -717,7 +717,11 @@ class OauthController extends Controller
             $data['npi'] = '<div class="list-group">';
             if ($npi_arr['result_count'] > 0) {
                 foreach ($npi_arr['results'] as $npi) {
-                    $label = '<strong>Name:</strong> ' . $npi['basic']['first_name'] . ' ' . $npi['basic']['middle_name'] . ' ' . $npi['basic']['last_name'] . ', ' . $npi['basic']['credential'];
+                    $label = '<strong>Name:</strong> ' . $npi['basic']['first_name'];
+                    if (isset($npi['basic']['middle_name'])) {
+                        $label .= ' ' . $npi['basic']['middle_name'];
+                    }
+                    $label .= ' ' . $npi['basic']['last_name'] . ', ' . $npi['basic']['credential'];
                     $label .= '<br><strong>NPI:</strong> ' . $npi['number'];
                     $label .= '<br><strong>Specialty:</strong> ' . $npi['taxonomies'][0]['desc'];
                     $label .= '<br><strong>Location:</strong> ' . $npi['addresses'][0]['city'] . ', ' . $npi['addresses'][0]['state'];
@@ -1326,7 +1330,5 @@ class OauthController extends Controller
 
     public function test1(Request $request)
     {
-        $arr = $this->npi_lookup('Michael', 'Chen');
-        return $arr;
     }
 }
