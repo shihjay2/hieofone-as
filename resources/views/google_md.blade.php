@@ -8,13 +8,13 @@
 				<div class="panel-heading">Additional information to access {{ $owner }}</div>
 				<div class="panel-body">
 					<div style="text-align: center;">
-						<h4>Choose the NPI that matches your identity:</h4>
+						<h5>Choose the NPI that matches your identity:</h5>
 					</div>
 					{!! $npi !!}
 					<form class="form-horizontal" role="form" method="POST" action="{{ url('/google_md') }}">
 						{{ csrf_field() }}
 						<div style="text-align: center;">
-							<h4>Or enter your NPI number below if you don't see one that matches in the list.</h4>
+							<h5>Or enter your NPI number below if you don't see one that matches in the list.</h5>
 						</div>
 						<br>
 						<div class="form-group{{ $errors->has('npi') ? ' has-error' : '' }}">
