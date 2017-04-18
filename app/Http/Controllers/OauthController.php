@@ -1326,5 +1326,7 @@ class OauthController extends Controller
 
     public function test1(Request $request)
     {
+        $arr = $this->npi_lookup('Michael', 'Chen');
+        return $arr;
     }
 }

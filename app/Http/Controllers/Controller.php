@@ -73,7 +73,23 @@ class Controller extends BaseController
 
     protected function npi_lookup($first, $last)
     {
-        $url = 'https://npiregistry.cms.hhs.gov/api/?first_name=' . $first . '&last_name=' . $last . '&enumeration_type=&taxonomy_description=&first_name=&last_name=&organization_name=&address_purpose=&city=&state=&postal_code=&country_code=&limit=&skip=';
+        $url = 'https://npiregistry.cms.hhs.gov/api/?';
+        $fields = http_build_query([
+            'number' => '',
+            'first_name' => $first,
+            'last_name' => $last,
+            'enumeration_type' => '',
+            'taxonomy_description' => '',
+            'organization_name' => '',
+            'address_purpose' => '',
+            'city' => '',
+            'state' => '',
+            'postal_code' => '',
+            'country_code' => '',
+            'limit' => '',
+            'skip' => ''
+        ]);
+        $url .= $fields;
         $ch = curl_init();
         curl_setopt($ch,CURLOPT_URL, $url);
         curl_setopt($ch,CURLOPT_FAILONERROR,1);
