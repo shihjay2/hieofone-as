@@ -124,6 +124,7 @@ Route::group(['middleware' => 'token'], function () {
 
 // OpenID Connect relying party routes
 Route::get('google', ['as' => 'google', 'uses' => 'OauthController@google_redirect']);
+Route::any('google_md/{npi?}', ['as' => 'google_md', 'uses' => 'OauthController@google_md']);
 Route::get('account/google', ['as' => 'account/google', 'uses' => 'OauthController@google']);
 Route::get('twitter', ['as' => 'twitter', 'uses' => 'OauthController@twitter_redirect']);
 Route::get('account/twitter', ['as' => 'account/twitter', 'uses' => 'OauthController@twitter']);

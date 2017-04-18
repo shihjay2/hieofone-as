@@ -77,7 +77,7 @@
 @section('view.scripts')
 <script type="text/javascript">
 	$(document).ready(function() {
-		$("#email").focus();
+		$("#username").focus();
 	});
 </script>
 @endsection

@@ -667,6 +667,8 @@ class HomeController extends Controller
                 'email' => $request->input('email')
             ];
             DB::table('oauth_users')->where('username', '=', Session::get('username'))->update($data1);
+            $data2['email'] = $request->input('email');
+            DB::table('users')->where('name', '=', Session::get('username'))->update($data2);
             if ($owner_query->sub == $query->sub) {
                 $owner_data = [
                     'lastname' => $request->input('last_name'),

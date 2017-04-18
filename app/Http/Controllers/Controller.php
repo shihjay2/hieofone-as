@@ -12,6 +12,7 @@ use Config;
 use DB;
 use Google_Client;
 use Mail;
+use Session;
 use Swift_Mailer;
 use Swift_SmtpTransport;
 
@@ -49,6 +50,40 @@ class Controller extends BaseController
     protected function base64url_encode($data)
     {
         return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+
+    protected function login_sessions($user, $client_id)
+    {
+        $owner_query = DB::table('owner')->first();
+        $client = DB::table('oauth_clients')->where('client_id', '=', $client_id)->first();
+        Session::put('client_id', $client_id);
+        Session::put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
+        Session::put('username', $user->username);
+        Session::put('client_name', $client->client_name);
+        Session::put('logo_uri', $client->logo_uri);
+        Session::put('sub', $user->sub);
+        Session::put('email', $user->email);
+        Session::put('invite', 'no');
+        if ($owner_query->sub == $user->sub) {
+            Session::put('invite', 'yes');
+        }
+        Session::save();
+        return true;
+    }
+
+    protected function npi_lookup($first, $last)
+    {
+        $url = 'https://npiregistry.cms.hhs.gov/api/?first_name=' . $first . '&last_name=' . $last . '&enumeration_type=&taxonomy_description=&first_name=&last_name=&organization_name=&address_purpose=&city=&state=&postal_code=&country_code=&limit=&skip=';
+        $ch = curl_init();
+        curl_setopt($ch,CURLOPT_URL, $url);
+        curl_setopt($ch,CURLOPT_FAILONERROR,1);
+        curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+        curl_setopt($ch,CURLOPT_TIMEOUT, 15);
+        $json = curl_exec($ch);
+        curl_close($ch);
+        $arr = json_decode($json, true);
+        return $arr;
     }
 
     protected function send_mail($template, $data_message, $subject, $to)

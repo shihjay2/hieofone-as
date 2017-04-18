@@ -101,7 +101,9 @@
 						@if (!isset($nooauth))
 						<div class="form-group">
 							<div class="col-md-6 col-md-offset-3">
-								<button type="button" class="btn btn-primary btn-block" id="connectUportBtn" onclick="loginBtnClick()">Login with uPort</button>
+								<button type="button" class="btn btn-primary btn-block" id="connectUportBtn" onclick="loginBtnClick()">
+									<img src="{{ asset('assets/uport-logo-white.svg') }}" height="25" width="25" style="margin-right:5px"></img> Login with uPort
+								</button>
 								<!-- <button type="button" class="btn btn-primary btn-block" id="connectUportBtn1" onclick="uportConnect()">Connect uPort</button> -->
 								<!-- <button type="button" class="btn btn-primary btn-block" id="connectUportBtn2" onclick="sendEther()">Send Ether</button> -->
 								<a class="btn btn-primary btn-block" href="{{ url('/mdnosh') }}">
