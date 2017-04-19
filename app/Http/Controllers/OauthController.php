@@ -23,6 +23,8 @@ use phpseclib\Crypt\RSA;
 use Session;
 use SimpleXMLElement;
 use GuzzleHttp;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class OauthController extends Controller
 {
@@ -365,6 +367,11 @@ class OauthController extends Controller
             $name_arr = $parser->parse_name($name);
             $uport_user = DB::table('oauth_users')->where('first_name', '=', $name_arr['fname'])->where('last_name', '=', $name_arr['lname'])->first();
             if ($uport_user) {
+                // Save uport id, keep updating for demo purposes for now
+                // if ($uport_user->uport_id == null || $uport_user->uport_id = '') {
+                    $uport['uport_id'] = $reuqest->input('uport');
+                    DB::table('oauth_users')->where('username', '=', $uport_user->username)->update($uport);
+                // }
                 if (Session::get('oauth_response_type') == 'code') {
                     $client_id = Session::get('oauth_client_id');
                 } else {
@@ -492,6 +499,7 @@ class OauthController extends Controller
     {
         $current_version = File::get(base_path() . "/.version");
         $result = $this->github_all();
+        $composer = false;
         if ($current_version != $result[0]['sha']) {
             $arr = [];
             foreach ($result as $row) {
@@ -521,6 +529,9 @@ class OauthController extends Controller
                                     }
                                 }
                                 file_put_contents($filename, $file);
+                                if ($filename == 'composer.json') {
+                                    $composer = true;
+                                }
                             }
                         }
                         if ($row1['status'] == 'removed') {
@@ -531,11 +542,18 @@ class OauthController extends Controller
                     }
                 }
             }
-            Artisan::call('migrate');
+            define('STDIN',fopen("php://stdin","r"));
+            Artisan::call('migrate', array('--force' => true));
             File::put(base_path() . "/.version", $result[0]['sha']);
-            echo "System Updated with version " . $result[0]['sha'] . " from " . $current_version;
+            if ($composer == true) {
+                putenv('COMPOSER_HOME=/usr/local/bin/composer');
+                $install = new Process("/usr/local/bin/composer install");
+                $install->setWorkingDirectory(base_path());
+                $install->run();
+            }
+            return "System Updated with version " . $result[0]['sha'] . " from " . $current_version;
         } else {
-            echo "No update needed";
+            return "No update needed";
         }
     }
 
@@ -1004,6 +1022,7 @@ class OauthController extends Controller
                 'picture' => $query->picture,
                 'birthday' => $birthday,
                 'npi' => $query->npi,
+                'uport_id' => $query->uport_id,
                 'client'  => $token['client_id'],
                 'expires' => $token['expires']
             ));
