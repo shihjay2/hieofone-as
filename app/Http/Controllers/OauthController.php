@@ -369,7 +369,7 @@ class OauthController extends Controller
             if ($uport_user) {
                 // Save uport id, keep updating for demo purposes for now
                 // if ($uport_user->uport_id == null || $uport_user->uport_id = '') {
-                    $uport['uport_id'] = $reuqest->input('uport');
+                    $uport['uport_id'] = $request->input('uport');
                     DB::table('oauth_users')->where('username', '=', $uport_user->username)->update($uport);
                 // }
                 if (Session::get('oauth_response_type') == 'code') {
