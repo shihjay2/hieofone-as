@@ -50,10 +50,10 @@
 @section('view.scripts')
 <script type="text/javascript">
 	$(document).ready(function() {
-		$("#remove_permissions_button").on('click', function() {
+		$("#remove_permissions_button").css('cursor', 'pointer').on('click', function() {
 			return confirm('Removing all permissions cannot be undone!');
 		});
-		$(".pnosh_link").on('click', function(){
+		$(".pnosh_link").css('cursor', 'pointer').on('click', function(){
 			var link = $(this).attr('nosh-link');
 			window.open(link);
 		});
