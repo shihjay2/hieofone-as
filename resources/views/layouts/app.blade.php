@@ -41,7 +41,7 @@
 
 				<!-- Branding Image -->
 				<a class="navbar-brand" href="{{ url('/') }}">
-					HIE of One AS
+					HIE of One Authorization Server
 					@if (isset($name))
 						for {{ $name }}
 					@endif
