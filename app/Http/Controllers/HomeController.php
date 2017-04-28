@@ -689,7 +689,7 @@ class HomeController extends Controller
             ];
 
             if ($owner_query->sub == $query->sub) {
-                $data['date_of_birth'] = date('m/d/Y', strtotime($owner_query->DOB));
+                $data['date_of_birth'] = date('Y-m-d', strtotime($owner_query->DOB));
                 $data['mobile'] = $owner_query->mobile;
             }
             return view('edit', $data);
