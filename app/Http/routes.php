@@ -78,7 +78,7 @@ Route::any('my_info_edit', ['as' => 'my_info_edit', 'uses' => 'HomeController@my
 Route::get('default_policies', ['as' => 'default_policies', 'uses' => 'HomeController@default_policies']);
 Route::post('change_policy', ['as' => 'change_policy', 'uses' => 'HomeController@change_policy']);
 Route::any('reset_demo', ['as' => 'reset_demo', 'uses' => 'OauthController@reset_demo']);
-Route::any('reset_demo1', ['as' => 'reset_demo1', 'uses' => 'OauthController@reset_demo1']);
+Route::any('invite_demo', ['as' => 'invite_demo', 'uses' => 'OauthController@invite_demo']);
 Route::get('check_demo', ['as' => 'check_demo', 'uses' => 'OauthController@check_demo']);
 Route::get('check_demo_self', ['as' => 'check_demo_self', 'middleware' => 'csrf', 'uses' => 'OauthController@check_demo_self']);
 

@@ -1272,7 +1272,7 @@ class OauthController extends Controller
         }
     }
 
-    public function reset_demo1(Request $request)
+    public function invite_demo(Request $request)
     {
         if (route('home') == 'https://shihjay.xyz/home') {
             if ($request->isMethod('post')) {
