@@ -669,13 +669,62 @@ class OauthController extends Controller
                     Session::put('google_sub' ,$user->getId());
                     Session::put('google_name', $user->getName());
                     Session::put('google_email', $user->getEmail());
-                    return redirect()->route('google_md');
+                    return redirect()->route('google_md1');
+                    // return redirect()->route('google_md');
                 } else {
                     return redirect()->route('login')->withErrors(['tryagain' => 'Unauthorized client.  Please contact the owner of this authorization server for assistance.']);
                 }
             } else {
                 return redirect()->route('login')->withErrors(['tryagain' => 'Not a registered user.  Any NPI or Any Google not set.  Please contact the owner of this authorization server for assistance.']);
             }
+        }
+    }
+
+    public function google_md1(Request $request)
+    {
+        $owner = DB::table('owner')->first();
+        $name = Session::get('google_name');
+        $name_arr = explode(' ', $name);
+        if (Session::get('oauth_response_type') == 'code') {
+            $client_id = Session::get('oauth_client_id');
+        } else {
+            $client_id = $owner->client_id;
+        }
+        $sub = Session::get('google_sub');
+        $email = Session::get('google_email');
+        Session::forget('google_sub');
+        Session::forget('google_name');
+        Session::forget('google_email');
+        $npi = '1234567890';
+        $user_data = [
+            'username' => $sub,
+            'password' => sha1($sub),
+            'first_name' => $name_arr[0],
+            'last_name' => $name_arr[1],
+            'sub' => $sub,
+            'email' => $email,
+            'npi' => $npi
+        ];
+        DB::table('oauth_users')->insert($user_data);
+        $user_data1 = [
+            'name' => $sub,
+            'email' => $email
+        ];
+        DB::table('users')->insert($user_data1);
+        $user = DB::table('oauth_users')->where('username', '=', $sub)->first();
+        $local_user = DB::table('users')->where('name', '=', $sub)->first();
+        $this->login_sessions($user, $client_id);
+        Auth::loginUsingId($local_user->id);
+        if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
+            // If generated from rqp_claims endpoint, do this
+            return redirect()->route('rqp_claims');
+        } elseif (Session::get('oauth_response_type') == 'code') {
+            Session::put('is_authorized', 'true');
+            Session::save();
+            return redirect()->route('authorize');
+        } else {
+            Session::save();
+            return redirect()->route('home');
         }
     }
 
