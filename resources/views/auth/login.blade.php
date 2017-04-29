@@ -153,7 +153,7 @@
 	// Setup
 	const Connect = window.uportconnect.Connect;
 	const appName = 'hieofone';
-	const connect = new Connect(appName);
+	const connect = new Connect(appName, {'clientId': '0xe20fd892d3439c0c317c860bfa22ee9e714c5c0f'});
 	const web3 = connect.getWeb3();
 	const loginBtnClick = () => {
 		connect.requestCredentials().then((credentials) => {
