@@ -76,7 +76,7 @@ class HomeController extends Controller
             }
             if (count($smart_on_fhir) > 0) {
                 foreach ($smart_on_fhir as $smart_row) {
-                    $data['content'] .= '<a href="' . $smart_row['endpoint_uri'] . '" class="list-group-item list-group-item-success" target="_blank">SMART-on-FHIR Resource: ' . $smart_row['org_name'] . '</a>';
+                    $data['content'] .= '<a href="' . $smart_row['endpoint_uri'] . '" class="list-group-item list-group-item-success" target="_blank">SMART-on-FHIR Resource (no refresh token): ' . $smart_row['org_name'] . '</a>';
                 }
             }
             $data['content'] .= '</div>';
