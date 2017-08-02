@@ -51,16 +51,33 @@ class HomeController extends Controller
         $data['message_action'] = Session::get('message_action');
         Session::forget('message_action');
         $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
-        if ($query) {
+        $url = URL::to('/') . '/nosh/smart_on_fhir_list';
+        $ch = curl_init();
+        curl_setopt($ch,CURLOPT_URL, $url);
+        curl_setopt($ch,CURLOPT_FAILONERROR,1);
+        curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+        curl_setopt($ch,CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
+        $result = curl_exec($ch);
+        $smart_on_fhir = json_decode($result, true);
+        if ($query || count($smart_on_fhir) > 0) {
             $data['content'] = '<div class="list-group">';
-            foreach ($query as $client) {
-                $link = '';
-                if ($pnosh) {
-                    if ($client->client_id == $pnosh->client_id) {
-                        $link = '<span class="label label-success pnosh_link" nosh-link="' . URL::to('/') . '/nosh/uma_auth">Go There</span>';
+            if ($query) {
+                foreach ($query as $client) {
+                    $link = '';
+                    if ($pnosh) {
+                        if ($client->client_id == $pnosh->client_id) {
+                            $link = '<span class="label label-success pnosh_link" nosh-link="' . URL::to('/') . '/nosh/uma_auth">Go There</span>';
+                        }
                     }
+                    $data['content'] .= '<a href="' . URL::to('resources') . '/' . $client->client_id . '" class="list-group-item"><img src="' . $client->logo_uri . '" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $client->client_name . '</span>' . $link . '</a>';
                 }
-                $data['content'] .= '<a href="' . URL::to('resources') . '/' . $client->client_id . '" class="list-group-item"><img src="' . $client->logo_uri . '" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $client->client_name . '</span>' . $link . '</a>';
+            }
+            if (count($smart_on_fhir) > 0) {
+                foreach ($smart_on_fhir as $smart_row) {
+                    $data['content'] .= '<a href="' . $smart_row['endpoint_uri'] . '" class="list-group-item list-group-item-success" target="_blank">SMART-on-FHIR Resource: ' . $smart_row['org_name'] . '</a>';
+                }
             }
             $data['content'] .= '</div>';
         }
