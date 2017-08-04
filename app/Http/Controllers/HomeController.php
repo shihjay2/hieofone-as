@@ -789,7 +789,7 @@ class HomeController extends Controller
 
     public function fhir_edit(Request $request)
     {
-        $data['username'] = $request->input('usernmae');
+        $data['username'] = $request->input('username');
         $data['password'] = encrypt($request->input('password'));
         DB::table('fhir_clients')->where('endpoint_uri', '=', $request->input('endpoint_uri'))->update($data);
         return 'Username and password saved';
