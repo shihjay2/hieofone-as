@@ -89,7 +89,7 @@ class HomeController extends Controller
                         ];
                         DB::table('fhir_clients')->insert($fhir_data);
                     }
-                    $data['content'] .= '<a href="' . $smart_row['endpoint_uri'] . '" class="list-group-item list-group-item-success" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">SMART-on-FHIR Resource (no refresh token): ' . $smart_row['org_name'] . '</span></a>';
+                    $data['content'] .= '<a href="' . $smart_row['endpoint_uri'] . '" class="list-group-item list-group-item-success" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">SMART-on-FHIR Resource (no refresh token): ' . $smart_row['org_name'] . '</span>' . $copy_link . '</a>';
 
                 }
             }
