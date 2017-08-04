@@ -140,6 +140,7 @@
 				$('#fhir_username').val('');
 				$('#fhir_password').val('');
 				$('#endpoint_uri').val('');
+				location.reload(true);
             });
         });
 		$("#fhir_cancel").click(function(){
