@@ -76,7 +76,21 @@ class HomeController extends Controller
             }
             if (count($smart_on_fhir) > 0) {
                 foreach ($smart_on_fhir as $smart_row) {
+                    $copy_link = '<i class="fa fa-cog fa-lg pnosh_copy_set" hie-val="' . $smart_row['endpoint_uri_raw'] . '"></i>';
+                    $fhir_db = DB::table('fhir_clients')->where('endpoint_uri', '=', $smart_row['endpoint_uri_raw'])->first();
+                    if ($fhir_db) {
+                        if ($fhir_db->username !== 'null' && $fhir_db->username !== '') {
+                            $copy_link .= '<span style="margin:10px"></span><i class="fa fa-clone fa-lg pnosh_copy" nosh-copy="' . $fhir_db->username . '"></i><span style="margin:10px"></span><i class="fa fa-key fa-lg pnosh_copy" nosh-copy="' . decrypt($fhir_db->password) . '"></i>';
+                        }
+                    } else {
+                        $fhir_data = [
+                            'name' => $smart_row['org_name'],
+                            'endpoint_uri' => $smart_row['endpoint_uri_raw'],
+                        ];
+                        DB::table('fhir_clients')->insert($fhir_data);
+                    }
                     $data['content'] .= '<a href="' . $smart_row['endpoint_uri'] . '" class="list-group-item list-group-item-success" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">SMART-on-FHIR Resource (no refresh token): ' . $smart_row['org_name'] . '</span></a>';
+
                 }
             }
             $data['content'] .= '</div>';
@@ -771,5 +785,13 @@ class HomeController extends Controller
         } else {
             return redirect()->route('home');
         }
+    }
+
+    public function fhir_edit(Request $request)
+    {
+        $data['username'] = $request->input('usernmae');
+        $data['password'] = encrypt($request->input('password'));
+        DB::table('fhir_clients')->where('endpoint_uri', '=', $request->input('endpoint_uri'))->update($data);
+        return 'Username and password saved';
     }
 }

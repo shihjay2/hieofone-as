@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('view.stylesheet')
+	<link rel="stylesheet" href="{{ asset('assets/css/toastr.min.css') }}">
+@endsection
+
 @section('content')
 <div class="container">
 	<div class="row">
@@ -45,9 +49,47 @@
 		</div>
 	</div>
 </div>
+<div class="modal" id="fhirModal" role="dialog">
+	<div class="modal-dialog">
+		<!-- Modal content-->
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Patient Portal Settings</h5>
+			</div>
+			<div class="modal-body" style="height:25vh;overflow-y:auto;">
+				<form id="fhir_form" class="form-horizontal form" role="form" method="POST">
+					<input type="hidden" name="endpoint_uri" id="endpoint_uri">
+					<div class="form-group" id="until_div">
+						<label for="fhir_username" class="col-md-3 control-label">Username</label>
+						<div class="col-md-8">
+							<input type="text" id="fhir_username" class="form-control" name="username" value="">
+						</div>
+					</div>
+					<div class="form-group" id="until_div">
+						<label for="fhir_password" class="col-md-3 control-label">Password</label>
+						<div class="col-md-8">
+							<input type="password" id="fhir_password" class="form-control" name="password" value="">
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-md-8 col-md-offset-4">
+							<button type="submit" class="btn btn-success" style="margin:10px">
+								<i class="fa fa-btn fa-save"></i> Save
+							</button>
+							<button type="button" class="btn btn-danger" style="margin:10px" id="fhir_cancel">
+								<i class="fa fa-btn fa-ban"></i> Cancel
+							</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
 @endsection
 
 @section('view.scripts')
+<script src="{{ asset('assets/js/toastr.min.js') }}"></script>
 <script type="text/javascript">
 	$(document).ready(function() {
 		$("#remove_permissions_button").css('cursor', 'pointer').on('click', function() {
@@ -57,6 +99,57 @@
 			var link = $(this).attr('nosh-link');
 			window.open(link);
 			e.preventDefault();
+		});
+		$(".pnosh_copy").css('cursor', 'pointer').on('click', function(e){
+			var copy = $(this).attr('hie-val');
+			var $temp = $("<input>");
+			$("body").append($temp);
+			$temp.val(copy).select();
+			document.execCommand("copy");
+			$temp.remove();
+			if ($(this).hasClass('fa-clone')) {
+				toastr.success('Username copied');
+			} else {
+				toastr.success('Password copied');
+			}
+			e.preventDefault();
+		});
+		$(".pnosh_copy_set").click(function(e){
+			e.preventDefault();
+			var uri = $(this).attr('hie-val');
+			var username = $(this).next().next().attr('hie-val');
+			var password = $(this).next().next().next().next().attr('hie-val');
+			$('#endpoint_uri').val(uri);
+			$('#fhir_username').val(username);
+			$('#fhir_password').val(password);
+			$('#fhirModal').modal('show');
+		});
+		$(document).on('submit', '#fhir_form', function(event) {
+            event.preventDefault();
+            var formData = $(this).serialize();
+            $('#modaltext').text('{{ trans('nosh.calendar_event') }}...');
+            $('#loadingModal').modal('show');
+			$.ajax({
+				type: "POST",
+				url: "{{ route('fhir_edit') }}",
+				data: formData,
+				beforeSend: function(request) {
+					return request.setRequestHeader("X-CSRF-Token", $("meta[name='csrf-token']").attr('content'));
+				}
+			}).done(function(response) {
+				toastr.success(response);
+				('#fhirModal').modal('hide');
+				$('#fhir_username').val('');
+				$('#fhir_password').val('');
+				$('#endpoint_uri').val('');
+                $('#loadingModal').modal('hide');
+            });
+        });
+		$("#fhir_cancel").click(function(){
+			$('#fhirModal').modal('hide');
+			$('#fhir_username').val('');
+			$('#fhir_password').val('');
+			$('#endpoint_uri').val('');
 		});
 		$('[data-toggle="tooltip"]').tooltip();
 	});
