@@ -127,8 +127,6 @@
 		$(document).on('submit', '#fhir_form', function(event) {
             event.preventDefault();
             var formData = $(this).serialize();
-            $('#modaltext').text('{{ trans('nosh.calendar_event') }}...');
-            $('#loadingModal').modal('show');
 			$.ajax({
 				type: "POST",
 				url: "{{ route('fhir_edit') }}",
@@ -138,11 +136,10 @@
 				}
 			}).done(function(response) {
 				toastr.success(response);
-				('#fhirModal').modal('hide');
+				$('#fhirModal').modal('hide');
 				$('#fhir_username').val('');
 				$('#fhir_password').val('');
 				$('#endpoint_uri').val('');
-                $('#loadingModal').modal('hide');
             });
         });
 		$("#fhir_cancel").click(function(){
