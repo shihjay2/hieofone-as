@@ -79,7 +79,7 @@ class HomeController extends Controller
                     $copy_link = '<i class="fa fa-cog fa-lg pnosh_copy_set" hie-val="' . $smart_row['endpoint_uri_raw'] . '"></i>';
                     $fhir_db = DB::table('fhir_clients')->where('endpoint_uri', '=', $smart_row['endpoint_uri_raw'])->first();
                     if ($fhir_db) {
-                        if ($fhir_db->username !== 'null' && $fhir_db->username !== '') {
+                        if ($fhir_db->username !== null && $fhir_db->username !== '') {
                             $copy_link .= '<span style="margin:10px"></span><i class="fa fa-clone fa-lg pnosh_copy" nosh-copy="' . $fhir_db->username . '"></i><span style="margin:10px"></span><i class="fa fa-key fa-lg pnosh_copy" nosh-copy="' . decrypt($fhir_db->password) . '"></i>';
                         }
                     } else {
