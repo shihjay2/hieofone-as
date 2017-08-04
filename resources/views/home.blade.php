@@ -53,9 +53,10 @@
 		$("#remove_permissions_button").css('cursor', 'pointer').on('click', function() {
 			return confirm('Removing all permissions cannot be undone!');
 		});
-		$(".pnosh_link").css('cursor', 'pointer').on('click', function(){
+		$(".pnosh_link").css('cursor', 'pointer').on('click', function(e){
 			var link = $(this).attr('nosh-link');
 			window.open(link);
+			e.preventDefault();
 		});
 		$('[data-toggle="tooltip"]').tooltip();
 	});
