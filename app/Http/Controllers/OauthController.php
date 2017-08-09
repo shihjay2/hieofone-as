@@ -401,6 +401,14 @@ class OauthController extends Controller
                         } else {
                             // Get user permission
                             $return['url'] = route('login_authorize');
+                            // Email notification to owner that someone is trying to login via uPort
+                            $data1['message_data'] = $name . ' has just attempted to login using your HIE of One Authorizaion Server via uPort.';
+                            $title = 'New uPort User';
+                            $to = $owner_query->email;
+                            $this->send_mail('auth.emails.generic', $data1, $title, $to);
+                            if ($owner_query->mobile != '') {
+                                $this->textbelt($owner_query->mobile, $data1['message_data']);
+                            }
                         }
                     } else {
                         // Get owner permission if owner is logging in from new client/registration server
