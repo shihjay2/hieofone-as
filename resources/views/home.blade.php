@@ -56,7 +56,7 @@
 			<div class="modal-header">
 				<h5 class="modal-title">Patient Portal Settings</h5>
 			</div>
-			<div class="modal-body" style="height:25vh;overflow-y:auto;">
+			<div class="modal-body" style="height:35vh;overflow-y:auto;">
 				<form id="fhir_form" class="form-horizontal form" role="form" method="POST">
 					<input type="hidden" name="endpoint_uri" id="endpoint_uri">
 					<div class="form-group" id="until_div">
@@ -92,6 +92,22 @@
 <script src="{{ asset('assets/js/toastr.min.js') }}"></script>
 <script type="text/javascript">
 	$(document).ready(function() {
+		toastr.options = {
+            'closeButton': true,
+            'debug': false,
+            'newestOnTop': true,
+            'progressBar': true,
+            'positionClass': 'toast-bottom-full-width',
+            'preventDuplicates': false,
+            'showDuration': '300',
+            'hideDuration': '1000',
+            'timeOut': '5000',
+            'extendedTimeOut': '1000',
+            'showEasing': 'swing',
+            'hideEasing': 'linear',
+            'showMethod': 'fadeIn',
+            'hideMethod': 'fadeOut'
+        };
 		$("#remove_permissions_button").css('cursor', 'pointer').on('click', function() {
 			return confirm('Removing all permissions cannot be undone!');
 		});
