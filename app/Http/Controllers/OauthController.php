@@ -535,6 +535,7 @@ class OauthController extends Controller
             'last_name' => Session::get('uport_last_name'),
             'email' => $email,
             'npi' => Session::get('uport_npi'),
+            'sub' => $sub,
             'uport_id' => $sub
         ];
         Session::forget('uport_first_name');
