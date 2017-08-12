@@ -331,7 +331,7 @@ class HomeController extends Controller
                         $i++;
                     }
                 }
-                $data['content'] .= '</td><td><a href="' . URL::to('authorize_client_disable') . '/' . $client->client_id . '" class="btn btn-primary" role="button">Unauthorize</a></td></tr>';
+                $data['content'] .= '</td><td><a href="' . route('authorize_client_disable', [$client->client_id]) . '" class="btn btn-primary" role="button">Unauthorize</a></td></tr>';
             }
         }
         return view('home', $data);
@@ -497,8 +497,8 @@ class HomeController extends Controller
                         $i++;
                     }
                 }
-                $data['content'] .= '</td><td><a href="' . URL::to('authorize_client_action') . '/' . $client->client_id . '" class="btn btn-primary" role="button">Authorize</a>';
-                $data['content'] .= ' <a href="' . URL::to('authorize_client_disable') . '/' . $client->client_id . '" class="btn btn-primary" role="button">Deny</a></td></tr>';
+                $data['content'] .= '</td><td><a href="' . route('authorize_client_action', [$client->client_id]) . '" class="btn btn-primary" role="button">Authorize</a>';
+                $data['content'] .= ' <a href="' . route('authorize_client_disable', [$client->client_id]) . '" class="btn btn-primary" role="button">Deny</a></td></tr>';
             }
         }
         return view('home', $data);
@@ -519,6 +519,82 @@ class HomeController extends Controller
         Session::put('message_action', 'You just unauthorized a client named ' . $query->client_name);
         DB::table('oauth_clients')->where('client_id', '=', $id)->delete();
         return redirect()->route('authorize_client');
+    }
+
+    public function users(Request $request)
+    {
+        $data['name'] = Session::get('owner');
+        $data['title'] = 'Authorized Users';
+        $data['content'] = 'No authorized users.';
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
+        $oauth_scope_array = [
+            'openid' => 'OpenID Connect',
+            'uma_authorization' => 'Access Resources',
+            'uma_protection' => 'Register Resources'
+        ];
+        $query = DB::table('oauth_users')->get();
+        if ($query) {
+            $data['content'] = '<p>Users have access to your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Name</th><th>Email</th><th>NPI</th><th></th></thead><tbody>';
+            foreach ($query as $user) {
+                $data['content'] .= '<tr><td>' . $user->first_name . ' ' . $user->last_name . '</td><td>' . $user->email . '</td><td>';
+                if ($user->npi !== null && $user->npi !== '') {
+                    $data['content'] .= $user->npi;
+                }
+                $data['content'] .= '</td><td><a href="' . route('authorize_user_disable', [$user->username]) . '" class="btn btn-primary" role="button">Unauthorize</a></td></tr>';
+            }
+        }
+        return view('home', $data);
+    }
+
+    public function authorize_user(Request $request)
+    {
+        $data['name'] = Session::get('owner');
+        $data['title'] = 'Users Pending Authorization';
+        $data['content'] = 'No users pending authorization.';
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
+        $oauth_scope_array = [
+            'openid' => 'OpenID Connect',
+            'uma_authorization' => 'Access Resources',
+            'uma_protection' => 'Register Resources'
+        ];
+        $query = DB::table('oauth_users')->where('password', '=', 'Pending')->get();
+        if ($query) {
+            $data['content'] = '<p>Users have access to your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Name</th><th>Email</th><th>NPI</th><th></th></thead><tbody>';
+            foreach ($query as $user) {
+                $data['content'] .= '<tr><td>' . $user->first_name . ' ' . $user->last_name . '</td><td>';
+                if ($user->email !== null && $user->email !== '') {
+                    $data['content'] .= $user->email;
+                }
+                $data['content'] .= '</td><td>';
+                if ($user->npi !== null && $user->npi !== '') {
+                    $data['content'] .= $user->npi;
+                }
+                $data['content'] .= '</td><td>';
+                $data['content'] .= '</td><td><a href="' . route('authorize_user_action', [$user->username]) . '" class="btn btn-primary" role="button">Authorize</a>';
+                $data['content'] .= ' <a href="' . route('authorize_user_disable', [$user->username]) . '" class="btn btn-primary" role="button">Deny</a></td></tr>';
+            }
+        }
+        return view('home', $data);
+    }
+
+    public function authorize_user_action(Request $request, $id)
+    {
+        $data['password'] = sha($id);
+        DB::table('oauth_users')->where('username', '=', $id)->update($data);
+        $query = DB::table('oauth_users')->where('username', '=', $id)->first();
+        Session::put('message_action', 'You just authorized a user named ' . $query->first_name . ' ' . $query->last_name);
+        return redirect()->route('authorize_user');
+    }
+
+    public function authorize_user_disable(Request $request, $id)
+    {
+        $query = DB::table('oauth_users')->where('username', '=', $id)->first();
+        Session::put('message_action', 'You just unauthorized a user named ' . $query->first_name . ' ' . $query->last_name);
+        DB::table('oauth_users')->where('username', '=', $id)->delete();
+        DB::table('users')->where('name', '=', $id)->delete();
+        return redirect()->route('authorize_user');
     }
 
     public function make_invitation(Request $request)

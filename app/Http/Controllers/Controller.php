@@ -59,6 +59,7 @@ class Controller extends BaseController
         Session::put('client_id', $client_id);
         Session::put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
         Session::put('username', $user->username);
+        Session::put('full_name', $user->first_name . ' ' . $user->last_name);
         Session::put('client_name', $client->client_name);
         Session::put('logo_uri', $client->logo_uri);
         Session::put('sub', $user->sub);
@@ -71,13 +72,13 @@ class Controller extends BaseController
         return true;
     }
 
-    protected function npi_lookup($first, $last)
+    protected function npi_lookup($first, $last='')
     {
         $url = 'https://npiregistry.cms.hhs.gov/api/?';
-        $fields = http_build_query([
+        $fields_arr = [
             'number' => '',
-            'first_name' => $first,
-            'last_name' => $last,
+            'first_name' => '',
+            'last_name' => '',
             'enumeration_type' => '',
             'taxonomy_description' => '',
             'organization_name' => '',
@@ -88,7 +89,14 @@ class Controller extends BaseController
             'country_code' => '',
             'limit' => '',
             'skip' => ''
-        ]);
+        ];
+        if ($last == '') {
+            $fields_arr['number'] = $first;
+        } else {
+            $fields_arr['first_name'] = $first;
+            $fields_arr['last_name'] = $last;
+        }
+        $fields = http_build_query($fields_arr);
         $url .= $fields;
         $ch = curl_init();
         curl_setopt($ch,CURLOPT_URL, $url);

@@ -153,16 +153,38 @@
 	// Setup
 	const Connect = window.uportconnect.Connect;
 	const appName = 'hieofone';
-	const connect = new Connect(appName, {'clientId': '0xe20fd892d3439c0c317c860bfa22ee9e714c5c0f'});
+	const connect = new Connect(appName, {
+		'clientId': '2ohNU4wT7Y7YqJ5kLMw2of1bdCnuFB1tZmr',
+		'signer': window.uportconnect.SimpleSigner('9d3aef4e1e1a80877fe501151f9372de2e34cb2744e875c5e1b1af5a73f4eb7e'),
+		'network': 'rinkeby'
+	});
 	const web3 = connect.getWeb3();
 	const loginBtnClick = () => {
-		connect.requestCredentials().then((credentials) => {
+		connect.requestCredentials({
+	      requested: ['name', 'phone', 'country', 'email', 'description'],
+	      notifications: true // We want this if we want to recieve credentials
+	    }).then((credentials) => {
 			console.log(credentials);
+			// const cred = {
+			// 	sub: credentials.address,
+			// 	claim: {'email': 'shihjay2@gmail.com'},
+			// 	exp: '1300819380'
+			// }
+			// connect.attestCredentials(cred).then(res => {
+			// response okay, received in uPort app
+			// })
 			var uport_url = '<?php echo route("login_uport"); ?>';
+			var uport_data = 'name=' + credentials.name + '&uport=' + credentials.address;
+			if (typeof credentials.description !== 'undefined') {
+				uport_data += '&npi=' + credentials.description;
+			}
+			if (typeof credentials.email !== 'undefined') {
+				uport_data += '&email=' + credentials.email;
+			}
 			$.ajax({
 				type: "POST",
 				url: uport_url,
-				data: 'name=' + credentials.name + '&uport=' + credentials.address,
+				data: uport_data,
 				dataType: 'json',
 				beforeSend: function(request) {
 					return request.setRequestHeader("X-CSRF-Token", $("meta[name='csrf-token']").attr('content'));

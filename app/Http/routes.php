@@ -48,6 +48,7 @@ Route::any('install', ['as' => 'install', 'uses' => 'OauthController@install']);
 Route::any('login', ['as' => 'login', 'uses' => 'OauthController@login']);
 Route::any('logout', ['as' => 'logout', 'uses' => 'OauthController@logout']);
 Route::post('login_uport', ['as' => 'login_uport', 'middleware' => 'csrf', 'uses' => 'OauthController@login_uport']);
+Route::any('uport_user_add', ['as' => 'uport_user_add', 'uses' => 'OauthController@uport_user_add']);
 Route::any('remote_logout', ['as' => 'remote_logout', 'uses' => 'OauthController@remote_logout']);
 Route::get('home', ['as' => 'home', 'uses' => 'HomeController@index']);
 Route::get('resources/{id}', ['as' => 'resources', 'uses' => 'HomeController@resources']);
@@ -56,6 +57,7 @@ Route::get('login_authorize_action/{type}', ['as' => 'login_authorize_action', '
 Route::any('client_register', ['as' => 'client_register', 'uses' => 'OauthController@client_register']);
 Route::any('oauth_login', ['as' => 'oauth_login', 'uses' => 'OauthController@oauth_login']);
 Route::get('clients', ['as' => 'clients', 'uses' => 'HomeController@clients']);
+Route::get('users', ['as' => 'users', 'uses' => 'HomeController@users']);
 Route::get('resource_view/{id}', ['as' => 'resource_view', 'uses' => 'HomeController@resource_view']);
 Route::get('change_permission/{id}', ['as' => 'change_permission', 'uses' => 'HomeController@change_permission']);
 Route::get('change_permission_add_edit/{id}', ['as' => 'change_permission_add_edit', 'uses' => 'HomeController@change_permission_add_edit']);
@@ -67,6 +69,9 @@ Route::post('rs_authorize_action', ['as' => 'rs_authorize_action', 'uses' => 'Ho
 Route::get('authorize_client', ['as' => 'authorize_client', 'uses' => 'HomeController@authorize_client']);
 Route::get('authorize_client_action/{id}', ['as' => 'authorize_client_action', 'uses' => 'HomeController@authorize_client_action']);
 Route::get('authorize_client_disable/{id}', ['as' => 'authorize_client_disable', 'uses' => 'HomeController@authorize_client_disable']);
+Route::get('authorize_user', ['as' => 'authorize_user', 'uses' => 'HomeController@authorize_user']);
+Route::get('authorize_user_action/{id}', ['as' => 'authorize_user_action', 'uses' => 'HomeController@authorize_user_action']);
+Route::get('authorize_user_disable/{id}', ['as' => 'authorize_user_disable', 'uses' => 'HomeController@authorize_user_disable']);
 Route::any('make_invitation', ['as' => 'make_invitation', 'uses' => 'HomeController@make_invitation']);
 Route::any('accept_invitation/{id}', ['as' => 'accept_invitation', 'uses' => 'OauthController@accept_invitation']);
 Route::any('process_invitation', ['as' => 'process_invitation', 'uses' => 'HomeController@process_invitation']);
