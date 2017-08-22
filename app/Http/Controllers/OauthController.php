@@ -362,6 +362,7 @@ class OauthController extends Controller
     {
         $owner_query = DB::table('owner')->first();
         if ($request->has('uport')) {
+            $uport_notify = false;
             // Start searching for users by checking name
             $name = $request->input('name');
             $parser = new NameParser();
@@ -471,67 +472,63 @@ class OauthController extends Controller
                                             $return['message'] = 'Unauthorized client.  Please contact the owner of this authorization server for assistance.';
                                         }
                                     } else {
-                                        // Email notification to owner that someone is trying to login via uPort
-                                        $uport_data = [
-                                            'username' => $request->input('uport'),
-                                            'first_name' => $name_arr['fname'],
-                                            'last_name' => $name_arr['lname'],
-                                            'uport_id' => $request->input('uport'),
-                                            'password' => 'Pending',
-                                        ];
-                                        DB::table('oauth_users')->insert($uport_data);
-                                        $uport_data1 = [
-                                            'name' => $request->input('uport'),
-                                            'email' => $request->input('email')
-                                        ];
-                                        DB::table('users')->insert($uport_data1);
-                                        $data1['message_data'] = $name . ' has just attempted to login using your HIE of One Authorizaion Server via uPort.';
-                                        $data1['message_data'] .= 'Go to ' . route('authorize_user') . ' to review and authorize.';
-                                        $title = 'New uPort User';
-                                        $to = $owner_query->email;
-                                        $this->send_mail('auth.emails.generic', $data1, $title, $to);
-                                        if ($owner_query->mobile != '') {
-                                            $this->textbelt($owner_query->mobile, $data1['message_data']);
-                                        }
+                                        $uport_notify = true;
                                     }
                                 } else {
                                     $return['message'] = 'You are not authorized to access this authorization server.  NPI not found in database.';
                                 }
                             } else {
-                                $return['message'] = 'You are not authorized to access this authorization server.  NPI not 10 characters.';
+                                if ($owner_query->any_uport == 1) {
+                                    $uport_notify = true;
+                                } else {
+                                    $return['message'] = 'You are not authorized to access this authorization server.  NPI not 10 characters.';
+                                }
                             }
                         } else {
-                            $return['message'] = 'You are not authorized to access this authorization server.  NPI not numeric.';
+                            if ($owner_query->any_uport == 1) {
+                                $uport_notify = true;
+                            } else {
+                                $return['message'] = 'You are not authorized to access this authorization server.  NPI not numeric.';
+                            }
                         }
                     } else {
-                        $return['message'] = 'You are not authorized to access this authorization server.  NPI is blank.';
+                        if ($owner_query->any_uport == 1) {
+                            $uport_notify = true;
+                        } else {
+                            $return['message'] = 'You are not authorized to access this authorization server.  NPI is blank.';
+                        }
                     }
                 } else {
                     if ($owner_query->any_uport == 1) {
-                        // Email notification to owner that someone is trying to login via uPort
-                        $uport_data = [
-                            'username' => $request->input('uport'),
-                            'first_name' => $name_arr['fname'],
-                            'last_name' => $name_arr['lname'],
-                            'uport_id' => $request->input('uport'),
-                            'password' => 'Pending',
-                        ];
-                        DB::table('oauth_users')->insert($uport_data);
-                        $uport_data1 = [
-                            'name' => $request->input('uport'),
-                            'email' => $request->input('email')
-                        ];
-                        DB::table('users')->insert($uport_data1);
-                        $data1['message_data'] = $name . ' has just attempted to login using your HIE of One Authorizaion Server via uPort.';
-                        $data1['message_data'] .= 'Go to ' . route('authorize_user') . ' to review and authorize.';
-                        $title = 'New uPort User';
-                        $to = $owner_query->email;
-                        $this->send_mail('auth.emails.generic', $data1, $title, $to);
-                        if ($owner_query->mobile != '') {
-                            $this->textbelt($owner_query->mobile, $data1['message_data']);
-                        }
+                        $uport_notify = true;
                     } else {
                         $return['message'] = 'You are not authorized to access this authorization server';
+                    }
+                }
+            }
+            if ($uport_notify == true) {
+                if ($request->has('email') && $request->input('email') !== '') {
+                    // Email notification to owner that someone is trying to login via uPort
+                    $uport_data = [
+                        'username' => $request->input('uport'),
+                        'first_name' => $name_arr['fname'],
+                        'last_name' => $name_arr['lname'],
+                        'uport_id' => $request->input('uport'),
+                        'password' => 'Pending',
+                    ];
+                    DB::table('oauth_users')->insert($uport_data);
+                    $uport_data1 = [
+                        'name' => $request->input('uport'),
+                        'email' => $request->input('email')
+                    ];
+                    DB::table('users')->insert($uport_data1);
+                    $data1['message_data'] = $name . ' has just attempted to login using your HIE of One Authorizaion Server via uPort.';
+                    $data1['message_data'] .= 'Go to ' . route('authorize_user') . ' to review and authorize.';
+                    $title = 'New uPort User';
+                    $to = $owner_query->email;
+                    $this->send_mail('auth.emails.generic', $data1, $title, $to);
+                    if ($owner_query->mobile != '') {
+                        $this->textbelt($owner_query->mobile, $data1['message_data']);
                     }
                 }
             }
