@@ -36,6 +36,17 @@
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
+									<label><input type="checkbox" name="login_uport" {{ $login_uport }}> Anyone signed in via uPort may be able to see these Resources</label>
+									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#login_uport_detail" style="margin-left:20px">Details</button>
+								</div>
+								<div id="login_uport_detail" class="collapse">
+									<p>uPort is a complete self-sovereign identity system built on Ethereum.  By checking this box, any new user with a uPort identity accessing this Authorization Server will notify you via SMS or Email for your decision for the uPort user's access to your Protected Health Information</p>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
 									<label><input type="checkbox" name="any_npi" {{ $any_npi }}> Anyone that has a National Provider Identifier (NPI) sees these Resources"</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#any_npi_detail" style="margin-left:20px">Details</button>
 								</div>

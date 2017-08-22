@@ -584,6 +584,12 @@ class HomeController extends Controller
         $data['password'] = sha($id);
         DB::table('oauth_users')->where('username', '=', $id)->update($data);
         $query = DB::table('oauth_users')->where('username', '=', $id)->first();
+        $owner_query = DB::table('owner')->first();
+        $data1['message_data'] = 'You have been authorized access to HIE of One Authorizaion Server for ' . $owner_query->firstname . ' ' . $owner_query->lastname;
+        $data1['message_data'] .= 'Go to ' . route('login') . ' to login.';
+        $title = 'Access to HIE of One';
+        $to = $query->email;
+        $this->send_mail('auth.emails.generic', $data1, $title, $to);
         Session::put('message_action', 'You just authorized a user named ' . $query->first_name . ' ' . $query->last_name);
         return redirect()->route('authorize_user');
     }
@@ -825,6 +831,9 @@ class HomeController extends Controller
         if ($query->login_google == 1) {
             $data['login_google'] = 'checked';
         }
+        if ($query->login_uport == 1) {
+            $data['login_uport'] = 'checked';
+        }
         $data['content'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
         $data['content'] .= '<h3>Resource Registration Consent Default Policies</h3>';
         $data['content'] .= '<p>You can set default policies (who gets access to your resources) whenever you have a new resource server registered to this authorization server.</p>';
@@ -853,6 +862,11 @@ class HomeController extends Controller
                 $data['login_google'] = 1;
             } else {
                 $data['login_google'] = 0;
+            }
+            if ($request->input('login_uport') == 'on') {
+                $data['login_uport'] = 1;
+            } else {
+                $data['login_uport'] = 0;
             }
             $query = DB::table('owner')->first();
             DB::table('owner')->where('id', '=', $query->id)->update($data);

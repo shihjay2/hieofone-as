@@ -482,7 +482,7 @@ class OauthController extends Controller
                                         DB::table('oauth_users')->insert($uport_data);
                                         $uport_data1 = [
                                             'name' => $request->input('uport'),
-                                            'email' => ''
+                                            'email' => $request->input('email')
                                         ];
                                         DB::table('users')->insert($uport_data1);
                                         $data1['message_data'] = $name . ' has just attempted to login using your HIE of One Authorizaion Server via uPort.';
@@ -507,7 +507,32 @@ class OauthController extends Controller
                         $return['message'] = 'You are not authorized to access this authorization server.  NPI is blank.';
                     }
                 } else {
-                    $return['message'] = 'You are not authorized to access this authorization server';
+                    if ($owner_query->any_uport == 1) {
+                        // Email notification to owner that someone is trying to login via uPort
+                        $uport_data = [
+                            'username' => $request->input('uport'),
+                            'first_name' => $name_arr['fname'],
+                            'last_name' => $name_arr['lname'],
+                            'uport_id' => $request->input('uport'),
+                            'password' => 'Pending',
+                        ];
+                        DB::table('oauth_users')->insert($uport_data);
+                        $uport_data1 = [
+                            'name' => $request->input('uport'),
+                            'email' => $request->input('email')
+                        ];
+                        DB::table('users')->insert($uport_data1);
+                        $data1['message_data'] = $name . ' has just attempted to login using your HIE of One Authorizaion Server via uPort.';
+                        $data1['message_data'] .= 'Go to ' . route('authorize_user') . ' to review and authorize.';
+                        $title = 'New uPort User';
+                        $to = $owner_query->email;
+                        $this->send_mail('auth.emails.generic', $data1, $title, $to);
+                        if ($owner_query->mobile != '') {
+                            $this->textbelt($owner_query->mobile, $data1['message_data']);
+                        }
+                    } else {
+                        $return['message'] = 'You are not authorized to access this authorization server';
+                    }
                 }
             }
         } else {
