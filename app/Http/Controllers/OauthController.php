@@ -441,6 +441,7 @@ class OauthController extends Controller
         $owner_query = DB::table('owner')->first();
         if ($request->has('uport')) {
             $uport_notify = false;
+            $valid_npi = '';
             // Start searching for users by checking name
             $name = $request->input('name');
             $parser = new NameParser();
@@ -551,6 +552,7 @@ class OauthController extends Controller
                                         }
                                     } else {
                                         $uport_notify = true;
+                                        $valid_npi = $npi1;
                                     }
                                 } else {
                                     $return['message'] = 'You are not authorized to access this authorization server.  NPI not found in database.';
@@ -593,6 +595,7 @@ class OauthController extends Controller
                         'last_name' => $name_arr['lname'],
                         'uport_id' => $request->input('uport'),
                         'password' => 'Pending',
+                        'npi' => $valid_npi
                     ];
                     DB::table('oauth_users')->insert($uport_data);
                     $uport_data1 = [
