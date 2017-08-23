@@ -224,7 +224,7 @@ class OauthController extends Controller
             if ($httpCode !== 404) {
                 $blockchain_arr = json_decode($blockchain, true);
                 $data['blockchain_count'] = $blockchain_arr['count'];
-                if ($blockchain_arr['count'] !== '0') {
+                if ($blockchain_arr['count'] !== 0) {
                     $data['blockchain_table'] = '<table class="table table-striped"><thead><tr><th>Date</th><th>Provider</th><th>Transaction Receipt</th></thead><tbody>';
                     foreach ($blockchain_arr['transactions'] as $blockchain_row) {
                         $data['blockchain_table'] .= '<tr><td>' . date('Y-m-d', $blockchain_row['date']) . '</td><td>' . $blockchain_row['provider'] . '</td><td><a href="https://rinkeby.etherscan.io/tx/' . $blockchain_row['transaction'] . '" target="_blank">' . $blockchain_row['transaction'] . '</a></td></tr>';
@@ -391,7 +391,7 @@ class OauthController extends Controller
                     if ($httpCode !== 404) {
                         $blockchain_arr = json_decode($blockchain, true);
                         $data['blockchain_count'] = $blockchain_arr['count'];
-                        if ($blockchain_arr['count'] !== '0') {
+                        if ($blockchain_arr['count'] !== 0) {
                             $data['blockchain_table'] = '<table class="table table-striped"><thead><tr><th>Date</th><th>Provider</th><th>Transaction Receipt</th></thead><tbody>';
                             foreach ($blockchain_arr['transactions'] as $blockchain_row) {
                                 $data['blockchain_table'] .= '<tr><td>' . date('Y-m-d', $blockchain_row['date']) . '</td><td>' . $blockchain_row['provider'] . '</td><td><a href="https://rinkeby.etherscan.io/tx/' . $blockchain_row['transaction'] . '" target="_blank">' . $blockchain_row['transaction'] . '</a></td></tr>';
