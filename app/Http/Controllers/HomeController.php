@@ -60,6 +60,7 @@ class HomeController extends Controller
         curl_setopt($ch,CURLOPT_TIMEOUT, 60);
         curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
         $result = curl_exec($ch);
+        curl_close ($ch);
         $smart_on_fhir = json_decode($result, true);
         if ($query || count($smart_on_fhir) > 0) {
             $data['content'] = '<div class="list-group">';

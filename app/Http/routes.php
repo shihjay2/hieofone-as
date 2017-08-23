@@ -45,6 +45,7 @@ App::singleton('oauth2', function () {
 
 // Core pages
 Route::any('install', ['as' => 'install', 'uses' => 'OauthController@install']);
+Route::get('/', ['as' => 'welcome', 'uses' => 'OauthController@welcome']);
 Route::any('login', ['as' => 'login', 'uses' => 'OauthController@login']);
 Route::any('logout', ['as' => 'logout', 'uses' => 'OauthController@logout']);
 Route::post('login_uport', ['as' => 'login_uport', 'middleware' => 'csrf', 'uses' => 'OauthController@login_uport']);
@@ -215,18 +216,3 @@ Route::get('update_system', ['as' => 'update_system', 'uses' => 'OauthController
 
 // test
 Route::any('test1', ['as' => 'test1', 'uses' => 'OauthController@test1']);
-
-Route::get('/', ['as' => 'welcome', function () {
-    $query = DB::table('owner')->first();
-    if ($query) {
-        if (Auth::check()) {
-            return redirect()->route('home');
-        }
-        $data = [
-            'name' => $query->firstname . ' ' . $query->lastname
-        ];
-        return view('welcome', $data);
-    } else {
-        return redirect()->route('install');
-    }
-}]);
