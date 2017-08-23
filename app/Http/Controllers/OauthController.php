@@ -201,7 +201,7 @@ class OauthController extends Controller
     {
         $query = DB::table('owner')->first();
         if ($query) {
-            if (Auth::check()) {
+            if (Auth::check() && Session::get('is_owner') == 'yes') {
                 return redirect()->route('home');
             }
             $data = [
