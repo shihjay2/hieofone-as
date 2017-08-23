@@ -73,6 +73,8 @@ Route::get('authorize_client_disable/{id}', ['as' => 'authorize_client_disable',
 Route::get('authorize_user', ['as' => 'authorize_user', 'uses' => 'HomeController@authorize_user']);
 Route::get('authorize_user_action/{id}', ['as' => 'authorize_user_action', 'uses' => 'HomeController@authorize_user_action']);
 Route::get('authorize_user_disable/{id}', ['as' => 'authorize_user_disable', 'uses' => 'HomeController@authorize_user_disable']);
+Route::get('proxy_add/{sub}', ['as' => 'proxy_add', 'uses' => 'HomeController@proxy_add']);
+Route::get('proxy_remove/{sub}', ['as' => 'proxy_remove', 'uses' => 'HomeController@proxy_remove']);
 Route::any('make_invitation', ['as' => 'make_invitation', 'uses' => 'HomeController@make_invitation']);
 Route::any('accept_invitation/{id}', ['as' => 'accept_invitation', 'uses' => 'OauthController@accept_invitation']);
 Route::any('process_invitation', ['as' => 'process_invitation', 'uses' => 'HomeController@process_invitation']);

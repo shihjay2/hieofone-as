@@ -253,6 +253,13 @@ class OauthController extends Controller
     {
         if (Auth::guest()) {
             $owner_query = DB::table('owner')->first();
+            $proxies = DB::table('owner')->where('sub', '!=', $owner_query->sub)->get();
+            $proxy_arr = [];
+            if ($proxies) {
+                foreach ($proxies as $proxy_row) {
+                    $proxy_arr[] = $proxy_row->sub;
+                }
+            }
             if ($request->isMethod('post')) {
                 $this->validate($request, [
                     'username' => 'required',
@@ -300,6 +307,10 @@ class OauthController extends Controller
                     Session::put('email', $oauth_user->email);
                     Session::put('login_origin', 'login_direct');
                     Session::put('invite', 'no');
+                    Session::put('is_owner', 'no');
+                    if ($oauth_user->sub == $owner_query->sub || in_array($oauth_user->sub, $proxy_arr)) {
+                        Session::put('is_owner', 'yes');
+                    }
                     if ($owner_query->sub == $oauth_user->sub) {
                         Session::put('invite', 'yes');
                     }
@@ -439,6 +450,13 @@ class OauthController extends Controller
     public function login_uport(Request $request)
     {
         $owner_query = DB::table('owner')->first();
+        $proxies = DB::table('owner')->where('sub', '!=', $owner_query->sub)->get();
+        $proxy_arr = [];
+        if ($proxies) {
+            foreach ($proxies as $proxy_row) {
+                $proxy_arr[] = $proxy_row->sub;
+            }
+        }
         if ($request->has('uport')) {
             $uport_notify = false;
             $valid_npi = '';
@@ -858,6 +876,13 @@ class OauthController extends Controller
     {
         $query0 = DB::table('oauth_rp')->where('type', '=', 'google')->first();
         $owner_query = DB::table('owner')->first();
+        $proxies = DB::table('owner')->where('sub', '!=', $owner->sub)->get();
+        $proxy_arr = [];
+        if ($proxies) {
+            foreach ($proxies as $proxy_row) {
+                $proxy_arr[] = $proxy_row->sub;
+            }
+        }
         config(['services.google.client_id' => $query0->client_id]);
         config(['services.google.client_secret' => $query0->client_secret]);
         config(['services.google.redirect' => $query0->redirect_uri]);
@@ -1106,6 +1131,13 @@ class OauthController extends Controller
             if ($authorized) {
                 Session::put('is_authorized', 'true');
                 $owner_query = DB::table('owner')->first();
+                $proxies = DB::table('owner')->where('sub', '!=', $owner_query->sub)->get();
+                $proxy_arr = [];
+                if ($proxies) {
+                    foreach ($proxies as $proxy_row) {
+                        $proxy_arr[] = $proxy_row->sub;
+                    }
+                }
                 if ($owner_query->login_md_nosh == 1) {
                     // Add user if not added already
                     $sub_query = DB::table('oauth_users')->where('sub', '=', $sub)->first();

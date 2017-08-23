@@ -49,22 +49,24 @@
 				<!-- Left Side Of Navbar -->
 				<ul class="nav navbar-nav">
 					@if (!Auth::guest())
-						<li><a href="{{ url('/home') }}">My Resources</a></li>
-						<li><a href="{{ url('/default_policies') }}">My Policies</a></li>
-						<li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">My Clients <span class="caret"></span></a>
-							<ul class="dropdown-menu" role="menu">
-								<li><a href="{{ url('/clients') }}">Authorized</a></li>
-								<li><a href="{{ url('/authorize_client') }}">Pending Authorization</a></li>
-							</ul>
-						</li>
-						<li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">My Users <span class="caret"></span></a>
-							<ul class="dropdown-menu" role="menu">
-								<li><a href="{{ url('/users') }}">Authorized</a></li>
-								<li><a href="{{ url('/authorize_user') }}">Pending Authorization</a></li>
-							</ul>
-						</li>
-						@if (Session::get('invite') == 'yes')
-							<li><a href="{{ url('/make_invitation') }}">Invite</a></li>
+						@if (Session::get('is_owner') == 'yes')
+							<li><a href="{{ url('/home') }}">My Resources</a></li>
+							<li><a href="{{ url('/default_policies') }}">My Policies</a></li>
+							<li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">My Clients <span class="caret"></span></a>
+								<ul class="dropdown-menu" role="menu">
+									<li><a href="{{ url('/clients') }}">Authorized</a></li>
+									<li><a href="{{ url('/authorize_client') }}">Pending Authorization</a></li>
+								</ul>
+							</li>
+							<li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">My Users <span class="caret"></span></a>
+								<ul class="dropdown-menu" role="menu">
+									<li><a href="{{ url('/users') }}">Authorized</a></li>
+									<li><a href="{{ url('/authorize_user') }}">Pending Authorization</a></li>
+								</ul>
+							</li>
+							@if (Session::get('invite') == 'yes')
+								<li><a href="{{ url('/make_invitation') }}">Invite</a></li>
+							@endif
 						@endif
 					@endif
 				</ul>

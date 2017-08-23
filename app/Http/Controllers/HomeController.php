@@ -30,73 +30,77 @@ class HomeController extends Controller
      */
     public function index(Request $request)
     {
-        $data['name'] = Session::get('owner');
-        $data['title'] = 'My Resource Services';
-        $data['content'] = 'No resource services yet.';
-        $mdnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', '%mdNOSH%')->first();
-        if (! $mdnosh) {
-            $data['mdnosh'] = true;
-        }
-        $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
-        if (! $pnosh) {
-            $data['pnosh'] = true;
-            $data['pnosh_url'] = URL::to('/') . '/nosh';
-            $owner = DB::table('owner')->first();
-            setcookie('pnosh_firstname', $owner->firstname);
-            setcookie('pnosh_lastname', $owner->lastname);
-            setcookie('pnosh_dob', date("m/d/Y", strtotime($owner->DOB)));
-            setcookie('pnosh_email', $owner->email);
-            setcookie('pnosh_username', Session::get('username'));
-        }
-        $data['message_action'] = Session::get('message_action');
-        Session::forget('message_action');
-        $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
-        $url = URL::to('/') . '/nosh/smart_on_fhir_list';
-        $ch = curl_init();
-        curl_setopt($ch,CURLOPT_URL, $url);
-        curl_setopt($ch,CURLOPT_FAILONERROR,1);
-        curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
-        curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
-        curl_setopt($ch,CURLOPT_TIMEOUT, 60);
-        curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
-        $result = curl_exec($ch);
-        curl_close ($ch);
-        $smart_on_fhir = json_decode($result, true);
-        if ($query || count($smart_on_fhir) > 0) {
-            $data['content'] = '<div class="list-group">';
-            if ($query) {
-                foreach ($query as $client) {
-                    $link = '';
-                    if ($pnosh) {
-                        if ($client->client_id == $pnosh->client_id) {
-                            $link = '<span class="label label-success pnosh_link" nosh-link="' . URL::to('/') . '/nosh/uma_auth">Go There</span>';
-                        }
-                    }
-                    $data['content'] .= '<a href="' . URL::to('resources') . '/' . $client->client_id . '" class="list-group-item"><img src="' . $client->logo_uri . '" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $client->client_name . '</span>' . $link . '</a>';
-                }
+        if (Session::get('is_owner') == 'no') {
+            return redirect()->route('welcome');
+        } else {
+            $data['name'] = Session::get('owner');
+            $data['title'] = 'My Resource Services';
+            $data['content'] = 'No resource services yet.';
+            $mdnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', '%mdNOSH%')->first();
+            if (! $mdnosh) {
+                $data['mdnosh'] = true;
             }
-            if (count($smart_on_fhir) > 0) {
-                foreach ($smart_on_fhir as $smart_row) {
-                    $copy_link = '<i class="fa fa-cog fa-lg pnosh_copy_set" hie-val="' . $smart_row['endpoint_uri_raw'] . '" title="Settings" style="cursor:pointer;"></i>';
-                    $fhir_db = DB::table('fhir_clients')->where('endpoint_uri', '=', $smart_row['endpoint_uri_raw'])->first();
-                    if ($fhir_db) {
-                        if ($fhir_db->username !== null && $fhir_db->username !== '') {
-                            $copy_link .= '<span style="margin:10px"></span><i class="fa fa-clone fa-lg pnosh_copy" hie-val="' . $fhir_db->username . '" title="Copy username" style="cursor:pointer;"></i><span style="margin:10px"></span><i class="fa fa-key fa-lg pnosh_copy" hie-val="' . decrypt($fhir_db->password) . '" title="Copy password" style="cursor:pointer;"></i>';
+            $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
+            if (! $pnosh) {
+                $data['pnosh'] = true;
+                $data['pnosh_url'] = URL::to('/') . '/nosh';
+                $owner = DB::table('owner')->first();
+                setcookie('pnosh_firstname', $owner->firstname);
+                setcookie('pnosh_lastname', $owner->lastname);
+                setcookie('pnosh_dob', date("m/d/Y", strtotime($owner->DOB)));
+                setcookie('pnosh_email', $owner->email);
+                setcookie('pnosh_username', Session::get('username'));
+            }
+            $data['message_action'] = Session::get('message_action');
+            Session::forget('message_action');
+            $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
+            $url = URL::to('/') . '/nosh/smart_on_fhir_list';
+            $ch = curl_init();
+            curl_setopt($ch,CURLOPT_URL, $url);
+            curl_setopt($ch,CURLOPT_FAILONERROR,1);
+            curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+            curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+            curl_setopt($ch,CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
+            $result = curl_exec($ch);
+            curl_close ($ch);
+            $smart_on_fhir = json_decode($result, true);
+            if ($query || count($smart_on_fhir) > 0) {
+                $data['content'] = '<div class="list-group">';
+                if ($query) {
+                    foreach ($query as $client) {
+                        $link = '';
+                        if ($pnosh) {
+                            if ($client->client_id == $pnosh->client_id) {
+                                $link = '<span class="label label-success pnosh_link" nosh-link="' . URL::to('/') . '/nosh/uma_auth">Go There</span>';
+                            }
                         }
-                    } else {
-                        $fhir_data = [
-                            'name' => $smart_row['org_name'],
-                            'endpoint_uri' => $smart_row['endpoint_uri_raw'],
-                        ];
-                        DB::table('fhir_clients')->insert($fhir_data);
+                        $data['content'] .= '<a href="' . URL::to('resources') . '/' . $client->client_id . '" class="list-group-item"><img src="' . $client->logo_uri . '" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $client->client_name . '</span>' . $link . '</a>';
                     }
-                    $data['content'] .= '<a href="' . $smart_row['endpoint_uri'] . '" class="list-group-item list-group-item-success container-fluid" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">SMART-on-FHIR Resource (no refresh token): ' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a>';
+                }
+                if (count($smart_on_fhir) > 0) {
+                    foreach ($smart_on_fhir as $smart_row) {
+                        $copy_link = '<i class="fa fa-cog fa-lg pnosh_copy_set" hie-val="' . $smart_row['endpoint_uri_raw'] . '" title="Settings" style="cursor:pointer;"></i>';
+                        $fhir_db = DB::table('fhir_clients')->where('endpoint_uri', '=', $smart_row['endpoint_uri_raw'])->first();
+                        if ($fhir_db) {
+                            if ($fhir_db->username !== null && $fhir_db->username !== '') {
+                                $copy_link .= '<span style="margin:10px"></span><i class="fa fa-clone fa-lg pnosh_copy" hie-val="' . $fhir_db->username . '" title="Copy username" style="cursor:pointer;"></i><span style="margin:10px"></span><i class="fa fa-key fa-lg pnosh_copy" hie-val="' . decrypt($fhir_db->password) . '" title="Copy password" style="cursor:pointer;"></i>';
+                            }
+                        } else {
+                            $fhir_data = [
+                                'name' => $smart_row['org_name'],
+                                'endpoint_uri' => $smart_row['endpoint_uri_raw'],
+                            ];
+                            DB::table('fhir_clients')->insert($fhir_data);
+                        }
+                        $data['content'] .= '<a href="' . $smart_row['endpoint_uri'] . '" class="list-group-item list-group-item-success container-fluid" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">SMART-on-FHIR Resource (no refresh token): ' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a>';
 
+                    }
                 }
+                $data['content'] .= '</div>';
             }
-            $data['content'] .= '</div>';
+            return view('home', $data);
         }
-        return view('home', $data);
     }
 
     /**
@@ -535,14 +539,36 @@ class HomeController extends Controller
             'uma_protection' => 'Register Resources'
         ];
         $query = DB::table('oauth_users')->get();
+        $owner = DB::table('owner')->first();
+        $proxies = DB::table('owner')->where('sub', '!=', $owner->sub)->get();
+        $proxy_arr = [];
+        if ($proxies) {
+            foreach ($proxies as $proxy_row) {
+                $proxy_arr[] = $proxy_row->sub;
+            }
+        }
         if ($query) {
-            $data['content'] = '<p>Users have access to your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Name</th><th>Email</th><th>NPI</th><th></th></thead><tbody>';
+            $data['content'] = '<p>Users have access to your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Name</th><th>Email</th><th>NPI</th><th></th><th></th></thead><tbody>';
             foreach ($query as $user) {
                 $data['content'] .= '<tr><td>' . $user->first_name . ' ' . $user->last_name . '</td><td>' . $user->email . '</td><td>';
                 if ($user->npi !== null && $user->npi !== '') {
                     $data['content'] .= $user->npi;
                 }
-                $data['content'] .= '</td><td><a href="' . route('authorize_user_disable', [$user->username]) . '" class="btn btn-primary" role="button">Unauthorize</a></td></tr>';
+                $data['content'] .= '</td><td><a href="' . route('authorize_user_disable', [$user->username]) . '" class="btn btn-primary" role="button">Unauthorize</a></td>';
+                if ($user->sub == $owner->sub) {
+                    $data['content'] .= '<td></td>';
+                } else {
+                    if (Session::get('sub') == $owner->sub) {
+                        if (in_array($user->sub, $proxy_arr)) {
+                            $data['content'] .= '<td><a href="' . route('proxy_remove', [$user->sub]) . '" class="btn btn-danger" role="button">Remove As Proxy</a></td>';
+                        } else {
+                            $data['content'] .= '<td><a href="' . route('proxy_add', [$user->sub]) . '" class="btn btn-success" role="button">Add As Proxy</a></td>';
+                        }
+                    } else {
+                        $data['content'] .= '<td></td>';
+                    }
+                }
+                $data['content'] .= '</tr>';
             }
         }
         return view('home', $data);
@@ -602,6 +628,31 @@ class HomeController extends Controller
         DB::table('oauth_users')->where('username', '=', $id)->delete();
         DB::table('users')->where('name', '=', $id)->delete();
         return redirect()->route('authorize_user');
+    }
+
+    public function proxy_add(Request $request, $sub)
+    {
+        $query = DB::table('oauth_users')->where('sub', '=', $sub)->first();
+        $data = [
+            'lastname' => $query->last_name,
+            'firstname' => $query->first_name,
+            'sub' => $sub
+        ];
+        DB::table('owner')->insert($data);
+        Session::put('message_action', 'You just added ' . $query->first_name . ' ' . $query->last_name . ' as a proxy for you');
+        return redirect()->route('users');
+    }
+
+    public function proxy_remove(Request $request, $sub)
+    {
+        $owner = DB::table('owner')->first();
+        if ($sub !== $owner->sub) {
+            DB::table('owner')->where('sub', '=', $sub)->delete();
+            Session::put('message_action', 'You just removed ' . $query->first_name . ' ' . $query->last_name . ' as a proxy for you');
+        } else {
+            Session::put('message_action', 'You cannot remove yourself as the owner.');
+        }
+        return redirect()->route('users');
     }
 
     public function make_invitation(Request $request)

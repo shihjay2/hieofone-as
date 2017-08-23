@@ -55,6 +55,13 @@ class Controller extends BaseController
     protected function login_sessions($user, $client_id)
     {
         $owner_query = DB::table('owner')->first();
+        $proxies = DB::table('owner')->where('sub', '!=', $owner_query->sub)->get();
+        $proxy_arr = [];
+        if ($proxies) {
+            foreach ($proxies as $proxy_row) {
+                $proxy_arr[] = $proxy_row->sub;
+            }
+        }
         $client = DB::table('oauth_clients')->where('client_id', '=', $client_id)->first();
         Session::put('client_id', $client_id);
         Session::put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
@@ -65,6 +72,10 @@ class Controller extends BaseController
         Session::put('sub', $user->sub);
         Session::put('email', $user->email);
         Session::put('invite', 'no');
+        Session::put('is_owner', 'no');
+        if ($user->sub == $owner_query->sub || in_array($user->sub, $proxy_arr)) {
+            Session::put('is_owner', 'yes');
+        }
         if ($owner_query->sub == $user->sub) {
             Session::put('invite', 'yes');
         }
