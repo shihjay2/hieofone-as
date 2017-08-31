@@ -627,7 +627,7 @@ class OauthController extends Controller
                         ];
                         DB::table('users')->insert($uport_data1);
                         $data1['message_data'] = $name . ' has just attempted to login using your HIE of One Authorizaion Server via uPort.';
-                        $data1['message_data'] .= 'Go to ' . route('authorize_user') . ' to review and authorize.';
+                        $data1['message_data'] .= 'Go to ' . route('authorize_user') . '/ to review and authorize.';
                         $title = 'New uPort User';
                         $to = $owner_query->email;
                         $this->send_mail('auth.emails.generic', $data1, $title, $to);

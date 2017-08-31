@@ -538,7 +538,7 @@ class HomeController extends Controller
             'uma_authorization' => 'Access Resources',
             'uma_protection' => 'Register Resources'
         ];
-        $query = DB::table('oauth_users')->get();
+        $query = DB::table('oauth_users')->where('password', '!=', 'Pending')->get();
         $owner = DB::table('owner')->first();
         $proxies = DB::table('owner')->where('sub', '!=', $owner->sub)->get();
         $proxy_arr = [];
@@ -613,7 +613,7 @@ class HomeController extends Controller
         $query = DB::table('oauth_users')->where('username', '=', $id)->first();
         $owner_query = DB::table('owner')->first();
         $data1['message_data'] = 'You have been authorized access to HIE of One Authorizaion Server for ' . $owner_query->firstname . ' ' . $owner_query->lastname;
-        $data1['message_data'] .= 'Go to ' . route('login') . ' to login.';
+        $data1['message_data'] .= 'Go to ' . route('login') . '/ to login.';
         $title = 'Access to HIE of One';
         $to = $query->email;
         $this->send_mail('auth.emails.generic', $data1, $title, $to);
