@@ -606,30 +606,36 @@ class OauthController extends Controller
             }
             if ($uport_notify == true) {
                 if ($request->has('email') && $request->input('email') !== '') {
-                    // Email notification to owner that someone is trying to login via uPort
-                    $uport_data = [
-                        'username' => $request->input('uport'),
-                        'first_name' => $name_arr['fname'],
-                        'last_name' => $name_arr['lname'],
-                        'uport_id' => $request->input('uport'),
-                        'password' => 'Pending',
-                        'npi' => $valid_npi
-                    ];
-                    DB::table('oauth_users')->insert($uport_data);
-                    $uport_data1 = [
-                        'name' => $request->input('uport'),
-                        'email' => $request->input('email')
-                    ];
-                    DB::table('users')->insert($uport_data1);
-                    $data1['message_data'] = $name . ' has just attempted to login using your HIE of One Authorizaion Server via uPort.';
-                    $data1['message_data'] .= 'Go to ' . route('authorize_user') . ' to review and authorize.';
-                    $title = 'New uPort User';
-                    $to = $owner_query->email;
-                    $this->send_mail('auth.emails.generic', $data1, $title, $to);
-                    if ($owner_query->mobile != '') {
-                        $this->textbelt($owner_query->mobile, $data1['message_data']);
+                    // Check email if duplicate
+                    $email_query = DB::table('users')->where('email', '=', $request->input('email'))->first();
+                    if ($email_query) {
+                        $return['message'] = 'There is already a user that has your email address';
+                    } else {
+                        // Email notification to owner that someone is trying to login via uPort
+                        $uport_data = [
+                            'username' => $request->input('uport'),
+                            'first_name' => $name_arr['fname'],
+                            'last_name' => $name_arr['lname'],
+                            'uport_id' => $request->input('uport'),
+                            'password' => 'Pending',
+                            'npi' => $valid_npi
+                        ];
+                        DB::table('oauth_users')->insert($uport_data);
+                        $uport_data1 = [
+                            'name' => $request->input('uport'),
+                            'email' => $request->input('email')
+                        ];
+                        DB::table('users')->insert($uport_data1);
+                        $data1['message_data'] = $name . ' has just attempted to login using your HIE of One Authorizaion Server via uPort.';
+                        $data1['message_data'] .= 'Go to ' . route('authorize_user') . ' to review and authorize.';
+                        $title = 'New uPort User';
+                        $to = $owner_query->email;
+                        $this->send_mail('auth.emails.generic', $data1, $title, $to);
+                        if ($owner_query->mobile != '') {
+                            $this->textbelt($owner_query->mobile, $data1['message_data']);
+                        }
+                        $return['message'] = 'Authorization owner has been notified and wait for an email for your approval';
                     }
-                    $return['message'] = 'Authorization owner has been notified and wait for an email for your approval';
                 } else {
                     $return['message'] = 'No email address associated with your uPort account.';
                 }
