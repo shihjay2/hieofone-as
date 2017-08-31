@@ -629,6 +629,9 @@ class OauthController extends Controller
                     if ($owner_query->mobile != '') {
                         $this->textbelt($owner_query->mobile, $data1['message_data']);
                     }
+                    $return['message'] = 'Authorization owner has been notified and wait for an email for your approval';
+                } else {
+                    $return['message'] = 'No email address associated with your uPort account.';
                 }
             }
         } else {
