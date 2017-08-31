@@ -576,28 +576,28 @@ class OauthController extends Controller
                                     $return['message'] = 'You are not authorized to access this authorization server.  NPI not found in database.';
                                 }
                             } else {
-                                if ($owner_query->any_uport == 1) {
+                                if ($owner_query->login_uport == 1) {
                                     $uport_notify = true;
                                 } else {
                                     $return['message'] = 'You are not authorized to access this authorization server.  NPI not 10 characters.';
                                 }
                             }
                         } else {
-                            if ($owner_query->any_uport == 1) {
+                            if ($owner_query->login_uport == 1) {
                                 $uport_notify = true;
                             } else {
                                 $return['message'] = 'You are not authorized to access this authorization server.  NPI not numeric.';
                             }
                         }
                     } else {
-                        if ($owner_query->any_uport == 1) {
+                        if ($owner_query->login_uport == 1) {
                             $uport_notify = true;
                         } else {
                             $return['message'] = 'You are not authorized to access this authorization server.  NPI is blank.';
                         }
                     }
                 } else {
-                    if ($owner_query->any_uport == 1) {
+                    if ($owner_query->login_uport == 1) {
                         $uport_notify = true;
                     } else {
                         $return['message'] = 'You are not authorized to access this authorization server';
@@ -702,6 +702,7 @@ class OauthController extends Controller
 
     public function password_email(Request $request)
     {
+        $owner = DB::table('owner')->first();
         if ($request->isMethod('post')) {
             $this->validate($request, [
                 'email' => 'required',
@@ -711,10 +712,10 @@ class OauthController extends Controller
                 $data['password'] = $this->gen_secret();
                 DB::table('oauth_users')->where('email', '=', $request->input('email'))->update($data);
                 $url = URL::to('password_reset') . '/' . $data['password'];
-                $data2['message_data'] = 'This message is to notify you that you have reset your password with mdNOSH Gateway.<br>';
+                $data2['message_data'] = 'This message is to notify you that you have reset your password with the HIE of One Auhtorization Server for ' . $owner->firstname . ' ' . $owner->lastname . '.<br>';
                 $data2['message_data'] .= 'To finish this process, please click on the following link or point your web browser to:<br>';
                 $data2['message_data'] .= $url;
-                $title = 'Reset password to mdNOSH Gateway';
+                $title = 'Reset password for ' . $owner->firstname . ' ' . $owner->lastname  . "'s Authorization Server";
                 $to = $request->input('email');
                 $this->send_mail('auth.emails.generic', $data2, $title, $to);
             }
