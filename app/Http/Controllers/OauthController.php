@@ -1543,6 +1543,33 @@ class OauthController extends Controller
         }
     }
 
+    public function pnosh_sync(Request $request)
+    {
+        $return = 'Error';
+        if ($request->isMethod('post')) {
+            $query = DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->where('client_secret', '=', $request->input('client_secret'))->first();
+            if ($query) {
+                $user = DB::table('users')->where('email', '=', $request->input('old_email'))->first();
+                if ($user) {
+                    $user1 = DB::table('oauth_users')->where('email', '=', $request->input('old_email'))->first();
+                    $owner = DB::table('owner')->where('id', '=', '1')->where('sub', '=', $user1->sub)->first();
+                    if ($owner) {
+                        $owner_data = [
+                            'email' => $request->input('email'),
+                            'mobile' => $request->input('sms')
+                        ];
+                        DB::table('owner')->where('id', '=', $owner->id)->update($owner_data);
+                        $data['email'] = $request->input('email');
+                        DB::table('users')->where('email', '=', $request->input('old_email'))->update($data);
+                        DB::table('oauth_users')->where('email', '=', $request->input('old_email'))->update($data);
+                        $return = 'Contact data synchronized';
+                    }
+                }
+            }
+        }
+        return $return;
+    }
+
     public function reset_demo(Request $request)
     {
         if (route('home') == 'https://shihjay.xyz/home') {
