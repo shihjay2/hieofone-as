@@ -844,7 +844,7 @@ class HomeController extends Controller
                     'mobile' => $request->input('mobile')
                 ];
                 DB::table('owner')->where('id', '=', '1')->update($owner_data);
-                if ($owner_query->email !== $request->input('email') && $owner_query->mobile !== $request->input('mobile')) {
+                if ($owner_query->email !== $request->input('email') || $owner_query->mobile !== $request->input('mobile')) {
                     $pnosh_uri = URL::to('/') . '/nosh';
                     $pnosh = DB::table('oauth_clients')->where('client_uri', '=', $pnosh_uri)->first();
                     if ($pnosh) {
