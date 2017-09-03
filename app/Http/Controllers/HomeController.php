@@ -868,7 +868,7 @@ class HomeController extends Controller
                         curl_setopt($ch, CURLOPT_TIMEOUT, 60);
                         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT ,0);
                         $result = curl_exec($ch);
-                        $message = ' ' . $result;
+                        $message = '<br>' . $result;
                     }
                 }
             }
