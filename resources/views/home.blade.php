@@ -25,7 +25,7 @@
 				<div class="panel-body">
 					@if (isset($message_action))
 						<div class="alert alert-success">
-							<strong>{{ $message_action }}</strong>
+							<strong>{!! $message_action !!}</strong>
 						</div>
 					@endif
 					@if (isset($pnosh))
