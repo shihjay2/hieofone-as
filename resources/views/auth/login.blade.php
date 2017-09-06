@@ -122,16 +122,6 @@
 							</div>
 						</div>
 						@endif
-						<div class="form-group">
-							<div class="col-md-6 col-md-offset-3">
-								<button type="button" class="btn btn-info btn-block" data-toggle="collapse" data-target="#blockchain_detail">{{ $blockchain_count }} Blockchain Transactions</button>
-							</div>
-							<div class="col-md-12">
-							<div id="blockchain_detail" class="collapse" style="margin-top:20px;">
-								<p><strong>Last 10 transactions:</strong></p>
-								{!! $blockchain_table !!}
-							</div>
-						</div>
 					</form>
 				</div>
 			</div>

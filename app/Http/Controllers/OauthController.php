@@ -207,37 +207,6 @@ class OauthController extends Controller
             $data = [
                 'name' => $query->firstname . ' ' . $query->lastname
             ];
-            // Get blockchain stats
-            $data['blockchain_count'] = '0';
-            $data['blockchain_table'] = 'None';
-            $url = URL::to('/') . '/nosh/transactions';
-            $ch = curl_init();
-            curl_setopt($ch,CURLOPT_URL, $url);
-            curl_setopt($ch,CURLOPT_FAILONERROR,1);
-            curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
-            curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
-            curl_setopt($ch,CURLOPT_TIMEOUT, 60);
-            curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
-            $blockchain = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close ($ch);
-            if ($httpCode !== 404) {
-                $blockchain_arr = json_decode($blockchain, true);
-                $data['blockchain_count'] = $blockchain_arr['count'];
-                if ($blockchain_arr['count'] !== 0) {
-                    $data['blockchain_table'] = '<table class="table table-striped"><thead><tr><th>Date</th><th>Provider</th><th>Transaction Receipt</th></thead><tbody>';
-                    foreach ($blockchain_arr['transactions'] as $blockchain_row) {
-                        $data['blockchain_table'] .= '<tr><td>' . date('Y-m-d', $blockchain_row['date']) . '</td><td>' . $blockchain_row['provider'] . '</td><td><a href="https://rinkeby.etherscan.io/tx/' . $blockchain_row['transaction'] . '" target="_blank">' . $blockchain_row['transaction'] . '</a></td></tr>';
-                    }
-                    $data['blockchain_table'] .= '</tbody></table>';
-                    $data['blockchain_table'] .= '<strong>Top 5 Provider Users</strong>';
-                    $data['blockchain_table'] .= '<table class="table table-striped"><thead><tr><th>Provider</th><th>Number of Transactions</th></thead><tbody>';
-                    foreach ($blockchain_arr['providers'] as $blockchain_row1) {
-                        $data['blockchain_table'] .= '<tr><td>' . $blockchain_row1['provider'] . '</td><td>' . $blockchain_row1['count'] . '</td></tr>';
-                    }
-                    $data['blockchain_table'] .= '</tbody></table>';
-                }
-            }
             return view('welcome', $data);
         } else {
             return redirect()->route('install');
@@ -384,37 +353,6 @@ class OauthController extends Controller
                     } else {
                         $version = $this->github_all();
                         $data['version'] = $version[0]['sha'];
-                    }
-                    // Get blockchain stats
-                    $data['blockchain_count'] = '0';
-                    $data['blockchain_table'] = 'None';
-                    $url = URL::to('/') . '/nosh/transactions';
-                    $ch = curl_init();
-                    curl_setopt($ch,CURLOPT_URL, $url);
-                    curl_setopt($ch,CURLOPT_FAILONERROR,1);
-                    curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
-                    curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
-                    curl_setopt($ch,CURLOPT_TIMEOUT, 60);
-                    curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
-                    $blockchain = curl_exec($ch);
-                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                    curl_close ($ch);
-                    if ($httpCode !== 404) {
-                        $blockchain_arr = json_decode($blockchain, true);
-                        $data['blockchain_count'] = $blockchain_arr['count'];
-                        if ($blockchain_arr['count'] !== 0) {
-                            $data['blockchain_table'] = '<table class="table table-striped"><thead><tr><th>Date</th><th>Provider</th><th>Transaction Receipt</th></thead><tbody>';
-                            foreach ($blockchain_arr['transactions'] as $blockchain_row) {
-                                $data['blockchain_table'] .= '<tr><td>' . date('Y-m-d', $blockchain_row['date']) . '</td><td>' . $blockchain_row['provider'] . '</td><td><a href="https://rinkeby.etherscan.io/tx/' . $blockchain_row['transaction'] . '" target="_blank">' . $blockchain_row['transaction'] . '</a></td></tr>';
-                            }
-                            $data['blockchain_table'] .= '</tbody></table>';
-                            $data['blockchain_table'] .= '<strong>Top 5 Provider Users</strong>';
-                            $data['blockchain_table'] .= '<table class="table table-striped"><thead><tr><th>Provider</th><th>Number of Transactions</th></thead><tbody>';
-                            foreach ($blockchain_arr['providers'] as $blockchain_row1) {
-                                $data['blockchain_table'] .= '<tr><td>' . $blockchain_row1['provider'] . '</td><td>' . $blockchain_row1['count'] . '</td></tr>';
-                            }
-                            $data['blockchain_table'] .= '</tbody></table>';
-                        }
                     }
                     return view('auth.login', $data);
                 } else {
