@@ -104,6 +104,7 @@
 								<button type="button" class="btn btn-primary btn-block" id="connectUportBtn" onclick="loginBtnClick()">
 									<img src="{{ asset('assets/uport-logo-white.svg') }}" height="25" width="25" style="margin-right:5px"></img> Login with uPort
 								</button>
+								<button type="button" class="btn btn-primary btn-block" id="connectUportBtn1" onclick="attest()">Be a New Doc!</button>
 								<!-- <button type="button" class="btn btn-primary btn-block" id="connectUportBtn1" onclick="uportConnect()">Connect uPort</button> -->
 								<!-- <button type="button" class="btn btn-primary btn-block" id="connectUportBtn2" onclick="sendEther()">Send Ether</button> -->
 								<a class="btn btn-primary btn-block" href="{{ url('/mdnosh') }}">
@@ -139,12 +140,6 @@
 <script src="{{ asset('assets/js/web3.js') }}"></script>
 <script src="{{ asset('assets/js/uport-connect.js') }}"></script>
 <script src="{{ asset('assets/js/toastr.min.js') }}"></script>
-<!-- <script src="{{ asset('assets/js/uport-connect-core.js') }}"></script> -->
-<!-- <script src="{{ asset('assets/js/uportlib.js') }}"></script> -->
-<!-- <script src="{{ asset('assets/js/aes.js') }}"></script> -->
-<!-- <script src="{{ asset('assets/js/aes-json-format.js') }}"></script> -->
-<!-- <script src="{{ asset('assets/js/uport-lib/dist/uportlib.js') }}"></script> -->
-<!-- <script src="{{ asset('assets/js/uport-lib/node_modules/web3/dist/web3.js') }}"></script> -->
 <script type="text/javascript">
 	$(document).ready(function() {
 		$("#username").focus();
@@ -159,24 +154,17 @@
 		'network': 'rinkeby'
 	});
 	const web3 = connect.getWeb3();
+
 	const loginBtnClick = () => {
 		connect.requestCredentials({
-	      requested: ['name', 'phone', 'country', 'email', 'description'],
+	      requested: ['name', 'phone', 'country', 'email', 'description', 'NPI'],
 	      notifications: true // We want this if we want to recieve credentials
 	    }).then((credentials) => {
 			console.log(credentials);
-			// const cred = {
-			// 	sub: credentials.address,
-			// 	claim: {'email': 'shihjay2@gmail.com'},
-			// 	exp: '1300819380'
-			// }
-			// connect.attestCredentials(cred).then(res => {
-			// response okay, received in uPort app
-			// })
 			var uport_url = '<?php echo route("login_uport"); ?>';
 			var uport_data = 'name=' + credentials.name + '&uport=' + credentials.address;
-			if (typeof credentials.description !== 'undefined') {
-				uport_data += '&npi=' + credentials.description;
+			if (typeof credentials.NPI !== 'undefined') {
+				uport_data += '&npi=' + credentials.NPI;
 			}
 			if (typeof credentials.email !== 'undefined') {
 				uport_data += '&email=' + credentials.email;
@@ -198,7 +186,6 @@
 					}
 				}
 			});
-			// render();
 		}, console.err);
 	};
 
@@ -236,45 +223,19 @@
 			}
 		);
 	};
-	// let appName = 'hieofone';
-	// let rpcUrl = "https://consensysnet.infura.io:8545";
-    // let Uport = window.uportlib.Uport;
-    // let web3 = new Web3();
-	//
-    // let options = {
-    //     ipfsProvider: {
-    //       host: 'ipfs.infura.io',
-    //       port: '5001',
-    //       protocol: 'https',
-    //       root: ''
-    //     }
-    // };
-    // let uport = new Uport(appName, options);
-    // let uportProvider = uport.getUportProvider(rpcUrl);
-    // web3.setProvider(uportProvider);
-    // const loginBtnClick = function () {
-    //     web3.eth.getCoinbase((error, address) => {
-    //     	if (error) { throw error; }
-    //     	web3.eth.defaultAccount = address;
-	// 		uport.getUserPersona().then((userPersona) => {
-	//             let profile = userPersona.getProfile();
-	// 			let claims = userPersona.getAllClaims();
-	//             console.log(profile);
-	// 			console.log(claims);
-	//             let name = profile.name.split(' ');
-	// 			let json_claims = JSON.stringify(claims);
-	// 			$('<form action="login_uport" method="POST">' +
-	// 		    '<input type="hidden" name="uport" value="uport">' +
-	// 			'<input type="hidden" name="firstname" value="' + name[0] + '">' +
-	// 			'<input type="hidden" name="lastname" value="' + name[1] + '">' +
-	// 			'<input type="hidden" name="claims" value="' + json_claims + '">' +
-	// 		    '</form>').submit();
-				// $('input[name="password"]').val('demodemo');
-	            // $('input[name="username"]').val(firstname[0]);
-	            // $("#loginform").submit();
-	// 		});
-	// 	});
-    // };
 
+	const attest = () => {
+		connect.requestCredentials({
+	      requested: ['name', 'phone', 'country', 'email', 'description'],
+	      notifications: true // We want this if we want to recieve credentials
+	    }).then((credentials) => {
+			console.log(credentials);
+			connect.attestCredentials({
+			  sub: credentials.address,
+			  claim: { "NPI": "1023005410" },
+			  exp: new Date().getTime() + 30 * 24 * 60 * 60 * 1000
+			})
+		});
+	}
 </script>
 @endsection
