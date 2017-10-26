@@ -141,11 +141,14 @@
 			<div id="modal1_header" class="modal-header">Add NPI credential to uPort?</div>
 			<div id="modal1_body" class="modal-body" style="height:30vh;overflow-y:auto;">
 				<p>This will simulate adding a verified credential to your existing uPort.</p>
-				<p>After the simulated NPI credential is added, click on Login with uPort</p>
+				<p>Clicking proceed with add a simulated NPI number</p>
+				<p>Clicking on Get from Doximity will demonstrate how you can get a verified credential if you have an existing Doximity account</p>
+				<p>After the NPI credential is added, click on Login with uPort</p>
 				<p>This will enable you to write a prescription.</p>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal" onClick="attest()"><i class="fa fa-btn fa-check"></i> Proceed</button>
+				<a href="https://cloud.noshchartingsystem.com/doximity/" target="_blank" class="btn btn-default" id="doximity_modal"><i class="fa fa-btn fa-hand-o-right"></i> Get from Doximity</a>
 				<button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-btn fa-times"></i> Close</button>
 			  </div>
 		</div>
@@ -164,6 +167,9 @@
 		$("#connectUportBtn1").click(function(){
             $('#modal1').modal('show');
         });
+		$('#doximity_modal').click(function(){
+			$('#modal1').modal('hide');
+		});
 	});
 	// Setup
 	const Connect = window.uportconnect.Connect;
