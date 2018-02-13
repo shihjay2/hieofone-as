@@ -1034,7 +1034,7 @@ class HomeController extends Controller
             }
         }
         $data['content'] .= '</tbody></table>';
-        $data['back'] = '<a href="' . URL::to('my_info_edit') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-pencil"></i> Edit</a>';
+        $data['back'] = '<a href="' . URL::to('directory_add') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-plus"></i> Add Directory</a>';
         return view('home', $data);
     }
 
