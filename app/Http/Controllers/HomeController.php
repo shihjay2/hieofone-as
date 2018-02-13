@@ -995,4 +995,141 @@ class HomeController extends Controller
         DB::table('fhir_clients')->where('endpoint_uri', '=', $request->input('endpoint_uri'))->update($data);
         return 'Username and password saved';
     }
+
+    public function directories(Request $request)
+    {
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
+        $data['title'] = 'Authorized Directories';
+        $root_url = explode('/', $request->root());
+        $root_domain = $root_url[0] . '/' . $root_url[1] . '/' . $root_url[2] . '/directory/';
+        $root_domain_registered = false;
+        $data['content'] = '<p>Directories are servers that share the location of your authorization server. Users such as authorized physicians can use a directory service to easily access your authorization server and patient health record.  Directories can also associate your authorization server to communities of other patients with similar goals or attributes.  Directories do not gather or share your health information in any way.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Directory Name</th><th>Permissions</th><th></th></thead><tbody>';
+        $query = DB::table('directories')->get();
+        if ($query) {
+            foreach ($query as $directory) {
+                $data['content'] .= '<tr><td>' . $directory->name . '</td>';
+                $data['content'] .= '<td><a href="' . route('directory_remove', [$directory->id]) . '" class="btn btn-primary" role="button">Unauthorize</a></td></tr>';
+                if ($directory->uri == $root_domain) {
+                    $root_domain_registered = true;
+                }
+            }
+        }
+        if ($root_domain_registered == false) {
+            // check if root domain exists
+            $url = $root_domain . '/check';
+            $ch = curl_init();
+            curl_setopt($ch,CURLOPT_URL, $url);
+            curl_setopt($ch,CURLOPT_FAILONERROR,1);
+            curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+            curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+            curl_setopt($ch,CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
+            $domain_name = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close ($ch);
+            if ($httpCode !== 404) {
+                $data['content'] .= '<tr><td>Suggested directory: ' . $domain_name . '</td>';
+                $data['content'] .= '<td><a href="' . route('directory_add', ['root']) . '" class="btn btn-success" role="button">Add</a></td></tr>';
+            }
+        }
+        $data['content'] .= '</tbody></table>';
+        $data['back'] = '<a href="' . URL::to('my_info_edit') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-pencil"></i> Edit</a>';
+        return view('home', $data);
+    }
+
+    public function directory_add(Request $request, $type='')
+    {
+        $as_url = $request->root();
+        $owner = DB::table('owner')->first();
+        $params = [
+            'as_uri' => $as_url,
+            'redirect_uri' => route('directory_add', ['approve']),
+            'name' => $owner->firstname . ' ' . $owner->lastname
+        ];
+        if ($type == 'approve') {
+            $directory = [
+                'uri' => $request->input('uri'),
+                'name' => $request->input('name'),
+                'directory_id' => $request->input('directory_id')
+            ];
+            DB::table('directories')->insert($directory);
+            Session::put('message_action', $request->input('name') . 'added');
+            return redirect()->route('directories');
+        }
+        if ($type == 'root') {
+            $root_url = explode('/', $as_url);
+            $root_domain = $root_url[0] . '/' . $root_url[1] . '/' . $root_url[2] . '/directory/';
+            Session::put('directory_uri', $root_domain);
+            $endpoint = $root_domain . 'directory_registration?' . http_build_query($params, null, '&');
+            return redirect($endpoint);
+        }
+        if ($request->isMethod('post')) {
+            $this->validate($request, [
+                'uri' => 'required|unique:directories,uri'
+            ]);
+            $pre_url = rtrim($request->input('uri'), '/');
+            $url =  $pre_url . '/check';
+            $ch = curl_init();
+            curl_setopt($ch,CURLOPT_URL, $url);
+            curl_setopt($ch,CURLOPT_FAILONERROR,1);
+            curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+            curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+            curl_setopt($ch,CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
+            $domain_name = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close ($ch);
+            if ($httpCode !== 404) {
+                Session::put('directory_uri', $pre_url . '/');
+                $endpoint = $pre_url . '/directory_registration?' . http_build_query($params, null, '&');
+                return redirect($endpoint);
+            } else {
+                return redirect()->back()->withErrors(['uri' => 'The URL you entered is not valid.']);
+            }
+        } else {
+            $data2['noheader'] = true;
+            return view('directory', $data2);
+        }
+    }
+
+    public function directory_remove(Request $request, $id)
+    {
+        if ($id == 'remove') {
+            Session::put('message_action', 'Directory removed');
+            return redirect()->route('directories');
+        } else {
+            $directory = DB::table('directories')->where('id', '=', $id)->first();
+            $url = rtrim($directory->uri, '/') . '/directory_check/' . $id;
+            $ch = curl_init();
+            curl_setopt($ch,CURLOPT_URL, $url);
+            curl_setopt($ch,CURLOPT_FAILONERROR,1);
+            curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+            curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+            curl_setopt($ch,CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
+            $return = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close ($ch);
+            if ($httpCode !== 404) {
+                Session::put('message_action', 'Directory URL does not exist');
+                return redirect()->route('directories');
+            } else {
+                if ($return !== 'OK') {
+                    Session::put('message_action', $return);
+                    return redirect()->route('directories');
+                } else {
+                    $client = DB::table('oauth_clients')->where('client_uri', '=', rtrim($directory->uri, '/'))->first();
+                    $client_id = '0';
+                    if ($client) {
+                        $client_id = $client->client_id;
+                        DB::table('oauth_clients')->where('client_id', '=', $client_id)->delete();
+                    }
+                    $url = rtrim($directory->uri, '/') . '/directory_remove/' . $directory->directory_id . '/' . $client_id;
+                    DB::table('directories')->where('id', '=', $id)->delete();
+                    return redirect($url);
+                }
+            }
+        }
+    }
 }

@@ -398,7 +398,7 @@ class OauthController extends Controller
         if ($request->has('uport')) {
             $uport_notify = false;
             $valid_npi = '';
-            // Start searching for users by checking name
+            // Start searching for users by checking name - will need to be more specific with e-mail address, verifiable claims, once in production etc
             $name = $request->input('name');
             $parser = new NameParser();
             $name_arr = $parser->parse_name($name);
@@ -1645,5 +1645,8 @@ class OauthController extends Controller
 
     public function test1(Request $request)
     {
+        $root_url = explode('/', $request->root());
+        $root_domain = $root_url[0] . '/' . $root_url[1] . '/' . $root_url[2] . '/';
+        return $root_domain;
     }
 }

@@ -20,16 +20,47 @@ class Controller extends BaseController
 {
     use AuthorizesRequests, AuthorizesResources, DispatchesJobs, ValidatesRequests;
 
-    protected function gen_uuid()
+    protected function base64url_encode($data)
     {
-        return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0x0fff) | 0x4000,
-            mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-        );
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
+    protected function changeEnv($data = []){
+		if(count($data) > 0){
+			// Read .env-file
+			$env = file_get_contents(base_path() . '/.env');
+			// Split string on every " " and write into array
+			$env = preg_split('/\s+/', $env);;
+			// Loop through given data
+			foreach((array)$data as $key => $value){
+                $new = true;
+				// Loop through .env-data
+				foreach($env as $env_key => $env_value){
+					// Turn the value into an array and stop after the first split
+					// So it's not possible to split e.g. the App-Key by accident
+					$entry = explode("=", $env_value, 2);
+					// Check, if new key fits the actual .env-key
+					if($entry[0] == $key){
+						// If yes, overwrite it with the new one
+						$env[$env_key] = $key . "=" . $value;
+                        $new = false;
+					} else {
+						// If not, keep the old one
+						$env[$env_key] = $env_value;
+					}
+				}
+                if ($new == true) {
+					$env[$key] = $key . "=" . $value;
+				}
+			}
+			// Turn the array back to an String
+			$env = implode("\n", $env);
+			// And overwrite the .env with the new data
+			file_put_contents(base_path() . '/.env', $env);
+			return true;
+		} else {
+			return false;
+		}
+	}
 
     protected function gen_secret()
     {
@@ -47,119 +78,15 @@ class Controller extends BaseController
         return $result;
     }
 
-    protected function base64url_encode($data)
+    protected function gen_uuid()
     {
-        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
-    }
-
-    protected function login_sessions($user, $client_id)
-    {
-        $owner_query = DB::table('owner')->first();
-        $proxies = DB::table('owner')->where('sub', '!=', $owner_query->sub)->get();
-        $proxy_arr = [];
-        if ($proxies) {
-            foreach ($proxies as $proxy_row) {
-                $proxy_arr[] = $proxy_row->sub;
-            }
-        }
-        $client = DB::table('oauth_clients')->where('client_id', '=', $client_id)->first();
-        Session::put('client_id', $client_id);
-        Session::put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
-        Session::put('username', $user->username);
-        Session::put('full_name', $user->first_name . ' ' . $user->last_name);
-        Session::put('client_name', $client->client_name);
-        Session::put('logo_uri', $client->logo_uri);
-        Session::put('sub', $user->sub);
-        Session::put('email', $user->email);
-        Session::put('invite', 'no');
-        Session::put('is_owner', 'no');
-        if ($user->sub == $owner_query->sub || in_array($user->sub, $proxy_arr)) {
-            Session::put('is_owner', 'yes');
-        }
-        if ($owner_query->sub == $user->sub) {
-            Session::put('invite', 'yes');
-        }
-        Session::save();
-        return true;
-    }
-
-    protected function npi_lookup($first, $last='')
-    {
-        $url = 'https://npiregistry.cms.hhs.gov/api/?';
-        $fields_arr = [
-            'number' => '',
-            'first_name' => '',
-            'last_name' => '',
-            'enumeration_type' => '',
-            'taxonomy_description' => '',
-            'organization_name' => '',
-            'address_purpose' => '',
-            'city' => '',
-            'state' => '',
-            'postal_code' => '',
-            'country_code' => '',
-            'limit' => '',
-            'skip' => ''
-        ];
-        if ($last == '') {
-            $fields_arr['number'] = $first;
-        } else {
-            $fields_arr['first_name'] = $first;
-            $fields_arr['last_name'] = $last;
-        }
-        $fields = http_build_query($fields_arr);
-        $url .= $fields;
-        $ch = curl_init();
-        curl_setopt($ch,CURLOPT_URL, $url);
-        curl_setopt($ch,CURLOPT_FAILONERROR,1);
-        curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
-        curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
-        curl_setopt($ch,CURLOPT_TIMEOUT, 15);
-        $json = curl_exec($ch);
-        curl_close($ch);
-        $arr = json_decode($json, true);
-        return $arr;
-    }
-
-    protected function send_mail($template, $data_message, $subject, $to)
-    {
-        $google_client = DB::table('oauth_rp')->where('type', '=', 'google')->first();
-        $google = new Google_Client();
-        $google->setClientID($google_client->client_id);
-        $google->setClientSecret($google_client->client_secret);
-        $google->refreshToken($google_client->refresh_token);
-        $credentials = $google->getAccessToken();
-        $username = $google_client->smtp_username;
-        $password = $credentials['access_token'];
-        $config = [
-            'mail.driver' => 'smtp',
-            'mail.host' => 'smtp.gmail.com',
-            'mail.port' => 465,
-            'mail.from' => ['address' => null, 'name' => null],
-            'mail.encryption' => 'ssl',
-            'mail.username' => $username,
-            'mail.password' => $password,
-            'mail.sendmail' => '/usr/sbin/sendmail -bs'
-        ];
-        config($config);
-        extract(Config::get('mail'));
-        $transport = Swift_SmtpTransport::newInstance($host, $port, 'ssl');
-        $transport->setAuthMode('XOAUTH2');
-        if (isset($encryption)) {
-            $transport->setEncryption($encryption);
-        }
-        if (isset($username)) {
-            $transport->setUsername($username);
-            $transport->setPassword($password);
-        }
-        $owner = DB::table('owner')->first();
-        Mail::setSwiftMailer(new Swift_Mailer($transport));
-        Mail::send($template, $data_message, function ($message) use ($to, $subject, $owner) {
-            $message->to($to)
-                ->from($owner->email, $owner->firstname . ' ' . $owner->lastname)
-                ->subject($subject);
-        });
-        return "E-mail sent.";
+        return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+        );
     }
 
     protected function group_policy($client_id, $types, $action)
@@ -278,6 +205,116 @@ class Controller extends BaseController
                 }
             }
         }
+    }
+
+    protected function login_sessions($user, $client_id)
+    {
+        $owner_query = DB::table('owner')->first();
+        $proxies = DB::table('owner')->where('sub', '!=', $owner_query->sub)->get();
+        $proxy_arr = [];
+        if ($proxies) {
+            foreach ($proxies as $proxy_row) {
+                $proxy_arr[] = $proxy_row->sub;
+            }
+        }
+        $client = DB::table('oauth_clients')->where('client_id', '=', $client_id)->first();
+        Session::put('client_id', $client_id);
+        Session::put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
+        Session::put('username', $user->username);
+        Session::put('full_name', $user->first_name . ' ' . $user->last_name);
+        Session::put('client_name', $client->client_name);
+        Session::put('logo_uri', $client->logo_uri);
+        Session::put('sub', $user->sub);
+        Session::put('email', $user->email);
+        Session::put('invite', 'no');
+        Session::put('is_owner', 'no');
+        if ($user->sub == $owner_query->sub || in_array($user->sub, $proxy_arr)) {
+            Session::put('is_owner', 'yes');
+        }
+        if ($owner_query->sub == $user->sub) {
+            Session::put('invite', 'yes');
+        }
+        Session::save();
+        return true;
+    }
+
+    protected function npi_lookup($first, $last='')
+    {
+        $url = 'https://npiregistry.cms.hhs.gov/api/?';
+        $fields_arr = [
+            'number' => '',
+            'first_name' => '',
+            'last_name' => '',
+            'enumeration_type' => '',
+            'taxonomy_description' => '',
+            'organization_name' => '',
+            'address_purpose' => '',
+            'city' => '',
+            'state' => '',
+            'postal_code' => '',
+            'country_code' => '',
+            'limit' => '',
+            'skip' => ''
+        ];
+        if ($last == '') {
+            $fields_arr['number'] = $first;
+        } else {
+            $fields_arr['first_name'] = $first;
+            $fields_arr['last_name'] = $last;
+        }
+        $fields = http_build_query($fields_arr);
+        $url .= $fields;
+        $ch = curl_init();
+        curl_setopt($ch,CURLOPT_URL, $url);
+        curl_setopt($ch,CURLOPT_FAILONERROR,1);
+        curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+        curl_setopt($ch,CURLOPT_TIMEOUT, 15);
+        $json = curl_exec($ch);
+        curl_close($ch);
+        $arr = json_decode($json, true);
+        return $arr;
+    }
+
+    protected function send_mail($template, $data_message, $subject, $to)
+    {
+        $google_client = DB::table('oauth_rp')->where('type', '=', 'google')->first();
+        $google = new Google_Client();
+        $google->setClientID($google_client->client_id);
+        $google->setClientSecret($google_client->client_secret);
+        $google->refreshToken($google_client->refresh_token);
+        $credentials = $google->getAccessToken();
+        $username = $google_client->smtp_username;
+        $password = $credentials['access_token'];
+        $config = [
+            'mail.driver' => 'smtp',
+            'mail.host' => 'smtp.gmail.com',
+            'mail.port' => 465,
+            'mail.from' => ['address' => null, 'name' => null],
+            'mail.encryption' => 'ssl',
+            'mail.username' => $username,
+            'mail.password' => $password,
+            'mail.sendmail' => '/usr/sbin/sendmail -bs'
+        ];
+        config($config);
+        extract(Config::get('mail'));
+        $transport = Swift_SmtpTransport::newInstance($host, $port, 'ssl');
+        $transport->setAuthMode('XOAUTH2');
+        if (isset($encryption)) {
+            $transport->setEncryption($encryption);
+        }
+        if (isset($username)) {
+            $transport->setUsername($username);
+            $transport->setPassword($password);
+        }
+        $owner = DB::table('owner')->first();
+        Mail::setSwiftMailer(new Swift_Mailer($transport));
+        Mail::send($template, $data_message, function ($message) use ($to, $subject, $owner) {
+            $message->to($to)
+                ->from($owner->email, $owner->firstname . ' ' . $owner->lastname)
+                ->subject($subject);
+        });
+        return "E-mail sent.";
     }
 
     /**

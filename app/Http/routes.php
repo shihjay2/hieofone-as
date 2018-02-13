@@ -83,6 +83,9 @@ Route::any('password_reset/{id}', ['as' => 'password_reset', 'uses' => 'OauthCon
 Route::any('change_password', ['as' => 'change_password', 'uses' => 'HomeController@change_password']);
 Route::get('my_info', ['as' => 'my_info', 'uses' => 'HomeController@my_info']);
 Route::any('my_info_edit', ['as' => 'my_info_edit', 'uses' => 'HomeController@my_info_edit']);
+Route::get('directories', ['as' => 'directories', 'uses' => 'HomeController@directories']);
+Route::any('directory_add/{type?}', ['as' => 'directory_add', 'uses' => 'HomeController@directory_add']);
+Route::get('directory_remove/{id}', ['as' => 'directory_remove', 'uses' => 'HomeController@directory_remove']);
 Route::get('default_policies', ['as' => 'default_policies', 'uses' => 'HomeController@default_policies']);
 Route::post('change_policy', ['as' => 'change_policy', 'uses' => 'HomeController@change_policy']);
 Route::post('fhir_edit', ['as' => 'fhir_edit', 'middleware' => 'csrf', 'uses' => 'HomeController@fhir_edit']);
