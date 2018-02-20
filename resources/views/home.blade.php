@@ -136,7 +136,11 @@
 			document.execCommand("copy");
 			$temp.remove();
 			if ($(this).hasClass('fa-clone')) {
-				toastr.success('Username copied');
+				if ($(this).hasClass('my_info')) {
+					toastr.success('Item copied');
+				} else {
+					toastr.success('Username copied');
+				}
 			} else {
 				toastr.success('Password copied');
 			}
