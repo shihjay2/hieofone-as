@@ -825,6 +825,7 @@ class HomeController extends Controller
         $data['content'] .= '<li class="list-group-item">First Name: ' . $query->first_name . '</li>';
         $data['content'] .= '<li class="list-group-item">Last Name: ' . $query->last_name . '</li>';
         $data['content'] .= '<li class="list-group-item">Email: ' . $query->email . '</li>';
+        $data['content'] .= '<li class="list-group-item">URL: ' . URL::to('welcome') . '</li>';
         $owner_query = DB::table('owner')->first();
         if ($owner_query->sub == $query->sub) {
             $data['content'] .= '<li class="list-group-item">Date of Birth: ' . date('m/d/Y', strtotime($owner_query->DOB)) . '</li>';
