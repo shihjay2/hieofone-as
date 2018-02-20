@@ -824,8 +824,10 @@ class HomeController extends Controller
         $data['content'] = '<ul class="list-group">';
         $data['content'] .= '<li class="list-group-item">First Name: ' . $query->first_name . '</li>';
         $data['content'] .= '<li class="list-group-item">Last Name: ' . $query->last_name . '</li>';
-        $data['content'] .= '<li class="list-group-item">Email: ' . $query->email . '</li>';
-        $data['content'] .= '<li class="list-group-item">URL: ' . URL::to('/') . '</li>';
+        $data['content'] .= '<li class="list-group-item">Email: ' . $query->email;
+        $data['content'] .= '<span style="margin:10px"></span><i class="fa fa-clone fa-lg pnosh_copy" hie-val="' . $query->email . '" title="Copy" style="cursor:pointer;"></i></li>';
+        $data['content'] .= '<li class="list-group-item">URL: ' . URL::to('/');
+        $data['content'] .= '<span style="margin:10px"></span><i class="fa fa-clone fa-lg pnosh_copy" hie-val="' . URL::to('/') . '" title="Copy" style="cursor:pointer;"></i></li>';
         $owner_query = DB::table('owner')->first();
         if ($owner_query->sub == $query->sub) {
             $data['content'] .= '<li class="list-group-item">Date of Birth: ' . date('m/d/Y', strtotime($owner_query->DOB)) . '</li>';
