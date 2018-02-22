@@ -1645,8 +1645,6 @@ class OauthController extends Controller
 
     public function test1(Request $request)
     {
-        $root_url = explode('/', $request->root());
-        $root_domain = $root_url[0] . '/' . $root_url[1] . '/' . $root_url[2] . '/';
-        return $root_domain;
+        return route('welcome');
     }
 }
