@@ -759,12 +759,12 @@ class HomeController extends Controller
             'uma_authorization' => 'fa-key'
         ];
         $client = DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->first();
-        if ($query->logo_uri == '' || $query->logo_uri == null) {
+        if ($client->logo_uri == '' || $client->logo_uri == null) {
             $data['permissions'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
         } else {
-            $data['permissions'] = '<div><img src="' . $query->logo_uri . '" style="margin:20px;text-align: center;"></div>';
+            $data['permissions'] = '<div><img src="' . $client->logo_uri . '" style="margin:20px;text-align: center;"></div>';
         }
-        $data['permissions'] .= '<h2>' . $query->client_name . ' would like to:</h2>';
+        $data['permissions'] .= '<h2>' . $client->client_name . ' would like to:</h2>';
         $data['permissions'] .= '<ul class="list-group">';
         $scopes_array = explode(' ', $client->scope);
         foreach ($scopes_array as $scope) {
