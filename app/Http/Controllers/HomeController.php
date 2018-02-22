@@ -781,13 +781,13 @@ class HomeController extends Controller
         // $data['permissions'] .= '<h2>' . Session::get('client_name') . ' would like to:</h2>';
         // $data['permissions'] .= '<ul class="list-group">';
         // $client = DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->first();
-        $scopes_array = explode(' ', $client->scope);
-        foreach ($scopes_array as $scope) {
-            if (array_key_exists($scope, $scope_array)) {
-                $data['permissions'] .= '<li class="list-group-item"><i class="fa fa-btn ' . $scope_icon[$scope] . '"></i> ' . $scope_array[$scope] . '</li>';
-            }
-        }
-        $data['permissions'] .= '</ul>';
+        // $scopes_array = explode(' ', $client->scope);
+        // foreach ($scopes_array as $scope) {
+        //     if (array_key_exists($scope, $scope_array)) {
+        //         $data['permissions'] .= '<li class="list-group-item"><i class="fa fa-btn ' . $scope_icon[$scope] . '"></i> ' . $scope_array[$scope] . '</li>';
+        //     }
+        // }
+        // $data['permissions'] .= '</ul>';
         return view('login_authorize', $data);
     }
 
