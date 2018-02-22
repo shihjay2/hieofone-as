@@ -1510,7 +1510,7 @@ class OauthController extends Controller
 
     public function reset_demo(Request $request)
     {
-        if (route('home') == 'https://shihjay.xyz/home') {
+        if (route('welcome') == 'https://shihjay.xyz/') {
             if ($request->isMethod('post')) {
                 $this->validate($request, [
                     'email' => 'required'
