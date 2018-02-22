@@ -759,7 +759,7 @@ class HomeController extends Controller
             'uma_authorization' => 'fa-key'
         ];
         $client = DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->first();
-        if ($query->logo_uri == '') {
+        if ($query->logo_uri == '' || $query->logo_uri == null) {
             $data['permissions'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
         } else {
             $data['permissions'] = '<div><img src="' . $query->logo_uri . '" style="margin:20px;text-align: center;"></div>';
