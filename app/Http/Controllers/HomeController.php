@@ -758,14 +758,29 @@ class HomeController extends Controller
             'offline_access' => 'fa-share-alt',
             'uma_authorization' => 'fa-key'
         ];
-        if (Session::get('logo_uri') == '') {
+        $client = DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->first();
+        if ($query->logo_uri == '') {
             $data['permissions'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
         } else {
-            $data['permissions'] = '<div><img src="' . Session::get('logo_uri') . '" style="margin:20px;text-align: center;"></div>';
+            $data['permissions'] = '<div><img src="' . $query->logo_uri . '" style="margin:20px;text-align: center;"></div>';
         }
-        $data['permissions'] .= '<h2>' . Session::get('client_name') . ' would like to:</h2>';
+        $data['permissions'] .= '<h2>' . $query->client_name . ' would like to:</h2>';
         $data['permissions'] .= '<ul class="list-group">';
-        $client = DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->first();
+        $scopes_array = explode(' ', $client->scope);
+        foreach ($scopes_array as $scope) {
+            if (array_key_exists($scope, $scope_array)) {
+                $data['permissions'] .= '<li class="list-group-item"><i class="fa fa-btn ' . $scope_icon[$scope] . '"></i> ' . $scope_array[$scope] . '</li>';
+            }
+        }
+        $data['permissions'] .= '</ul>';
+        // if (Session::get('logo_uri') == '') {
+        //     $data['permissions'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
+        // } else {
+        //     $data['permissions'] = '<div><img src="' . Session::get('logo_uri') . '" style="margin:20px;text-align: center;"></div>';
+        // }
+        // $data['permissions'] .= '<h2>' . Session::get('client_name') . ' would like to:</h2>';
+        // $data['permissions'] .= '<ul class="list-group">';
+        // $client = DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->first();
         $scopes_array = explode(' ', $client->scope);
         foreach ($scopes_array as $scope) {
             if (array_key_exists($scope, $scope_array)) {
