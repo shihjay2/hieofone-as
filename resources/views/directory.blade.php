@@ -46,6 +46,7 @@
 <script type="text/javascript">
 	$(document).ready(function() {
 		$("#uri").focus();
+		$('[data-toggle="tooltip"]').tooltip();
 	});
 </script>
 @endsection
