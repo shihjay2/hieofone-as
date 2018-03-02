@@ -298,7 +298,7 @@ class UmaController extends Controller
                 $error = 'Client identifier is missing or invalid,';
             }
             // Clear all session data
-            $request->session()->flush();
+            // $request->session()->flush();
             if ($error == '') {
                 $redirect_uri .= '?' . http_build_query($params, null, '&');
                 return redirect($redirect_uri);
