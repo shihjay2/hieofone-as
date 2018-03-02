@@ -364,6 +364,10 @@ class OauthController extends Controller
                 }
             }
         } else {
+            if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
+                // If generated from rqp_claims endpoint, do this
+                return redirect()->route('rqp_claims');
+            }
             return redirect()->route('home');
         }
     }
