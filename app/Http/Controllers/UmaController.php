@@ -299,6 +299,10 @@ class UmaController extends Controller
             }
             // Clear all session data
             // $request->session()->flush();
+            $request->session()->forget('uma_permission_ticket');
+            $request->session()->forget('uma_redirect_uri');
+            $request->session()->forget('uma_client_id');
+            $request->session()->forget('uma_state');
             if ($error == '') {
                 $redirect_uri .= '?' . http_build_query($params, null, '&');
                 return redirect($redirect_uri);
