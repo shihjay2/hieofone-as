@@ -1,5 +1,5 @@
 #!/bin/sh
-# install script for hieofone-as
+# install script for hieofone-as on a droplet - Ubuntu 16.04 server
 
 set -e
 
@@ -11,6 +11,11 @@ HIE=$WEB/hieofone-as
 ENV=$HIE/.env
 PRIVKEY=$HIE/.privkey.pem
 PUBKEY=$HIE/.pubkey.pem
+WEB_GROUP=www-data
+WEB_USER=www-data
+WEB_CONF=/etc/apache2/conf-enabled
+APACHE="/etc/init.d/apache2 restart"
+MYSQL_DATABASE=oidc
 
 log_only () {
 	echo "$1"
@@ -44,73 +49,41 @@ if [ ! -d $LOGDIR ]; then
 	mkdir -p $LOGDIR
 fi
 
-read -e -p "Is this an 1. UMA or 2. OIDC only installation?" -i "1" INSTALL_TYPE
-read -e -p "Enter the name of the MySQL database that HIE of One Authorization Server will use: " -i "oidc" MYSQL_DATABASE
 read -e -p "Enter your MySQL username: " -i "" MYSQL_USERNAME
 read -e -p "Enter your MySQL password: " -i "" MYSQL_PASSWORD
+USERNAME=$MYSQL_USERNAME
 
-# Check os and distro
-if [[ "$OSTYPE" == "linux-gnu" ]]; then
-	if [ -f /etc/debian_version ]; then
-		# Ubuntu or Debian
-		WEB_GROUP=www-data
-		WEB_USER=www-data
-		if [ -d /etc/apache2/conf-enabled ]; then
-			WEB_CONF=/etc/apache2/conf-enabled
-		else
-			WEB_CONF=/etc/apache2/conf.d
-		fi
-		APACHE="/etc/init.d/apache2 restart"
-	elif [ -f /etc/redhat-release ]; then
-		# CentOS or RHEL
-		WEB_GROUP=apache
-		WEB_USER=apache
-		WEB_CONF=/etc/httpd/conf.d
-		APACHE="/etc/init.d/httpd restart"
-	elif [ -f /etc/arch-release ]; then
-		# ARCH
-		WEB_GROUP=http
-		WEB_USER=http
-		WEB_CONF=/etc/httpd/conf/extra
-		APACHE="systemctl restart httpd.service"
-	elif [ -f /etc/gentoo-release ]; then
-		# Gentoo
-		WEB_GROUP=apache
-		WEB_USER=apache
-		WEB_CONF=/etc/apache2/modules.d
-		APACHE=/etc/init.d/apache2
-	elif [ -f /etc/fedora-release ]; then
-		# Fedora
-		WEB_GROUP=apache
-		WEB_USER=apache
-		WEB_CONF=/etc/httpd/conf.d
-		APACHE="/etc/init.d/httpd restart"
-	fi
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-	# Mac
-	WEB_GROUP=_www
-	WEB_USER=_www
-	WEB_CONF=/etc/httpd/conf.d
-	APACHE="/usr/sbin/apachectl restart"
-elif [[ "$OSTYPE" == "cygwin" ]]; then
-	echo "This operating system is not supported by this install script at this time.  Aborting." 1>&2
-	exit 1
-elif [[ "$OSTYPE" == "win32" ]]; then
-	echo "This operating system is not supported by this install script at this time.  Aborting." 1>&2
-	exit 1
-elif [[ "$OSTYPE" == "freebsd"* ]]; then
-	WEB_GROUP=www
-	WEB_USERP=www
-	WEB_CONF=/etc/httpd/conf.d
-	if [ -e /usr/local/etc/rc.d/apache22.sh ]; then
-		APACHE="/usr/local/etc/rc.d/apache22.sh restart"
-	else
-		APACHE="/usr/local/etc/rc.d/apache24.sh restart"
-	fi
-else
-	echo "This operating system is not supported by this install script at this time.  Aborting." 1>&2
-	exit 1
-fi
+# Install PHP and MariaDB
+apt-get -y install software-properties-common
+apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
+add-apt-repository ppa:ondrej/php -y
+add-apt-repository 'deb [arch=amd64,i386,ppc64el] http://ftp.osuosl.org/pub/mariadb/repo/10.1/ubuntu xenial main'
+apt update
+apt-get -y install php7.2 php7.2-zip php7.2-curl php7.2-mysql php-pear php7.2-imap libapache2-mod-php7.2 php7.2-gd php-imagick php7.2-cli php7.2-common libdbi-perl libdbd-mysql-perl libssh2-1-dev php-ssh2 php7.2-soap imagemagick pdftk openssh-server
+export DEBIAN_FRONTEND=noninteractive
+debconf-set-selections <<< "mariadb-server-10.1 mysql-server/data-dir select ''"
+debconf-set-selections <<< "mariadb-server-10.1 mysql-server/root_password password $MYSQL_PASSWORD"
+debconf-set-selections <<< "mariadb-server-10.1 mysql-server/root_password_again password $MYSQL_PASSWORD"
+apt-get install -y mariadb-server mariadb-client
+# Set default collation and character set
+echo "[mysqld]
+character_set_server = 'utf8'
+collation_server = 'utf8_general_ci'" >> /etc/mysql/my.cnf
+# Configure Maria Remote Access
+sed -i '/^bind-address/s/bind-address.*=.*/bind-address = 0.0.0.0/' /etc/mysql/my.cnf
+mysql --user="root" --password="$MYSQL_PASSWORD" -e "GRANT ALL ON *.* TO root@'0.0.0.0' IDENTIFIED BY '$MYSQL_PASSWORD' WITH GRANT OPTION;"
+systemctl restart mysql
+mysql --user="root" --password="$MYSQL_PASSWORD" -e "CREATE USER '$USERNAME'@'0.0.0.0' IDENTIFIED BY '$MYSQL_PASSWORD';"
+mysql --user="root" --password="$MYSQL_PASSWORD" -e "GRANT ALL ON *.* TO '$USERNAME'@'0.0.0.0' IDENTIFIED BY '$MYSQL_PASSWORD' WITH GRANT OPTION;"
+mysql --user="root" --password="$MYSQL_PASSWORD" -e "GRANT ALL ON *.* TO '$USERNAME'@'%' IDENTIFIED BY '$MYSQL_PASSWORD' WITH GRANT OPTION;"
+mysql --user="root" --password="$MYSQL_PASSWORD" -e "FLUSH PRIVILEGES;"
+systemctl restart mysql
+echo "phpmyadmin phpmyadmin/dbconfig-install boolean true" | debconf-set-selections
+echo "phpmyadmin phpmyadmin/app-password-confirm password $MYSQL_PASSWORD" | debconf-set-selections
+echo "phpmyadmin phpmyadmin/mysql/admin-pass password $MYSQL_PASSWORD" | debconf-set-selections
+echo "phpmyadmin phpmyadmin/mysql/app-pass password $MYSQL_PASSWORD" | debconf-set-selections
+echo "phpmyadmin phpmyadmin/reconfigure-webserver multiselect none" | debconf-set-selections
+apt-get -y install phpmyadmin
 
 # Check prerequisites
 type apache2 >/dev/null 2>&1 || { echo >&2 "Apache Web Server is required, but it's not installed.  Aborting."; exit 1; }
@@ -123,23 +96,7 @@ log_only "All prerequisites for installation are met."
 APACHE_VER=$(apache2 -v | awk -F"[..]" 'NR<2{print $2}')
 
 # Install
-if [ -f /etc/debian_version ]; then
-	if [ -d /etc/php5/mods-available ]; then
-		if [ ! -f /etc/php5/mods-available/mcrypt.ini ]; then
-			if ! [ -L /etc/php5/mods-available/mcrypt.ini ]; then
-				ln -s /etc/php5/conf.d/mcrypt.ini /etc/php5/mods-available
-				log_only "Enabled mycrpt module for PHP."
-			fi
-		fi
-	fi
-	if [ -f /usr/sbin/php5enmod ]; then
-		php5enmod mcrypt
-		php5enmod imap
-		log_only "Enabled mycrpt module for PHP."
-	fi
-else
-	log_only "Ensure you have enabled the mcrypt module for PHP.  Check you distribution help pages to do this."
-fi
+phpenmod imap
 if [ ! -f /usr/local/bin/composer ]; then
 	curl -sS https://getcomposer.org/installer | php
 	mv composer.phar /usr/local/bin/composer
