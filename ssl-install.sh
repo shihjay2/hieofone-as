@@ -6,6 +6,9 @@ set -e
 WEB_CONF=/etc/apache2/conf-enabled
 UBUNTU_VER=$(lsb_release -rs)
 APACHE_VER=$(apache2 -v | awk -F"[..]" 'NR<2{print $2}')
+WEB=/opt
+HIE=$WEB/hieofone-as
+NOSHCRON=/etc/cron.d/nosh-cs
 
 # Check if running as root user
 if [[ $EUID -ne 0 ]]; then
@@ -35,7 +38,7 @@ if [[ ! -z $DOMAIN ]]; then
 		DocumentRoot $HIE/public/
 		SSLEngine on
 		SSLProtocol all -SSLv2 -SSLv3
-		ServerName as1.hieofone.org
+		ServerName $DOMAIN
 		SSLCertificateFile /etc/letsencrypt/live/$DOMAIN/fullchain.pem
 		SSLCertificateKeyFile /etc/letsencrypt/live/$DOMAIN/privkey.pem
 		Include /etc/letsencrypt/options-ssl-apache.conf
@@ -82,8 +85,16 @@ if [[ ! -z $DOMAIN ]]; then
 	</IfModule>
 </Directory>"
 	echo "$APACHE_CONF" >> "$WEB_CONF"/hie.conf
-	echo "SSL Certificate for $DOMAIN set"
+	echo "SSL Certificate set for $DOMAIN"
 	/etc/init.d/apache2 restart
 	echo "Restarting Apache service."
+	if [ -f $NOSHCRON ]; then
+		rm -rf $NOSHCRON
+	fi
+	touch $NOSHCRON
+	echo "30 0    * * 1   root    /usr/local/bin/certbot-auto renew >>  /var/log/le-renew.log" >> $NOSHCRON
+	chown root.root $NOSHCRON
+	chmod 644 $NOSHCRON
+	echo "Created Let'sEncrypt cron scripts."
 fi
 exit 0
