@@ -356,11 +356,11 @@ class OauthController extends Controller
                     }
                     $data['demo_username'] = '';
                     $data['demo_password'] = '';
-                    if (route('/') == 'https://shihjay.xyz') {
+                    if (route('welcome') == 'https://shihjay.xyz') {
                         $data['demo_username'] = 'Demo Username: AlicePatient';
                         $data['demo_password'] = 'demo';
                     }
-                    if (route('/') == 'https://as1.hieofone.org') {
+                    if (route('welcome') == 'https://as1.hieofone.org') {
                         $data['demo_username'] = 'Demo Username: Alice1Patient';
                         $data['demo_password'] = 'demo';
                     }
