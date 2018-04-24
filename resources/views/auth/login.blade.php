@@ -55,7 +55,7 @@
 							<label for="username" class="col-md-4 control-label">Username </label>
 
 							<div class="col-md-6">
-								<input id="username" class="form-control" name="username" value="{{ old('username') }}" data-toggle="tooltip" title="Demo Username: AlicePatient">
+								<input id="username" class="form-control" name="username" value="{{ old('username') }}" data-toggle="tooltip" title="{{ $demo_username }}">
 
 								@if ($errors->has('username'))
 									<span class="help-block">

@@ -354,6 +354,16 @@ class OauthController extends Controller
                         $version = $this->github_all();
                         $data['version'] = $version[0]['sha'];
                     }
+                    $data['demo_username'] = '';
+                    $data['demo_password'] = '';
+                    if (route('/') == 'https://shihjay.xyz') {
+                        $data['demo_username'] = 'Demo Username: AlicePatient';
+                        $data['demo_password'] = 'demo';
+                    }
+                    if (route('/') == 'https://as1.hieofone.org') {
+                        $data['demo_username'] = 'Demo Username: Alice1Patient';
+                        $data['demo_password'] = 'demo';
+                    }
                     return view('auth.login', $data);
                 } else {
                     // Not installed yet
