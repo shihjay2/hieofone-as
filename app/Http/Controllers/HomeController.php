@@ -65,7 +65,7 @@ class HomeController extends Controller
             $result = curl_exec($ch);
             curl_close ($ch);
             $smart_on_fhir = json_decode($result, true);
-            if ($query || count($smart_on_fhir) > 0) {
+            if ($query || ! empty($smart_on_fhir)) {
                 $data['content'] = '<div class="list-group">';
                 if ($query) {
                     foreach ($query as $client) {
@@ -78,7 +78,7 @@ class HomeController extends Controller
                         $data['content'] .= '<a href="' . URL::to('resources') . '/' . $client->client_id . '" class="list-group-item"><img src="' . $client->logo_uri . '" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $client->client_name . '</span>' . $link . '</a>';
                     }
                 }
-                if (count($smart_on_fhir) > 0) {
+                if (! empty($smart_on_fhir)) {
                     foreach ($smart_on_fhir as $smart_row) {
                         $copy_link = '<i class="fa fa-cog fa-lg pnosh_copy_set" hie-val="' . $smart_row['endpoint_uri_raw'] . '" title="Settings" style="cursor:pointer;"></i>';
                         $fhir_db = DB::table('fhir_clients')->where('endpoint_uri', '=', $smart_row['endpoint_uri_raw'])->first();
