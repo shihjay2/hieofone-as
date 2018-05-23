@@ -96,7 +96,8 @@ class Controller extends BaseController
             'login_direct',
             'login_md_nosh',
             'any_npi',
-            'login_google'
+            'login_google',
+            'consent_public_publish_directory'
         ];
         // Create default policy claims if they don't exist
         foreach ($default_policy_type as $default_claim) {
@@ -315,6 +316,55 @@ class Controller extends BaseController
                 ->subject($subject);
         });
         return "E-mail sent.";
+    }
+
+    protected function directory_api($pre_url, $params, $action='directory_registration', $id='1')
+    {
+        $url =  $pre_url . '/check/' . $id;
+        $ch = curl_init();
+        curl_setopt($ch,CURLOPT_URL, $url);
+        curl_setopt($ch,CURLOPT_FAILONERROR,1);
+        curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+        curl_setopt($ch,CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
+        $domain_name = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close ($ch);
+        if ($httpCode !== 404) {
+            Session::put('directory_uri', $pre_url . '/');
+            $endpoint = $pre_url . '/'. $action;
+            if ($action == 'directory_update') {
+                $endpoint .= '/' . $id;
+            }
+            $post_body = json_encode($params);
+            $content_type = 'application/json';
+            $ch1 = curl_init();
+            curl_setopt($ch1,CURLOPT_URL, $endpoint);
+            curl_setopt($ch1, CURLOPT_POST, 1);
+            curl_setopt($ch1, CURLOPT_POSTFIELDS, $post_body);
+            curl_setopt($ch1, CURLOPT_HTTPHEADER, [
+                "Content-Type: {$content_type}",
+                'Content-Length: ' . strlen($post_body)
+            ]);
+            curl_setopt($ch1, CURLOPT_HEADER, 0);
+            curl_setopt($ch1, CURLOPT_SSL_VERIFYPEER, FALSE);
+            curl_setopt($ch1, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch1, CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch1, CURLOPT_CONNECTTIMEOUT ,0);
+            $output = curl_exec($ch1);
+            curl_close ($ch1);
+            $response['status'] = 'OK';
+            $response['arr'] = json_decode($output, true);
+        } else {
+            $response['status'] = 'error';
+            if ($action == 'directory_registration') {
+                $response['message'] = 'The URL provided is not valid.';
+            } else {
+                $response['message'] = 'Directory URL does not exist';
+            }
+        }
+        return $response;
     }
 
     /**

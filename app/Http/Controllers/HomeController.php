@@ -395,6 +395,7 @@ class HomeController extends Controller
         $data['login_md_nosh'] = '';
         $data['any_npi'] = '';
         $data['login_google'] = '';
+        $data['public_publish_directory'] = '';
         if ($query->consent_login_direct == 1) {
             $data['login_direct'] = 'checked';
         }
@@ -406,6 +407,9 @@ class HomeController extends Controller
         }
         if ($query->consent_login_google == 1) {
             $data['login_google'] = 'checked';
+        }
+        if ($query->consent_public_publish_directory == 1) {
+            $data['public_publish_directory'] = 'checked';
         }
         return view('rs_authorize', $data);
     }
@@ -434,6 +438,7 @@ class HomeController extends Controller
             $data['login_md_nosh'] = '';
             $data['any_npi'] = '';
             $data['login_google'] = '';
+            $data['public_publish_directory'] = '';
             if ($query1->login_direct == 1) {
                 $data['login_direct'] = 'checked';
             }
@@ -445,6 +450,9 @@ class HomeController extends Controller
             }
             if ($query1->login_google == 1) {
                 $data['login_google'] = 'checked';
+            }
+            if ($query1->public_publish_directory == 1) {
+                $data['public_publish_directory'] = 'checked';
             }
             return view('rs_authorize', $data);
         } else {
@@ -475,6 +483,10 @@ class HomeController extends Controller
             if ($request->input('consent_login_google') == 'on') {
                 $data['consent_login_google'] = 1;
                 $types[] = 'login_google';
+            }
+            if ($request->input('public_publish_directory') == 'on') {
+                $data['consent_public_publish_directory'] = 1;
+                $types[] = 'public_publish_directory';
             }
             $data['authorized'] = 1;
             DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data);
@@ -1020,7 +1032,13 @@ class HomeController extends Controller
         Session::forget('message_action');
         $data['title'] = 'Authorized Directories';
         $root_url = explode('/', $request->root());
-        $root_domain = $root_url[0] . '/' . $root_url[1] . '/' . $root_url[2] . '/directory/';
+        // Assume root domain for directories starts with subdomain of dir and AS is another subdomain with common domain.
+        $root_url1 = explode('.', $root_url[2]);
+        if (isset($root_url1[1])) {
+            $root_domain = 'https://dir.' . $root_url1[1];
+        } else {
+            $root_domain = 'https://dir.' . $root_url1[0];
+        }
         $root_domain_registered = false;
         $data['content'] = '<p>Directories are servers that share the location of your authorization server. Users such as authorized physicians can use a directory service to easily access your authorization server and patient health record.  Directories can also associate your authorization server to communities of other patients with similar goals or attributes.  Directories do not gather or share your health information in any way.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Directory Name</th><th>Permissions</th><th></th></thead><tbody>';
         $query = DB::table('directories')->get();
@@ -1046,9 +1064,9 @@ class HomeController extends Controller
             $domain_name = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close ($ch);
-            if ($httpCode !== 404) {
+            if ($httpCode !== 404 && $httpCode !== 0) {
                 $data['content'] .= '<tr><td>Suggested directory: ' . $domain_name . '</td>';
-                $data['content'] .= '<td><a href="' . route('directory_add', ['root']) . '" class="btn btn-success" role="button">Add</a></td></tr>';
+                $data['content'] .= '<td><a href="' . route('directory_add', ['root']) . '" class="btn btn-success btn-block" role="button">Add</a></td></tr>';
             }
         }
         $data['content'] .= '</tbody></table>';
@@ -1060,94 +1078,117 @@ class HomeController extends Controller
     {
         $as_url = $request->root();
         $owner = DB::table('owner')->first();
+        $rs = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
+        $rs_arr = [];
+        if ($rs) {
+            foreach ($rs as $rs_row) {
+                $rs_arr[] = [
+                    'name' => $rs_row->client_name,
+                    'uri' => $rs_row->client_uri,
+                    'public' => $rs_row->public_publish_directory
+                ];
+            }
+        }
         $params = [
             'as_uri' => $as_url,
             'redirect_uri' => route('directory_add', ['approve']),
-            'name' => $owner->firstname . ' ' . $owner->lastname
+            'name' => $owner->firstname . ' ' . $owner->lastname,
+            'rs' => $rs_arr
         ];
         if ($type == 'approve') {
-            $directory = [
-                'uri' => $request->input('uri'),
-                'name' => $request->input('name'),
-                'directory_id' => $request->input('directory_id')
-            ];
-            DB::table('directories')->insert($directory);
-            Session::put('message_action', $request->input('name') . 'added');
-            return redirect()->route('directories');
+            if (Session::has('directory_uri')) {
+                $directory = [
+                    'uri' => Session::get('directory_uri'),
+                    'name' => $request->input('name'),
+                    'directory_id' => $request->input('directory_id')
+                ];
+                DB::table('directories')->insert($directory);
+                Session::forget('directory_uri');
+                Session::put('message_action', $request->input('name') . 'added');
+                return redirect()->route('directories');
+            } else {
+                Session::put('message_action', 'Error: there was a problem with registering with the directory.');
+                return redirect()->route('directories');
+            }
         }
         if ($type == 'root') {
             $root_url = explode('/', $as_url);
-            $root_domain = $root_url[0] . '/' . $root_url[1] . '/' . $root_url[2] . '/directory/';
+            $root_url1 = explode('.', $root_url[2]);
+            $root_domain = 'https://dir.' . $root_url1[1];
             Session::put('directory_uri', $root_domain);
-            $endpoint = $root_domain . 'directory_registration?' . http_build_query($params, null, '&');
-            return redirect($endpoint);
+            $response = $this->directory_api($root_domain, $params);
+            if ($response['status'] == 'error') {
+                Session::put('message_action', $response['message']);
+                return redirect()->route('directories');
+            } else {
+                return redirect($response['arr']['uri']);
+            }
         }
         if ($request->isMethod('post')) {
             $this->validate($request, [
                 'uri' => 'required|unique:directories,uri'
             ]);
             $pre_url = rtrim($request->input('uri'), '/');
-            $url =  $pre_url . '/check';
-            $ch = curl_init();
-            curl_setopt($ch,CURLOPT_URL, $url);
-            curl_setopt($ch,CURLOPT_FAILONERROR,1);
-            curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
-            curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
-            curl_setopt($ch,CURLOPT_TIMEOUT, 60);
-            curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
-            $domain_name = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close ($ch);
-            if ($httpCode !== 404) {
-                Session::put('directory_uri', $pre_url . '/');
-                $endpoint = $pre_url . '/directory_registration?' . http_build_query($params, null, '&');
-                return redirect($endpoint);
+            $response = $this->directory_api($pre_url, $params);
+            if ($response['status'] == 'error') {
+                return redirect()->back()->withErrors(['uri' => 'The URL provided is not valid.']);
             } else {
-                return redirect()->back()->withErrors(['uri' => 'The URL you entered is not valid.']);
+                return redirect($response['arr']['uri']);
             }
         } else {
-            $data2['noheader'] = true;
-            return view('directory', $data2);
+            return redirect()->route('directories');
         }
     }
 
     public function directory_remove(Request $request, $id)
     {
-        if ($id == 'remove') {
-            Session::put('message_action', 'Directory removed');
-            return redirect()->route('directories');
-        } else {
-            $directory = DB::table('directories')->where('id', '=', $id)->first();
-            $url = rtrim($directory->uri, '/') . '/directory_check/' . $id;
-            $ch = curl_init();
-            curl_setopt($ch,CURLOPT_URL, $url);
-            curl_setopt($ch,CURLOPT_FAILONERROR,1);
-            curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
-            curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
-            curl_setopt($ch,CURLOPT_TIMEOUT, 60);
-            curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
-            $return = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close ($ch);
-            if ($httpCode !== 404) {
-                Session::put('message_action', 'Directory URL does not exist');
-                return redirect()->route('directories');
-            } else {
-                if ($return !== 'OK') {
-                    Session::put('message_action', $return);
-                    return redirect()->route('directories');
-                } else {
-                    $client = DB::table('oauth_clients')->where('client_uri', '=', rtrim($directory->uri, '/'))->first();
-                    $client_id = '0';
-                    if ($client) {
-                        $client_id = $client->client_id;
-                        DB::table('oauth_clients')->where('client_id', '=', $client_id)->delete();
-                    }
-                    $url = rtrim($directory->uri, '/') . '/directory_remove/' . $directory->directory_id . '/' . $client_id;
-                    DB::table('directories')->where('id', '=', $id)->delete();
-                    return redirect($url);
-                }
+        $directory = DB::table('directories')->where('id', '=', $id)->first();
+        $client = DB::table('oauth_clients')->where('client_uri', '=', rtrim($directory->uri, '/'))->first();
+        $params['client_id'] = '0';
+        if ($client) {
+            $params['client_id'] = $client->client_id;
+            DB::table('oauth_clients')->where('client_id', '=', $client_id)->delete();
+        }
+        $url = rtrim($directory->uri, '/');
+        $response = $this->directory_api($url, $params, 'directory_update', $directory->directory_id);
+        if ($response['arr']['message'] == 'Directory removed') {
+            DB::table('directories')->where('id', '=', $id)->delete();
+        }
+        Session::put('message_action', $response['arr']['message']);
+        return redirect()->route('directories');
+    }
+
+    public function directory_update(Request $request)
+    {
+        $as_url = $request->root();
+        $owner = DB::table('owner')->first();
+        $rs = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
+        $rs_arr = [];
+        if ($rs) {
+            foreach ($rs as $rs_row) {
+                $rs_arr[] = [
+                    'name' => $rs_row->client_name,
+                    'uri' => $rs_row->client_uri,
+                    'public' => $rs_row->public_publish_directory
+                ];
             }
         }
+        $params = [
+            'as_uri' => $as_url,
+            'name' => $owner->firstname . ' ' . $owner->lastname,
+            'rs' => $rs_arr
+        ];
+        $query = DB::table('directories')->get();
+        $response1 = '<ul>';
+        if ($query) {
+            foreach ($query as $directory) {
+                $url = rtrim($directory->uri, '/');
+                $response = $this->directory_api($url, $params, 'directory_update', $directory->directory_id);
+                $response1 = $directory->name . ': ' . $response['arr']['message'];
+            }
+        }
+        $response1 .= '</ul'>
+        Session::put('message_action', $repsonse1);
+        return redirect()->route('directories');
     }
 }

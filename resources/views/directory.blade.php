@@ -17,7 +17,7 @@
 							<label for="uri" class="col-md-4 control-label">URL of Directory</label>
 
 							<div class="col-md-6">
-								<input id="uri" type="username" class="form-control" name="uri" value="{{ old('uri') }}" data-toggle="tooltip" title="Demo URL: https://cloud.noshchartingsystem.com/hiedirectory">
+								<input id="uri" type="username" class="form-control" name="uri" value="{{ old('uri') }}">
 
 								@if ($errors->has('uri'))
 									<span class="help-block">
@@ -46,7 +46,6 @@
 <script type="text/javascript">
 	$(document).ready(function() {
 		$("#uri").focus();
-		$('[data-toggle="tooltip"]').tooltip();
 	});
 </script>
 @endsection

@@ -36,6 +36,17 @@
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
+									<label><input type="checkbox" name="consent_public_publish_directory" {!! $public_publish_directory !!}> Anyone can see where this resource is located</label>
+									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#public_publish_directory_detail" style="margin-left:20px">Details</button>
+								</div>
+								<div id="public_publish_directory_detail" class="collapse">
+									<p>Any party that has access to a Directory that you participate in can see where this resource is found.</p>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
 									<label><input type="checkbox" name="consent_login_md_nosh" {!! $login_md_nosh !!}> Anyone signed in via mdNOSH sees these Resources</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#login_md_nosh_detail" style="margin-left:20px">Details</button>
 								</div>
