@@ -38,10 +38,10 @@ class HomeController extends Controller
             $data['content'] = 'No resource services yet.';
             $data['blockchain_count'] = '0';
             $data['blockchain_table'] = 'None';
-            $mdnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', '%mdNOSH%')->first();
-            if (! $mdnosh) {
-                $data['mdnosh'] = true;
-            }
+            // $mdnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', '%mdNOSH%')->first();
+            // if (! $mdnosh) {
+            //     $data['mdnosh'] = true;
+            // }
             $smart_on_fhir = [];
             $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
             if (! $pnosh) {
