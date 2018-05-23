@@ -389,7 +389,7 @@ class OauthController extends Controller
         // Ensure pNOSH logs out too for safety
         $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
         if ($pnosh) {
-            $redirect_uri = URL::to('/') . '/nosh';
+            $redirect_uri = $pnosh->client_uri;
             $params = [
     			'redirect_uri' => URL::to('/')
     		];
@@ -1658,6 +1658,6 @@ class OauthController extends Controller
 	}
 
     public function test1(Request $request)
-    {        
+    {
     }
 }

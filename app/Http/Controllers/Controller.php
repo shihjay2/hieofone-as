@@ -318,6 +318,19 @@ class Controller extends BaseController
         return "E-mail sent.";
     }
 
+    protected function default_policy_type()
+    {
+        $return = [
+            'login_direct',
+            'login_md_nosh',
+            'any_npi',
+            'login_google',
+            'login_uport',
+            'public_publish_directory'
+        ];
+        return $return;
+    }
+
     protected function directory_api($pre_url, $params, $action='directory_registration', $id='1')
     {
         $url =  $pre_url . '/check/' . $id;
@@ -331,7 +344,7 @@ class Controller extends BaseController
         $domain_name = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close ($ch);
-        if ($httpCode !== 404) {
+        if ($httpCode !== 404 && $httpCode !== 0) {
             Session::put('directory_uri', $pre_url . '/');
             $endpoint = $pre_url . '/'. $action;
             if ($action == 'directory_update') {

@@ -36,35 +36,80 @@ class HomeController extends Controller
             $data['name'] = Session::get('owner');
             $data['title'] = 'My Resource Services';
             $data['content'] = 'No resource services yet.';
+            $data['blockchain_count'] = '0';
+            $data['blockchain_table'] = 'None';
             $mdnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', '%mdNOSH%')->first();
             if (! $mdnosh) {
                 $data['mdnosh'] = true;
             }
+            $smart_on_fhir = [];
             $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
             if (! $pnosh) {
-                $data['pnosh'] = true;
-                $data['pnosh_url'] = URL::to('/') . '/nosh';
-                $owner = DB::table('owner')->first();
-                setcookie('pnosh_firstname', $owner->firstname);
-                setcookie('pnosh_lastname', $owner->lastname);
-                setcookie('pnosh_dob', date("m/d/Y", strtotime($owner->DOB)));
-                setcookie('pnosh_email', $owner->email);
-                setcookie('pnosh_username', Session::get('username'));
+                $url0 = URL::to('/') . '/nosh';
+                $ch0 = curl_init();
+                curl_setopt($ch0,CURLOPT_URL, $url0);
+                curl_setopt($ch0,CURLOPT_FAILONERROR,1);
+                curl_setopt($ch0,CURLOPT_FOLLOWLOCATION,1);
+                curl_setopt($ch0,CURLOPT_RETURNTRANSFER,1);
+                curl_setopt($ch0,CURLOPT_TIMEOUT, 60);
+                curl_setopt($ch0,CURLOPT_CONNECTTIMEOUT ,0);
+                $httpCode0 = curl_getinfo($ch0, CURLINFO_HTTP_CODE);
+                curl_close ($ch0);
+                if ($httpCode0 !== 404 && $httpCode0 !== 0) {
+                    $data['pnosh'] = true;
+                    $data['pnosh_url'] = $url0;
+                    $owner = DB::table('owner')->first();
+                    setcookie('pnosh_firstname', $owner->firstname);
+                    setcookie('pnosh_lastname', $owner->lastname);
+                    setcookie('pnosh_dob', date("m/d/Y", strtotime($owner->DOB)));
+                    setcookie('pnosh_email', $owner->email);
+                    setcookie('pnosh_username', Session::get('username'));
+                }
+            } else {
+                $pnosh_url = $pnosh->client_uri;
+                $url = $pnosh->client_uri . '/smart_on_fhir_list';
+                $ch = curl_init();
+                curl_setopt($ch,CURLOPT_URL, $url);
+                curl_setopt($ch,CURLOPT_FAILONERROR,1);
+                curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+                curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+                curl_setopt($ch,CURLOPT_TIMEOUT, 60);
+                curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
+                $result = curl_exec($ch);
+                curl_close ($ch);
+                $smart_on_fhir = json_decode($result, true);
+                $url1 = $pnosh_url . '/transactions';
+                $ch1 = curl_init();
+                curl_setopt($ch1,CURLOPT_URL, $url1);
+                curl_setopt($ch1,CURLOPT_FAILONERROR,1);
+                curl_setopt($ch1,CURLOPT_FOLLOWLOCATION,1);
+                curl_setopt($ch1,CURLOPT_RETURNTRANSFER,1);
+                curl_setopt($ch1,CURLOPT_TIMEOUT, 60);
+                curl_setopt($ch1,CURLOPT_CONNECTTIMEOUT ,0);
+                $blockchain = curl_exec($ch1);
+                $httpCode = curl_getinfo($ch1, CURLINFO_HTTP_CODE);
+                curl_close ($ch1);
+                if ($httpCode !== 404 && $httpCode !== 0) {
+                    $blockchain_arr = json_decode($blockchain, true);
+                    $data['blockchain_count'] = $blockchain_arr['count'];
+                    if ($blockchain_arr['count'] !== 0) {
+                        $data['blockchain_table'] = '<table class="table table-striped"><thead><tr><th>Date</th><th>Provider</th><th>Transaction Receipt</th></thead><tbody>';
+                        foreach ($blockchain_arr['transactions'] as $blockchain_row) {
+                            $data['blockchain_table'] .= '<tr><td>' . date('Y-m-d', $blockchain_row['date']) . '</td><td>' . $blockchain_row['provider'] . '</td><td><a href="https://rinkeby.etherscan.io/tx/' . $blockchain_row['transaction'] . '" target="_blank">' . $blockchain_row['transaction'] . '</a></td></tr>';
+                        }
+                        $data['blockchain_table'] .= '</tbody></table>';
+                        $data['blockchain_table'] .= '<strong>Top 5 Provider Users</strong>';
+                        $data['blockchain_table'] .= '<table class="table table-striped"><thead><tr><th>Provider</th><th>Number of Transactions</th></thead><tbody>';
+                        foreach ($blockchain_arr['providers'] as $blockchain_row1) {
+                            $data['blockchain_table'] .= '<tr><td>' . $blockchain_row1['provider'] . '</td><td>' . $blockchain_row1['count'] . '</td></tr>';
+                        }
+                        $data['blockchain_table'] .= '</tbody></table>';
+                    }
+                }
             }
             $data['message_action'] = Session::get('message_action');
             Session::forget('message_action');
             $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
-            $url = URL::to('/') . '/nosh/smart_on_fhir_list';
-            $ch = curl_init();
-            curl_setopt($ch,CURLOPT_URL, $url);
-            curl_setopt($ch,CURLOPT_FAILONERROR,1);
-            curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
-            curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
-            curl_setopt($ch,CURLOPT_TIMEOUT, 60);
-            curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
-            $result = curl_exec($ch);
-            curl_close ($ch);
-            $smart_on_fhir = json_decode($result, true);
             if ($query || ! empty($smart_on_fhir)) {
                 $data['content'] = '<div class="list-group">';
                 if ($query) {
@@ -72,7 +117,7 @@ class HomeController extends Controller
                         $link = '';
                         if ($pnosh) {
                             if ($client->client_id == $pnosh->client_id) {
-                                $link = '<span class="label label-success pnosh_link" nosh-link="' . URL::to('/') . '/nosh/uma_auth">Go There</span>';
+                                $link = '<span class="label label-success pnosh_link" nosh-link="' . $pnosh_url . '/uma_auth">Go There</span>';
                             }
                         }
                         $data['content'] .= '<a href="' . URL::to('resources') . '/' . $client->client_id . '" class="list-group-item"><img src="' . $client->logo_uri . '" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $client->client_name . '</span>' . $link . '</a>';
@@ -99,37 +144,6 @@ class HomeController extends Controller
                 }
                 $data['content'] .= '</div>';
             }
-            // Get blockchain stats
-            $data['blockchain_count'] = '0';
-            $data['blockchain_table'] = 'None';
-            $url = URL::to('/') . '/nosh/transactions';
-            $ch = curl_init();
-            curl_setopt($ch,CURLOPT_URL, $url);
-            curl_setopt($ch,CURLOPT_FAILONERROR,1);
-            curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
-            curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
-            curl_setopt($ch,CURLOPT_TIMEOUT, 60);
-            curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
-            $blockchain = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close ($ch);
-            if ($httpCode !== 404) {
-                $blockchain_arr = json_decode($blockchain, true);
-                $data['blockchain_count'] = $blockchain_arr['count'];
-                if ($blockchain_arr['count'] !== 0) {
-                    $data['blockchain_table'] = '<table class="table table-striped"><thead><tr><th>Date</th><th>Provider</th><th>Transaction Receipt</th></thead><tbody>';
-                    foreach ($blockchain_arr['transactions'] as $blockchain_row) {
-                        $data['blockchain_table'] .= '<tr><td>' . date('Y-m-d', $blockchain_row['date']) . '</td><td>' . $blockchain_row['provider'] . '</td><td><a href="https://rinkeby.etherscan.io/tx/' . $blockchain_row['transaction'] . '" target="_blank">' . $blockchain_row['transaction'] . '</a></td></tr>';
-                    }
-                    $data['blockchain_table'] .= '</tbody></table>';
-                    $data['blockchain_table'] .= '<strong>Top 5 Provider Users</strong>';
-                    $data['blockchain_table'] .= '<table class="table table-striped"><thead><tr><th>Provider</th><th>Number of Transactions</th></thead><tbody>';
-                    foreach ($blockchain_arr['providers'] as $blockchain_row1) {
-                        $data['blockchain_table'] .= '<tr><td>' . $blockchain_row1['provider'] . '</td><td>' . $blockchain_row1['count'] . '</td></tr>';
-                    }
-                    $data['blockchain_table'] .= '</tbody></table>';
-                }
-            }
             return view('home', $data);
         }
     }
@@ -147,27 +161,16 @@ class HomeController extends Controller
         $data['content'] = 'No resources registered yet.';
         $data['message_action'] = Session::get('message_action');
         Session::forget('message_action');
-        $default_policy_type = [
-            'login_direct',
-            'login_md_nosh',
-            'any_npi',
-            'login_google'
-        ];
+        $default_policy_types = $this->default_policy_type();
         $data['back'] = '<a href="' . URL::to('home') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resource Services</a>';
         $query = DB::table('resource_set')->where('client_id', '=', $id)->get();
         if ($query) {
             $count1 = 0;
-            if ($client->consent_login_direct == 1) {
-                $count1++;
-            }
-            if ($client->consent_login_md_nosh == 1) {
-                $count1++;
-            }
-            if ($client->consent_any_npi == 1) {
-                $count1++;
-            }
-            if ($client->consent_login_google == 1) {
-                $count1++;
+            foreach ($default_policy_types as $default_policy_type) {
+                $consent = 'consent_' . $default_policy_type;
+                if ($client->{$consent} == 1) {
+                    $count1++;
+                }
             }
             $count_label1 = 'policies';
             if ($count1 == 1) {
@@ -182,7 +185,7 @@ class HomeController extends Controller
                     $query2 = DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->first();
                     if ($query2) {
                         $query3 = DB::table('claim')->where('claim_id', '=', $query2->claim_id)->first();
-                        if (!in_array($query3->claim_value, $default_policy_type)) {
+                        if (!in_array($query3->claim_value, $default_policy_types)) {
                             $count++;
                         }
                     }
@@ -215,12 +218,7 @@ class HomeController extends Controller
             'view' => 'View',
             'edit' => 'Edit'
         ];
-        $default_policy_type = [
-            'login_direct',
-            'login_md_nosh',
-            'any_npi',
-            'login_google'
-        ];
+        $default_policy_type = $this->default_policy_type();
         $query = DB::table('resource_set')->where('resource_set_id', '=', $id)->first();
         $data['title'] = 'Permissions for ' . $query->name;
         $data['content'] = 'No policies registered for this resource.';
@@ -391,25 +389,13 @@ class HomeController extends Controller
         $data['content'] .= '<p>By clicking Allow, you consent to sharing your information on ' . $query->client_name . ' according to the policies selected below. You can revoke consent or change your policies for ' . $query->client_name . ' at any time using the My Resources page.  Parties requesting access to your information will be listed on the My Clients page where their access can also be revoked or changed.   Your sharing defaults can be changed on the My Policies page.</p>';
         $data['content'] .= '<input type="hidden" name="client_id" value="' . $query->client_id . '"/>';
         $data['client'] = $query->client_name;
-        $data['login_direct'] = '';
-        $data['login_md_nosh'] = '';
-        $data['any_npi'] = '';
-        $data['login_google'] = '';
-        $data['public_publish_directory'] = '';
-        if ($query->consent_login_direct == 1) {
-            $data['login_direct'] = 'checked';
-        }
-        if ($query->consent_login_md_nosh == 1) {
-            $data['login_md_nosh'] = 'checked';
-        }
-        if ($query->consent_any_npi == 1) {
-            $data['any_npi'] = 'checked';
-        }
-        if ($query->consent_login_google == 1) {
-            $data['login_google'] = 'checked';
-        }
-        if ($query->consent_public_publish_directory == 1) {
-            $data['public_publish_directory'] = 'checked';
+        $default_policy_types = $this->default_policy_type();
+        foreach ($default_policy_types as $default_policy_type) {
+            $data[$default_policy_type] = '';
+            $consent = 'consent_' . $default_policy_type;
+            if ($query->{$consent} == 1) {
+                $data[$default_policy_type] = 'checked';
+            }
         }
         return view('rs_authorize', $data);
     }
@@ -434,25 +420,12 @@ class HomeController extends Controller
             $data['content'] .= '<input type="hidden" name="client_id" value="' . $query->client_id . '"/>';
             $data['client'] = $query->client_name;
             $query1 = DB::table('owner')->first();
-            $data['login_direct'] = '';
-            $data['login_md_nosh'] = '';
-            $data['any_npi'] = '';
-            $data['login_google'] = '';
-            $data['public_publish_directory'] = '';
-            if ($query1->login_direct == 1) {
-                $data['login_direct'] = 'checked';
-            }
-            if ($query1->login_md_nosh == 1) {
-                $data['login_md_nosh'] = 'checked';
-            }
-            if ($query1->any_npi == 1) {
-                $data['any_npi'] = 'checked';
-            }
-            if ($query1->login_google == 1) {
-                $data['login_google'] = 'checked';
-            }
-            if ($query1->public_publish_directory == 1) {
-                $data['public_publish_directory'] = 'checked';
+            $default_policy_types = $this->default_policy_type();
+            foreach ($default_policy_types as $default_policy_type) {
+                $data[$default_policy_type] = '';
+                if ($query1->{$default_policy_type} == 1) {
+                    $data[$default_policy_type] = 'checked';
+                }
             }
             return view('rs_authorize', $data);
         } else {
@@ -463,30 +436,15 @@ class HomeController extends Controller
     public function rs_authorize_action(Request $request)
     {
         if ($request->input('submit') == 'allow') {
-            $data['consent_login_direct'] = 0;
-            $data['consent_login_md_nosh'] = 0;
-            $data['consent_any_npi'] = 0;
-            $data['consent_login_google'] = 0;
+            $default_policy_types = $this->default_policy_type();
             $types = [];
-            if ($request->input('consent_login_direct') == 'on') {
-                $data['consent_login_direct'] = 1;
-                $types[] = 'login_direct';
-            }
-            if ($request->input('consent_login_md_nosh') == 'on') {
-                $data['consent_login_md_nosh'] = 1;
-                $types[] = 'login_md_nosh';
-            }
-            if ($request->input('consent_any_npi') == 'on') {
-                $data['consent_any_npi'] = 1;
-                $types[] = 'any_npi';
-            }
-            if ($request->input('consent_login_google') == 'on') {
-                $data['consent_login_google'] = 1;
-                $types[] = 'login_google';
-            }
-            if ($request->input('public_publish_directory') == 'on') {
-                $data['consent_public_publish_directory'] = 1;
-                $types[] = 'public_publish_directory';
+            foreach ($default_policy_types as $default_policy_type) {
+                $consent = 'consent_' . $default_policy_type;
+                $data[$consent] = 0;
+                if ($request->input($consent) == 'on') {
+                    $data[$consent] = 1;
+                    $types[] = $default_policy_type;
+                }
             }
             $data['authorized'] = 1;
             DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data);
@@ -906,11 +864,10 @@ class HomeController extends Controller
                 ];
                 DB::table('owner')->where('id', '=', '1')->update($owner_data);
                 if ($owner_query->email !== $request->input('email') || $owner_query->mobile !== $request->input('mobile')) {
-                    $pnosh_uri = URL::to('/') . '/nosh';
-                    $pnosh = DB::table('oauth_clients')->where('client_uri', '=', $pnosh_uri)->first();
+                    $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
                     if ($pnosh) {
                         // Synchronize contact info with pNOSH
-                        $url = URL::to('/') . '/nosh/as_sync';
+                        $url = $pnosh->client_uri . '/as_sync';
                         $ch = curl_init();
                         $sync_data = [
                             'old_email' => $owner_query->email,
@@ -956,24 +913,12 @@ class HomeController extends Controller
         Session::forget('message_action');
         $data['name'] = Session::get('owner');
         $query = DB::table('owner')->first();
-        $data['login_direct'] = '';
-        $data['login_md_nosh'] = '';
-        $data['any_npi'] = '';
-        $data['login_google'] = '';
-        if ($query->login_direct == 1) {
-            $data['login_direct'] = 'checked';
-        }
-        if ($query->login_md_nosh == 1) {
-            $data['login_md_nosh'] = 'checked';
-        }
-        if ($query->any_npi == 1) {
-            $data['any_npi'] = 'checked';
-        }
-        if ($query->login_google == 1) {
-            $data['login_google'] = 'checked';
-        }
-        if ($query->login_uport == 1) {
-            $data['login_uport'] = 'checked';
+        $default_policy_types = $this->default_policy_type();
+        foreach ($default_policy_types as $default_policy_type) {
+            $data[$default_policy_type] = '';
+            if ($query->{$default_policy_type} == 1) {
+                $data[$default_policy_type] = 'checked';
+            }
         }
         $data['content'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
         $data['content'] .= '<h3>Resource Registration Consent Default Policies</h3>';
@@ -984,30 +929,15 @@ class HomeController extends Controller
     public function change_policy(Request $request)
     {
         if ($request->input('submit') == 'save') {
-            if ($request->input('login_direct') == 'on') {
-                $data['login_direct'] = 1;
-            } else {
-                $data['login_direct'] = 0;
-            }
-            if ($request->input('login_md_nosh') == 'on') {
-                $data['login_md_nosh'] = 1;
-            } else {
-                $data['login_md_nosh'] = 0;
-            }
-            if ($request->input('any_npi') == 'on') {
-                $data['any_npi'] = 1;
-            } else {
-                $data['any_npi'] = 0;
-            }
-            if ($request->input('login_google') == 'on') {
-                $data['login_google'] = 1;
-            } else {
-                $data['login_google'] = 0;
-            }
-            if ($request->input('login_uport') == 'on') {
-                $data['login_uport'] = 1;
-            } else {
-                $data['login_uport'] = 0;
+            $default_policy_types = $this->default_policy_type();
+            foreach ($default_policy_types as $default_policy_type) {
+                if ($request->has($default_policy_type)) {
+                    if ($request->input($default_policy_type) == 'on') {
+                        $data[$default_policy_type] = 1;
+                    } else {
+                        $data[$default_policy_type] = 0;
+                    }
+                }
             }
             $query = DB::table('owner')->first();
             DB::table('owner')->where('id', '=', $query->id)->update($data);
