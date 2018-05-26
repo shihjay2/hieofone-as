@@ -601,8 +601,6 @@ class OauthController extends Controller
     public function uport_user_add(Request $request)
     {
         $owner = DB::table('owner')->first();
-        $name = Session::get('google_name');
-        $name_arr = explode(' ', $name);
         if (Session::get('oauth_response_type') == 'code') {
             $client_id = Session::get('oauth_client_id');
         } else {
@@ -1493,6 +1491,74 @@ class OauthController extends Controller
             $error = 'Your invitation code is invalid';
             return $error;
         }
+    }
+
+    public function as_push_notification(Request $request)
+    {
+        $owners_query = DB::table('owner')->get();
+        $owner_query = DB::table('owner')->first();
+        $client = DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->where('client_secret', '=', $request->input('client_secret'))->first();
+        if ($client) {
+            $actions = json_decode(json_encode($request->input('action')), true);
+            foreach ($actions as $action_k => $action_v) {
+                if ($action_k == 'notification') {
+                    $data['message_data'] = $action_v;
+                    $title = 'Directory Notification';
+                    foreach ($owners_query as $owner) {
+                        $to = $owner->email;
+                        $this->send_mail('auth.emails.generic', $data, $title, $to);
+                        if ($owner->mobile != '') {
+                            $this->textbelt($owner_query->mobile, $data['message_data']);
+                        }
+                    }
+                }
+                if ($action_k == 'add_clinician') {
+                    $email_check = DB::table('users')->where('email', '=', $action_v['email'])->first();
+                    $user_data = [
+                        'username' => $action_v['uport_id'],
+                        'first_name' => $action_v['first_name'],
+                        'last_name' => $action_v['last_name'],
+                        'uport_id' => $action_v['uport_id'],
+                        'password' => 'Pending',
+                        'npi' => $action_v['npi'],
+                    ];
+                    $user_data1 = [
+                        'name' => $action_v['uport_id'],
+                        'email' => $action_v['email']
+                    ];
+                    if (! $email_check) {
+                        if ($owner_query->any_npi == 0) {
+                            DB::table('oauth_users')->insert($user_data);
+                            DB::table('users')->insert($user_data1);
+                            $data1['message_data'] = $name . ' has just subscribed to your HIE of One Authorizaion Server via the ' . $client->client_name . ' Directory.<br>';
+                            $data1['message_data'] .= 'Go to ' . route('authorize_user') . '/ to review and authorize.';
+                            $title1 = 'New User from the ' . $client->client_name . ' Directory';
+                            $to1 = $owner_query->email;
+                            $this->send_mail('auth.emails.generic', $data1, $title1, $to1);
+                            if ($owner_query->mobile != '') {
+                                $this->textbelt($owner_query->mobile, $data1['message_data']);
+                            }
+                        } else {
+                            $uport_data['password'] = sha1($action_v['uport_id']);
+                            $uport_data['email'] = $action_v['email'];
+                            $uport_data['sub'] = $action_v['uport_id'];
+                            DB::table('oauth_users')->insert($user_data);
+                            DB::table('users')->insert($user_data);
+                            $url = URL::to('login');
+                            $data2['message_data'] = 'You are now registered to access to the HIE of One Authorization Server for ' . $owner_query->firstname . ' ' . $owner_query->lastname . '.<br>';
+                            $data2['message_data'] .= 'Go to ' . $url . ' to get started.';
+                            $title2 = 'New Registration';
+                            $to2 = $action_v['email'];
+                            $this->send_mail('auth.emails.generic', $data2, $title2, $to2);
+                        }
+                    }
+                }
+            }
+            $return = 'OK';
+        } else {
+            $return = 'Not Authorized';
+        }
+        return $return;
     }
 
     public function pnosh_sync(Request $request)

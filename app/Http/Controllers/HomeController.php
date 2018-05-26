@@ -1023,6 +1023,7 @@ class HomeController extends Controller
             'as_uri' => $as_url,
             'redirect_uri' => route('directory_add', ['approve']),
             'name' => $owner->firstname . ' ' . $owner->lastname,
+            'last_update' => time(),
             'rs' => $rs_arr
         ];
         if ($type == 'approve') {
@@ -1106,6 +1107,7 @@ class HomeController extends Controller
         $params = [
             'as_uri' => $as_url,
             'name' => $owner->firstname . ' ' . $owner->lastname,
+            'last_update' => time(),
             'rs' => $rs_arr
         ];
         $query = DB::table('directories')->get();

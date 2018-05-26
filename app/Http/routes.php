@@ -86,6 +86,7 @@ Route::any('my_info_edit', ['as' => 'my_info_edit', 'uses' => 'HomeController@my
 Route::get('directories', ['as' => 'directories', 'uses' => 'HomeController@directories']);
 Route::any('directory_add/{type?}', ['as' => 'directory_add', 'uses' => 'HomeController@directory_add']);
 Route::get('directory_remove/{id}', ['as' => 'directory_remove', 'uses' => 'HomeController@directory_remove']);
+Route::post('as_push_notification', ['as' => 'as_push_notification', 'uses' => 'OauthController@as_push_notification']);
 Route::get('default_policies', ['as' => 'default_policies', 'uses' => 'HomeController@default_policies']);
 Route::post('change_policy', ['as' => 'change_policy', 'uses' => 'HomeController@change_policy']);
 Route::post('fhir_edit', ['as' => 'fhir_edit', 'middleware' => 'csrf', 'uses' => 'HomeController@fhir_edit']);
