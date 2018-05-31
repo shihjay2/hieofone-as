@@ -1067,7 +1067,8 @@ class HomeController extends Controller
                 return redirect($response['arr']['uri']);
             }
         } else {
-            return redirect()->route('directories');
+            return view('directory');
+            // return redirect()->route('directories');
         }
     }
 
