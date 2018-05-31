@@ -1015,7 +1015,7 @@ class HomeController extends Controller
                 $rs_arr[] = [
                     'name' => $rs_row->client_name,
                     'uri' => $rs_row->client_uri,
-                    'public' => $rs_row->public_publish_directory
+                    'public' => $rs_row->consent_public_publish_directory
                 ];
             }
         }
