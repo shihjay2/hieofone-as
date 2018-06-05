@@ -333,7 +333,7 @@ class Controller extends BaseController
 
     protected function directory_api($pre_url, $params, $action='directory_registration', $id='1')
     {
-        $url =  $pre_url . '/check/' . $id;
+        $url =  $pre_url . '/check';
         $ch = curl_init();
         curl_setopt($ch,CURLOPT_URL, $url);
         curl_setopt($ch,CURLOPT_FAILONERROR,1);

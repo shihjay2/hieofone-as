@@ -1035,7 +1035,7 @@ class HomeController extends Controller
                 ];
                 DB::table('directories')->insert($directory);
                 Session::forget('directory_uri');
-                Session::put('message_action', $request->input('name') . 'added');
+                Session::put('message_action', $request->input('name') . ' added');
                 return redirect()->route('directories');
             } else {
                 Session::put('message_action', 'Error: there was a problem with registering with the directory.');
