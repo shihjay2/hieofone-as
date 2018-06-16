@@ -6,7 +6,7 @@ set -e
 # Constants and paths
 LOGDIR=/var/log/hieofone-as-pnosh
 LOG=$LOGDIR/installation_log
-NOSHCRON=/etc/cron.d/nosh-cs
+HIECRON=/etc/cron.d/hieofone
 MYSQL_DATABASE=nosh
 MYSQL_USERNAME=root
 AS_MYSQL_DATABASE=oidc
@@ -67,7 +67,7 @@ apt-get -y install php7.2 php7.2-zip php7.2-curl php7.2-mysql php-pear php7.2-im
 export DEBIAN_FRONTEND=noninteractive
 # Randomly generated password for MariaDB
 MYSQL_PASSWORD=`pwgen -s 40 1`
-log_only "Your MariaDB password is $MYSQL_PASSWORD" 
+log_only "Your MariaDB password is $MYSQL_PASSWORD"
 debconf-set-selections <<< "mariadb-server-10.1 mysql-server/data-dir select ''"
 debconf-set-selections <<< "mariadb-server-10.1 mysql-server/root_password password $MYSQL_PASSWORD"
 debconf-set-selections <<< "mariadb-server-10.1 mysql-server/root_password_again password $MYSQL_PASSWORD"
@@ -193,16 +193,17 @@ echo "$AS_APACHE_CONF" >> "$WEB_CONF"/hie.conf
 log_only "HIE of One Authorization Server Apache configuration file set."
 
 # Create cron scripts
-if [ -f $NOSHCRON ]; then
-	rm -rf $NOSHCRON
+if [ -f $HIECRON ]; then
+	rm -rf $HIECRON
 fi
-touch $NOSHCRON
-echo "*/10 *  * * *   root    $NEWNOSH/noshfax" >> $NOSHCRON
-echo "*/1 *   * * *   root    $NEWNOSH/noshreminder" >> $NOSHCRON
-echo "0 0     * * *   root    $NEWNOSH/noshbackup" >> $NOSHCRON
-chown root.root $NOSHCRON
-chmod 644 $NOSHCRON
-log_only "Created NOSH ChartingSystem cron scripts."
+touch $HIECRON
+echo "*/10 *  * * *   root    $NEWNOSH/noshfax" >> $HIECRON
+echo "*/1 *   * * *   root    $NEWNOSH/noshreminder" >> $HIECRON
+echo "0 0     * * *   root    $NEWNOSH/noshbackup" >> $HIECRON
+echo "30 0    * * 1   root    /usr/local/bin/certbot-auto renew >>  /var/log/le-renew.log" >> $HIECRON
+chown root.root $HIECRON
+chmod 644 $HIECRON
+log_only "Created cron scripts."
 
 phpenmod imap
 if [ ! -f /usr/local/bin/composer ]; then
@@ -299,6 +300,12 @@ echo "$APACHE_CONF" >> "$WEB_CONF"/nosh2.conf
 log_only "NOSH ChartingSystem Apache configuration file set."
 log_only "Restarting Apache service."
 $APACHE >> $LOG 2>&1
+# Install LetsEncrypt
+cd /usr/local/bin
+wget https://dl.eff.org/certbot-auto
+chmod a+x /usr/local/bin/certbot-auto
+./certbot-auto --apache -d $URL
+log_only "Let's Encrypt SSL certificate is set."
 # Installation completed
 log_only "You can now complete your new installation of HIE of One Authorization Server by browsing to:"
 log_only "https://localhost/install"

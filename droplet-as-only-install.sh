@@ -7,6 +7,7 @@ set -e
 LOGDIR=/var/log/hieofone-as
 LOG=$LOGDIR/installation_log
 WEB=/opt
+HIECRON=/etc/cron.d/hieofone
 HIE=$WEB/hieofone-as
 ENV=$HIE/.env
 PRIVKEY=$HIE/.privkey.pem
@@ -62,7 +63,7 @@ apt-get -y install php7.2 php7.2-zip php7.2-curl php7.2-mysql php-pear php7.2-im
 export DEBIAN_FRONTEND=noninteractive
 # Randomly generated password for MariaDB
 MYSQL_PASSWORD=`pwgen -s 40 1`
-log_only "Your MariaDB password is $MYSQL_PASSWORD" 
+log_only "Your MariaDB password is $MYSQL_PASSWORD"
 debconf-set-selections <<< "mariadb-server-10.1 mysql-server/data-dir select ''"
 debconf-set-selections <<< "mariadb-server-10.1 mysql-server/root_password password $MYSQL_PASSWORD"
 debconf-set-selections <<< "mariadb-server-10.1 mysql-server/root_password_again password $MYSQL_PASSWORD"
@@ -86,6 +87,16 @@ log_only "All prerequisites for installation are met."
 
 # Check apache version
 APACHE_VER=$(apache2 -v | awk -F"[..]" 'NR<2{print $2}')
+
+# Create cron scripts
+if [ -f $HIECRON ]; then
+	rm -rf $HIECRON
+fi
+touch $HIECRON
+echo "30 0    * * 1   root    /usr/local/bin/certbot-auto renew >>  /var/log/le-renew.log" >> $HIECRON
+chown root.root $HIECRON
+chmod 644 $HIECRON
+log_only "Created cron scripts."
 
 # Install
 phpenmod imap
