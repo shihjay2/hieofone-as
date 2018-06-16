@@ -60,13 +60,14 @@ add-apt-repository 'deb [arch=amd64,i386,ppc64el] http://ftp.osuosl.org/pub/mari
 apt update
 apt-get -y install php7.2 php7.2-zip php7.2-curl php7.2-mysql php-pear php7.2-imap libapache2-mod-php7.2 php7.2-gd php-imagick php7.2-cli php7.2-mbstring php7.2-xml php7.2-common libdbi-perl libdbd-mysql-perl libssh2-1-dev php-ssh2 php7.2-soap imagemagick pdftk openssh-server pwgen
 export DEBIAN_FRONTEND=noninteractive
+# Randomly generated password for MariaDB
+MYSQL_PASSWORD=`pwgen -s 40 1`
+log_only "Your MariaDB password is $MYSQL_PASSWORD" 
 debconf-set-selections <<< "mariadb-server-10.1 mysql-server/data-dir select ''"
 debconf-set-selections <<< "mariadb-server-10.1 mysql-server/root_password password $MYSQL_PASSWORD"
 debconf-set-selections <<< "mariadb-server-10.1 mysql-server/root_password_again password $MYSQL_PASSWORD"
 apt-get install -y mariadb-server mariadb-client
-# Randomly generated password for MariaDB
-MYSQL_PASSWORD=`pwgen -s 40 1`
-log_only "Your MariaDB password is $MYSQL_PASSWORD" 
+
 # Set default collation and character set
 echo "[mysqld]
 character_set_server = 'utf8'
