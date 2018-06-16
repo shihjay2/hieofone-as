@@ -107,9 +107,9 @@
 								<button type="button" class="btn btn-primary btn-block" id="connectUportBtn1">Add NPI credential to uPort using Doximity Verification</button>
 								<!-- <button type="button" class="btn btn-primary btn-block" id="connectUportBtn1" onclick="uportConnect()">Connect uPort</button> -->
 								<!-- <button type="button" class="btn btn-primary btn-block" id="connectUportBtn2" onclick="sendEther()">Send Ether</button> -->
-								<a class="btn btn-primary btn-block" href="{{ url('/mdnosh') }}">
+								<!-- <a class="btn btn-primary btn-block" href="{{ url('/mdnosh') }}">
 									<i class="fa fa-btn fa-openid"></i> Login with mdNOSH
-								</a>
+								</a> -->
 								@if (isset($google))
 									<a class="btn btn-primary btn-block" href="{{ url('/google') }}">
 										<i class="fa fa-btn fa-google"></i> Login with Google

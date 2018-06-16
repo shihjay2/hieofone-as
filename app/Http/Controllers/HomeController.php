@@ -1045,7 +1045,7 @@ class HomeController extends Controller
         if ($type == 'root') {
             $root_url = explode('/', $as_url);
             $root_url1 = explode('.', $root_url[2]);
-            $root_domain = 'https://dir.' . $root_url1[1];
+            $root_domain = 'https://dir.' . $root_url1[1] . '.' . $root_url1[2];
             Session::put('directory_uri', $root_domain);
             $response = $this->directory_api($root_domain, $params);
             if ($response['status'] == 'error') {

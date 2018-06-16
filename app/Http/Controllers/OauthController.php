@@ -102,9 +102,9 @@ class OauthController extends Controller
                     'first_name' => 'required',
                     'last_name' => 'required',
                     'date_of_birth' => 'required',
-                    'google_client_id' => 'required',
-                    'google_client_secret' => 'required',
-                    'smtp_username' => 'required'
+                    // 'google_client_id' => 'required',
+                    // 'google_client_secret' => 'required',
+                    // 'smtp_username' => 'required'
                 ]);
                 // Register user
                 $sub = $this->gen_uuid();
@@ -136,24 +136,70 @@ class OauthController extends Controller
                     'sub' => $sub
                 ];
                 DB::table('owner')->insert($owner_data);
-                // Register oauth for Google and Twitter
-                $google_data = [
-                    'type' => 'google',
-                    'client_id' => $request->input('google_client_id'),
-                    'client_secret' => $request->input('google_client_secret'),
-                    'redirect_uri' => URL::to('account/google'),
-                    'smtp_username' => $request->input('smtp_username')
-                ];
-                DB::table('oauth_rp')->insert($google_data);
-                if ($request->input('twitter_client_id') !== '') {
-                    $twitter_data = [
-                        'type' => 'twitter',
-                        'client_id' => $request->input('twitter_client_id'),
-                        'client_secret' => $request->input('twitter_client_secret'),
-                        'redirect_uri' => URL::to('account/twitter')
-                    ];
-                    DB::table('oauth_rp')->insert($twitter_data);
+                // Setup e-mail server with Mailgun
+                $as_url = $request->root();
+                $as_url = str_replace(array('http://','https://'), '', $as_url);
+                $root_url = explode('/', $as_url);
+                $root_url1 = explode('.', $root_url[2]);
+                $final_root_url = $root_url1[1] . '.' . $root_url1[2];
+                if ($final_root_url == 'hieofone.org') {
+                    $mailgun_url = 'https://dir.' . $final_root_url . '/mailgun';
+                    $params = ['uri' => $as_url];
+                    $post_body = json_encode($params);
+                    $content_type = 'application/json';
+                    $ch = curl_init();
+                    curl_setopt($ch,CURLOPT_URL, $mailgun_url);
+                    curl_setopt($ch, CURLOPT_POST, 1);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                        "Content-Type: {$content_type}",
+                        'Content-Length: ' . strlen($post_body)
+                    ]);
+                    curl_setopt($ch, CURLOPT_HEADER, 0);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+                    curl_setopt($ch,CURLOPT_FAILONERROR,1);
+                    curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+                    curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+                    curl_setopt($ch,CURLOPT_TIMEOUT, 60);
+                    curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
+                    $mailgun_secret = curl_exec($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close ($ch);
+                    if ($httpCode !== 404 && $httpCode !== 0) {
+                        $mail_arr = [
+                            'MAIL_DRIVER' => 'mailgun',
+                            'MAILGUN_DOMAIN' => 'mg.hieofone.org',
+                            'MAILGUN_SECRET' => $mailgun_secret,
+                            'MAIL_HOST' => '',
+                            'MAIL_PORT' => '',
+                            'MAIL_ENCRYPTION' => '',
+                            'MAIL_USERNAME' => '',
+                            'MAIL_PASSWORD' => '',
+                            'GOOGLE_KEY' => '',
+                            'GOOGLE_SECRET' => '',
+                            'GOOGLE_REDIRECT_URI' => ''
+                        ];
+                        $this->changeEnv($mail_arr);
+                    }
                 }
+                // Register oauth for Google and Twitter
+                // $google_data = [
+                //     'type' => 'google',
+                //     'client_id' => $request->input('google_client_id'),
+                //     'client_secret' => $request->input('google_client_secret'),
+                //     'redirect_uri' => URL::to('account/google'),
+                //     'smtp_username' => $request->input('smtp_username')
+                // ];
+                // DB::table('oauth_rp')->insert($google_data);
+                // if ($request->input('twitter_client_id') !== '') {
+                //     $twitter_data = [
+                //         'type' => 'twitter',
+                //         'client_id' => $request->input('twitter_client_id'),
+                //         'client_secret' => $request->input('twitter_client_secret'),
+                //         'redirect_uri' => URL::to('account/twitter')
+                //     ];
+                //     DB::table('oauth_rp')->insert($twitter_data);
+                // }
                 // Register server as its own client
                 $grant_types = 'client_credentials password authorization_code implicit jwt-bearer refresh_token';
                 $scopes = 'openid profile email address phone offline_access';
@@ -188,7 +234,8 @@ class OauthController extends Controller
                     DB::table('oauth_scopes')->insert($scope_data);
                 }
                 // Go register with Google to get refresh token for email setup
-                return redirect()->route('installgoogle');
+                // return redirect()->route('installgoogle');
+                return redirect()->route('home');
             } else {
                 $data2['noheader'] = true;
                 return view('install', $data2);
@@ -1725,5 +1772,29 @@ class OauthController extends Controller
 
     public function test1(Request $request)
     {
+        $as_url = $request->root();
+        $as_url = str_replace(array('http://','https://'), '', $as_url);
+        $params = ['uri' => $as_url];
+        $post_body = json_encode($params);
+        $content_type = 'application/json';
+        $ch = curl_init();
+        curl_setopt($ch,CURLOPT_URL, $mailgun_url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Content-Type: {$content_type}",
+            'Content-Length: ' . strlen($post_body)
+        ]);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch,CURLOPT_FAILONERROR,1);
+        curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+        curl_setopt($ch,CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
+        $mailgun_secret = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close ($ch);
+        return $mailgun_secret;
     }
 }

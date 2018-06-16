@@ -8,6 +8,7 @@ LOGDIR=/var/log/hieofone-as-pnosh
 LOG=$LOGDIR/installation_log
 NOSHCRON=/etc/cron.d/nosh-cs
 MYSQL_DATABASE=nosh
+MYSQL_USERNAME=root
 AS_MYSQL_DATABASE=oidc
 WEB=/opt
 HIE=$WEB/hieofone-as
@@ -19,12 +20,8 @@ WEB_USER=www-data
 WEB_CONF=/etc/apache2/conf-enabled
 APACHE="/etc/init.d/apache2 restart"
 NOSH_DIR=/noshdocuments
-FTPIMPORT=/srv/ftp/shared/import
-FTPEXPORT=/srv/ftp/shared/export
 NEWNOSH=$NOSH_DIR/nosh2
 ENV=$NEWNOSH/.env
-SSH="/etc/init.d/ssh stop"
-SSH1="/etc/init.d/ssh start"
 
 log_only () {
 	echo "$1"
@@ -58,9 +55,7 @@ if [ ! -d $LOGDIR ]; then
 	mkdir -p $LOGDIR
 fi
 
-read -e -p "Enter your MySQL username: " -i "" MYSQL_USERNAME
-read -e -p "Enter your MySQL password: " -i "" MYSQL_PASSWORD
-USERNAME=$MYSQL_USERNAME
+read -e -p "Enter your registered URL: " -i "" URL
 
 # Install PHP and MariaDB
 apt-get -y install software-properties-common build-essential binutils-doc git subversion bc apache2
@@ -68,12 +63,15 @@ apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74C
 add-apt-repository ppa:ondrej/php -y
 add-apt-repository 'deb [arch=amd64,i386,ppc64el] http://ftp.osuosl.org/pub/mariadb/repo/10.1/ubuntu xenial main'
 apt update
-apt-get -y install php7.2 php7.2-zip php7.2-curl php7.2-mysql php-pear php7.2-imap libapache2-mod-php7.2 php7.2-gd php-imagick php7.2-cli php7.2-mbstring php7.2-xml php7.2-common libdbi-perl libdbd-mysql-perl libssh2-1-dev php-ssh2 php7.2-soap imagemagick pdftk openssh-server
+apt-get -y install php7.2 php7.2-zip php7.2-curl php7.2-mysql php-pear php7.2-imap libapache2-mod-php7.2 php7.2-gd php-imagick php7.2-cli php7.2-mbstring php7.2-xml php7.2-common libdbi-perl libdbd-mysql-perl libssh2-1-dev php-ssh2 php7.2-soap imagemagick pdftk openssh-server pwgen
 export DEBIAN_FRONTEND=noninteractive
 debconf-set-selections <<< "mariadb-server-10.1 mysql-server/data-dir select ''"
 debconf-set-selections <<< "mariadb-server-10.1 mysql-server/root_password password $MYSQL_PASSWORD"
 debconf-set-selections <<< "mariadb-server-10.1 mysql-server/root_password_again password $MYSQL_PASSWORD"
 apt-get install -y mariadb-server mariadb-client
+# Randomly generated password for MariaDB
+MYSQL_PASSWORD=`pwgen -s 40 1`
+log_only "Your MariaDB password is $MYSQL_PASSWORD" 
 # Set default collation and character set
 echo "[mysqld]
 character_set_server = 'utf8'
@@ -82,19 +80,6 @@ collation_server = 'utf8_general_ci'" >> /etc/mysql/my.cnf
 sed -i '/^bind-address/s/bind-address.*=.*/bind-address = 0.0.0.0/' /etc/mysql/my.cnf
 mysql --user="root" --password="$MYSQL_PASSWORD" -e "GRANT ALL ON *.* TO root@'0.0.0.0' IDENTIFIED BY '$MYSQL_PASSWORD' WITH GRANT OPTION;"
 systemctl restart mysql
-if [ $MYSQL_USERNAME != "root"]; then
-	mysql --user="root" --password="$MYSQL_PASSWORD" -e "CREATE USER '$USERNAME'@'0.0.0.0' IDENTIFIED BY '$MYSQL_PASSWORD';"
-	mysql --user="root" --password="$MYSQL_PASSWORD" -e "GRANT ALL ON *.* TO '$USERNAME'@'0.0.0.0' IDENTIFIED BY '$MYSQL_PASSWORD' WITH GRANT OPTION;"
-	mysql --user="root" --password="$MYSQL_PASSWORD" -e "GRANT ALL ON *.* TO '$USERNAME'@'%' IDENTIFIED BY '$MYSQL_PASSWORD' WITH GRANT OPTION;"
-	mysql --user="root" --password="$MYSQL_PASSWORD" -e "FLUSH PRIVILEGES;"
-	systemctl restart mysql
-fi
-echo "phpmyadmin phpmyadmin/dbconfig-install boolean true" | debconf-set-selections
-echo "phpmyadmin phpmyadmin/app-password-confirm password $MYSQL_PASSWORD" | debconf-set-selections
-echo "phpmyadmin phpmyadmin/mysql/admin-pass password $MYSQL_PASSWORD" | debconf-set-selections
-echo "phpmyadmin phpmyadmin/mysql/app-pass password $MYSQL_PASSWORD" | debconf-set-selections
-echo "phpmyadmin phpmyadmin/reconfigure-webserver multiselect none" | debconf-set-selections
-apt-get -y install phpmyadmin
 
 # Check prerequisites
 type apache2 >/dev/null 2>&1 || { echo >&2 "Apache Web Server is required, but it's not installed.  Aborting."; exit 1; }
@@ -218,33 +203,6 @@ chown root.root $NOSHCRON
 chmod 644 $NOSHCRON
 log_only "Created NOSH ChartingSystem cron scripts."
 
-# Set up SFTP
-groupadd ftpshared
-log_only "Group ftpshared does not exist.  Making group."
-mkdir -p $FTPIMPORT
-mkdir -p $FTPEXPORT
-chown -R root:ftpshared /srv/ftp/shared
-chmod 755 /srv/ftp/shared
-chmod -R 775 $FTPIMPORT
-chmod -R 775 $FTPEXPORT
-chmod g+s $FTPIMPORT
-chmod g+s $FTPEXPORT
-log_only "The NOSH ChartingSystem SFTP directories have been created."
-/usr/bin/gpasswd -a www-data ftpshared
-cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
-log_only "Backup of SSH config file created."
-sed -i '/Subsystem/s/^/#/' /etc/ssh/sshd_config
-echo '
-Subsystem sftp internal-sftp' >> /etc/ssh/sshd_config
-echo 'Match Group ftpshared' >> /etc/ssh/sshd_config
-echo 'ChrootDirectory /srv/ftp/shared' >> /etc/ssh/sshd_config
-echo 'X11Forwarding no' >> /etc/ssh/sshd_config
-echo 'AllowTCPForwarding no' >> /etc/ssh/sshd_config
-echo 'ForceCommand internal-sftp' >> /etc/ssh/sshd_config
-log_only "SSH config file updated."
-log_only "Restarting SSH server service"
-$SSH >> $LOG 2>&1
-$SSH1 >> $LOG 2>&1
 phpenmod imap
 if [ ! -f /usr/local/bin/composer ]; then
 	curl -sS https://getcomposer.org/installer | php
