@@ -92,13 +92,7 @@ class Controller extends BaseController
     protected function group_policy($client_id, $types, $action)
     {
         // $types is an array of claims
-        $default_policy_type = [
-            'login_direct',
-            'login_md_nosh',
-            'any_npi',
-            'login_google',
-            'consent_public_publish_directory'
-        ];
+        $default_policy_type = $this->default_policy_type();
         // Create default policy claims if they don't exist
         foreach ($default_policy_type as $default_claim) {
             $claims = DB::table('claim')->where('claim_value', '=', $default_claim)->first();
@@ -322,11 +316,12 @@ class Controller extends BaseController
     {
         $return = [
             'login_direct',
-            'login_md_nosh',
+            // 'login_md_nosh',
             'any_npi',
-            'login_google',
+            // 'login_google',
             'login_uport',
-            'public_publish_directory'
+            'public_publish_directory',
+            'private_publish_directory'
         ];
         return $return;
     }

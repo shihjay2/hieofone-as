@@ -198,6 +198,7 @@ class HomeController extends Controller
             }
             $data['content'] .= '</div>';
         }
+        Session::put('back', $request->fullUrl());
         Session::put('current_client_id', $id);
         return view('home', $data);
     }
@@ -397,6 +398,7 @@ class HomeController extends Controller
                 $data[$default_policy_type] = 'checked';
             }
         }
+        $data['set'] = 'true';
         return view('rs_authorize', $data);
     }
 
@@ -433,8 +435,9 @@ class HomeController extends Controller
         }
     }
 
-    public function rs_authorize_action(Request $request)
+    public function rs_authorize_action(Request $request, $type='')
     {
+        $client = DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->first();
         if ($request->input('submit') == 'allow') {
             $default_policy_types = $this->default_policy_type();
             $types = [];
@@ -448,7 +451,6 @@ class HomeController extends Controller
             }
             $data['authorized'] = 1;
             DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data);
-            $client = DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->first();
             $this->group_policy($request->input('client_id'), $types, 'update');
             if (Session::get('oauth_response_type') == 'code') {
                 $user_array = explode(' ', $client->user_id);
@@ -457,21 +459,37 @@ class HomeController extends Controller
                 DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data);
                 Session::put('is_authorized', 'true');
             }
-            Session::put('message_action', 'You just authorized a resource server named ' . $client->client_name);
-        } else {
-            Session::put('message_action', 'You just unauthorized a resource server named ' . $client->client_name);
-            if (Session::get('oauth_response_type') == 'code') {
-                Session::put('is_authorized', 'false');
+            if ($type == '') {
+                Session::put('message_action', 'You just authorized a resource server named ' . $client->client_name);
             } else {
-                $data1['authorized'] = 0;
-                DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data1);
-                $this->group_policy($request->input('client_id'), $types, 'delete');
+                Session::put('message_action', 'You updated a resource server named ' . $client->client_name);
+            }
+        } else {
+            if ($type == '') {
+                Session::put('message_action', 'You just unauthorized a resource server named ' . $client->client_name);
+                if (Session::get('oauth_response_type') == 'code') {
+                    Session::put('is_authorized', 'false');
+                } else {
+                    $data1['authorized'] = 0;
+                    DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data1);
+                    $this->group_policy($request->input('client_id'), $types, 'delete');
+                }
+            } else {
+                $route = Session::get('back');
+                Session::forget('back');
+                return redirect($route);
             }
         }
         if (Session::get('oauth_response_type') == 'code') {
             return redirect()->route('authorize');
         } else {
-            return redirect()->route('resources', ['id' => Session::get('current_client_id')]);
+            if ($type == '') {
+                return redirect()->route('resources', ['id' => Session::get('current_client_id')]);
+            } else {
+                $route = Session::get('back');
+                Session::forget('back');
+                return redirect($route);
+            }
         }
     }
 
@@ -1015,7 +1033,8 @@ class HomeController extends Controller
                 $rs_arr[] = [
                     'name' => $rs_row->client_name,
                     'uri' => $rs_row->client_uri,
-                    'public' => $rs_row->consent_public_publish_directory
+                    'public' => $rs_row->consent_public_publish_directory,
+                    'private' => $rs_row->consent_private_publish_directory
                 ];
             }
         }
@@ -1101,7 +1120,8 @@ class HomeController extends Controller
                 $rs_arr[] = [
                     'name' => $rs_row->client_name,
                     'uri' => $rs_row->client_uri,
-                    'public' => $rs_row->public_publish_directory
+                    'public' => $rs_row->consent_public_publish_directory,
+                    'private' => $rs_row->consent_private_publish_directory
                 ];
             }
         }
@@ -1123,5 +1143,53 @@ class HomeController extends Controller
         $response1 .= '</ul'>
         Session::put('message_action', $repsonse1);
         return redirect()->route('directories');
+    }
+
+    public function consent_table(Request $request)
+    {
+        $data['message_action'] = Session::get('message_action');
+        $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
+        $policy_labels = [
+            'public_publish_directory' => 'Public in HIE of One Directory',
+            'private_publish_directory' => 'Private in HIE of One Directory',
+            'any_npi' => 'Verfied Clnicians Only',
+            'ask_me' => 'Ask Me'
+        ];
+        $policy_arr = [];
+        $data['title'] = 'Consent Table';
+        $data['content'] = '<table class="table table-striped"><thead><tr><th><div><span>Resource</span></div></th>';
+        foreach ($policy_labels as $policy_label_k => $policy_label_v) {
+            $data['content'] .= '<th><div><span>' . $policy_label_v . '</span></div></th>';
+            $policy_arr[] = $policy_label_k;
+        }
+        $data['content'] .= '</tr></thead><tbody><tr>';
+        if ($query) {
+            foreach ($query as $client) {
+                $data['content'] .= '<tr><td><a href="'. route('consent_edit', [$client->client_id]) . '">' . $client->client_name . '</a></td>';
+                foreach ($policy_arr as $default_policy_type) {
+                    $data[$default_policy_type] = '';
+                    $consent = 'consent_' . $default_policy_type;
+                    if (isset($client->{$consent})) {
+                        if ($client->{$consent} == 1) {
+                            $data['content'] .= '<td><i class="fa fa-check fa-lg" style="color:green;"></i></td>';
+                        } else {
+                            $data['content'] .= '<td><i class="fa fa-times fa-lg" style="color:red;"></i></td>';
+                        }
+                    } else  {
+                        $data['content'] .= '<td></td>';
+                    }
+                }
+                $data['content'] .= '</tr>';
+            }
+        }
+        $data['content'] .= '</tbody></table>';
+        Session::put('back', $request->fullUrl());
+        return view('home', $data);
+    }
+
+    public function consent_edit(Request $request, $id)
+    {
+        Session::put('current_client_id', $id);
+        return redirect()->route('consents_resource_server');
     }
 }

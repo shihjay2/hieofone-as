@@ -66,13 +66,15 @@ Route::get('change_permission_remove_edit/{id}', ['as' => 'change_permission_rem
 Route::get('change_permission_delete/{id}', ['as' => 'change_permission_delete', 'uses' => 'HomeController@change_permission_delete']);
 Route::get('consents_resource_server', ['as' => 'consents_resource_server', 'uses' => 'HomeController@consents_resource_server']);
 Route::get('authorize_resource_server', ['as' => 'authorize_resource_server', 'uses' => 'HomeController@authorize_resource_server']);
-Route::post('rs_authorize_action', ['as' => 'rs_authorize_action', 'uses' => 'HomeController@rs_authorize_action']);
+Route::post('rs_authorize_action/{type?}', ['as' => 'rs_authorize_action', 'uses' => 'HomeController@rs_authorize_action']);
 Route::get('authorize_client', ['as' => 'authorize_client', 'uses' => 'HomeController@authorize_client']);
 Route::get('authorize_client_action/{id}', ['as' => 'authorize_client_action', 'uses' => 'HomeController@authorize_client_action']);
 Route::get('authorize_client_disable/{id}', ['as' => 'authorize_client_disable', 'uses' => 'HomeController@authorize_client_disable']);
 Route::get('authorize_user', ['as' => 'authorize_user', 'uses' => 'HomeController@authorize_user']);
 Route::get('authorize_user_action/{id}', ['as' => 'authorize_user_action', 'uses' => 'HomeController@authorize_user_action']);
 Route::get('authorize_user_disable/{id}', ['as' => 'authorize_user_disable', 'uses' => 'HomeController@authorize_user_disable']);
+Route::get('consent_table', ['as' => 'consent_table', 'uses' => 'HomeController@consent_table']);
+Route::get('consent_edit/{id}', ['as' => 'consent_edit', 'uses' => 'HomeController@consent_edit']);
 Route::get('proxy_add/{sub}', ['as' => 'proxy_add', 'uses' => 'HomeController@proxy_add']);
 Route::get('proxy_remove/{sub}', ['as' => 'proxy_remove', 'uses' => 'HomeController@proxy_remove']);
 Route::any('make_invitation', ['as' => 'make_invitation', 'uses' => 'HomeController@make_invitation']);

@@ -227,12 +227,12 @@ class UmaController extends Controller
                                                 $claim_id = $rs_query3->claim_id;
                                             }
                                         }
-                                        if ($rs_query2->consent_login_md_nosh == 1) {
-                                            if ($request->session()->get('login_origin') == 'login_md_nosh' && $claim_id == '') {
-                                                $rs_query4 = DB::table('claim')->where('claim_value', '=', 'login_md_nosh')->first();
-                                                $claim_id = $rs_query4->claim_id;
-                                            }
-                                        }
+                                        // if ($rs_query2->consent_login_md_nosh == 1) {
+                                        //     if ($request->session()->get('login_origin') == 'login_md_nosh' && $claim_id == '') {
+                                        //         $rs_query4 = DB::table('claim')->where('claim_value', '=', 'login_md_nosh')->first();
+                                        //         $claim_id = $rs_query4->claim_id;
+                                        //     }
+                                        // }
                                         if ($rs_query2->consent_any_npi == 1) {
                                             if ($request->session()->has('npi') && $claim_id == '') {
                                                 if ($request->session()->get('npi') !== '') {
@@ -241,12 +241,20 @@ class UmaController extends Controller
                                                 }
                                             }
                                         }
-                                        if ($rs_query2->consent_login_google == 1) {
-                                            if ($request->session()->get('login_origin') == 'login_google' && $claim_id == '') {
-                                                $rs_query6 = DB::table('claim')->where('claim_value', '=', 'login_google')->first();
-                                                $claim_id = $rs_query6->claim_id;
+                                        if ($rs_query2->consent_public_publish_directory == 1) {
+                                            if ($request->session()->has('npi') && $claim_id == '') {
+                                                if ($request->session()->get('npi') !== '') {
+                                                    $rs_query6 = DB::table('claim')->where('claim_value', '=', 'public_publish_directory')->first();
+                                                    $claim_id = $rs_query6->claim_id;
+                                                }
                                             }
                                         }
+                                        // if ($rs_query2->consent_login_google == 1) {
+                                        //     if ($request->session()->get('login_origin') == 'login_google' && $claim_id == '') {
+                                        //         $rs_query6 = DB::table('claim')->where('claim_value', '=', 'login_google')->first();
+                                        //         $claim_id = $rs_query6->claim_id;
+                                        //     }
+                                        // }
                                         // Test if email matches
                                         if (in_array($request->session()->get('email'), $valid_claims_array) && $claim_id == '') {
                                             $claim1 = DB::table('claim')->where('claim_value', '=', $request->session()->get('email'))->first();

@@ -2,6 +2,9 @@
 
 @section('view.stylesheet')
 	<link rel="stylesheet" href="{{ asset('assets/css/toastr.min.css') }}">
+	<style>
+	
+	</style>
 @endsection
 
 @section('content')

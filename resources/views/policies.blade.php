@@ -22,18 +22,8 @@
 								</div>
 							</div>
 						</div>
-						<div class="form-group">
-							<div class="col-sm-offset-2 col-sm-10">
-								<div class="checkbox">
-									<label><input type="checkbox" name="login_md_nosh" {{ $login_md_nosh }}> Anyone signed in via mdNOSH sees these Resources</label>
-									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#login_md_nosh_detail" style="margin-left:20px">Details</button>
-								</div>
-								<div id="login_md_nosh_detail" class="collapse">
-									<p>mdNOSH is single sign-on solution for healthcare providers.  This allows the providers to access many pNOSH patient centric health records without having to remember different usernames and passwords.</p>
-								</div>
-							</div>
-						</div>
-						<div class="form-group">
+
+						<!-- <div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
 									<label><input type="checkbox" name="login_uport" {{ $login_uport }}> Anyone signed in via uPort may be able to see these Resources</label>
@@ -43,7 +33,7 @@
 									<p>uPort is a complete self-sovereign identity system built on Ethereum.  By checking this box, any new user with a uPort identity accessing this Authorization Server will notify you via SMS or Email for your decision for the uPort user's access to your Protected Health Information</p>
 								</div>
 							</div>
-						</div>
+						</div> -->
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
@@ -76,17 +66,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="form-group">
-							<div class="col-sm-offset-2 col-sm-10">
-								<div class="checkbox">
-									<label><input type="checkbox" name="login_google" {{ $login_google }}> Anyone signed in via Google ID sees these Resources</label>
-									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#login_google_detail" style="margin-left:20px">Details</button>
-								</div>
-								<div id="login_google_detail" class="collapse">
-									<p>Any party that has a Google ID (they have a Gmail account) will be able to see your Protected Health Information.</p>
-								</div>
-							</div>
-						</div>
+
 						<div class="form-group">
 							<div class="col-md-6 col-md-offset-3">
 								<button type="submit" class="btn btn-success btn-block" name="submit" value="save">

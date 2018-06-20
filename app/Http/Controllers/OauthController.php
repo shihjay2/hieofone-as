@@ -166,20 +166,24 @@ class OauthController extends Controller
                     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                     curl_close ($ch);
                     if ($httpCode !== 404 && $httpCode !== 0) {
-                        $mail_arr = [
-                            'MAIL_DRIVER' => 'mailgun',
-                            'MAILGUN_DOMAIN' => 'mg.hieofone.org',
-                            'MAILGUN_SECRET' => $mailgun_secret,
-                            'MAIL_HOST' => '',
-                            'MAIL_PORT' => '',
-                            'MAIL_ENCRYPTION' => '',
-                            'MAIL_USERNAME' => '',
-                            'MAIL_PASSWORD' => '',
-                            'GOOGLE_KEY' => '',
-                            'GOOGLE_SECRET' => '',
-                            'GOOGLE_REDIRECT_URI' => ''
-                        ];
-                        $this->changeEnv($mail_arr);
+                        if ($mailgun_secret !== 'Not authorized.' && $mailgun_secret !== 'Try again.') {
+                            $mail_arr = [
+                                'MAIL_DRIVER' => 'mailgun',
+                                'MAILGUN_DOMAIN' => 'mg.hieofone.org',
+                                'MAILGUN_SECRET' => $mailgun_secret,
+                                'MAIL_HOST' => '',
+                                'MAIL_PORT' => '',
+                                'MAIL_ENCRYPTION' => '',
+                                'MAIL_USERNAME' => '',
+                                'MAIL_PASSWORD' => '',
+                                'GOOGLE_KEY' => '',
+                                'GOOGLE_SECRET' => '',
+                                'GOOGLE_REDIRECT_URI' => ''
+                            ];
+                            $this->changeEnv($mail_arr);
+                        } else {
+
+                        }
                     }
                 }
                 // Register oauth for Google and Twitter

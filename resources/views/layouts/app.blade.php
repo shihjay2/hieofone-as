@@ -64,6 +64,7 @@
 									<li><a href="{{ url('/authorize_user') }}">Pending Authorization</a></li>
 								</ul>
 							</li>
+							<li><a href="{{ url('/consent_table') }}">Consent Table</a></li>
 							@if (Session::get('invite') == 'yes')
 								<li><a href="{{ url('/make_invitation') }}">Invite</a></li>
 							@endif
