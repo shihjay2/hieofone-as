@@ -54,12 +54,7 @@ fi
 read -e -p "Enter your registered URL: " -i "" URL
 
 # Install PHP and MariaDB
-apt-get -y install software-properties-common build-essential binutils-doc git subversion bc apache2
-apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
-add-apt-repository ppa:ondrej/php -y
-add-apt-repository 'deb [arch=amd64,i386,ppc64el] http://ftp.osuosl.org/pub/mariadb/repo/10.1/ubuntu xenial main'
-apt update
-apt-get -y install php7.2 php7.2-zip php7.2-curl php7.2-mysql php-pear php7.2-imap libapache2-mod-php7.2 php7.2-gd php-imagick php7.2-cli php7.2-mbstring php7.2-xml php7.2-common libdbi-perl libdbd-mysql-perl libssh2-1-dev php-ssh2 php7.2-soap imagemagick pdftk openssh-server pwgen
+apt-get -y install software-properties-common build-essential binutils-doc git subversion bc apache2 php php-cli php-common php-curl php-gd php-imagick php-imap php-mbstring php-mysql php-pear php-soap php-ssh2 php-xml php-zip libapache2-mod-php libdbi-perl libdbd-mysql-perl libssh2-1-dev imagemagick openssh-server pwgen
 export DEBIAN_FRONTEND=noninteractive
 # Randomly generated password for MariaDB
 MYSQL_PASSWORD=`pwgen -s 40 1`
@@ -76,6 +71,10 @@ collation_server = 'utf8_general_ci'" >> /etc/mysql/my.cnf
 # Configure Maria Remote Access
 sed -i '/^bind-address/s/bind-address.*=.*/bind-address = 0.0.0.0/' /etc/mysql/my.cnf
 mysql --user="root" --password="$MYSQL_PASSWORD" -e "GRANT ALL ON *.* TO root@'0.0.0.0' IDENTIFIED BY '$MYSQL_PASSWORD' WITH GRANT OPTION;"
+mysql --user="root" --password="$MYSQL_PASSWORD" -e "CREATE USER 'hieofone'@'0.0.0.0' IDENTIFIED BY '$MYSQL_PASSWORD';"
+mysql --user="root" --password="$MYSQL_PASSWORD" -e "GRANT ALL ON *.* TO 'hieofone'@'0.0.0.0' IDENTIFIED BY '$MYSQL_PASSWORD' WITH GRANT OPTION;"
+mysql --user="root" --password="$MYSQL_PASSWORD" -e "GRANT ALL ON *.* TO 'hieofone'@'%' IDENTIFIED BY '$MYSQL_PASSWORD' WITH GRANT OPTION;"
+mysql --user="root" --password="$MYSQL_PASSWORD" -e "FLUSH PRIVILEGES;"
 systemctl restart mysql
 
 # Check prerequisites
@@ -130,7 +129,7 @@ chmod -R 755 $HIE
 chmod -R 777 $HIE/storage
 chmod -R 777 $HIE/public
 log_only "Installed HIE of One Authorization Server core files."
-echo "create database $MYSQL_DATABASE" | mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWORD
+echo "create database $MYSQL_DATABASE" | sudo mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWORD
 php artisan migrate:install
 php artisan migrate
 a2enmod rewrite
@@ -207,5 +206,5 @@ chmod a+x /usr/local/bin/certbot-auto
 log_only "Let's Encrypt SSL certificate is set."
 # Installation completed
 log_only "You can now complete your new installation of HIE of One Authorization Server by browsing to:"
-log_only "https://localhost/install"
+log_only "https://$URL"
 exit 0

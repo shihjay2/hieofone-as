@@ -173,7 +173,7 @@ Route::get('.well-known/openid-configuration', ['as' => 'openid-configuration', 
     return $config;
 }]);
 
-Route::get('.well-known/uma-configuration', function () {
+Route::get('.well-known/uma2-configuration', function () {
     $config = [
         'issuer' => URL::to('/'),
         'pat_profiles_supported' => [
@@ -221,7 +221,7 @@ Route::get('.well-known/uma-configuration', function () {
 Route::get('.well-known/webfinger', ['as' => 'webfinger', 'uses' => 'OauthController@webfinger']);
 
 // Update system call
-Route::get('update_system', ['as' => 'update_system', 'uses' => 'OauthController@update_system']);
+Route::get('update_system/{type?}', ['as' => 'update_system', 'uses' => 'OauthController@update_system']);
 
 // test
 Route::any('test1', ['as' => 'test1', 'uses' => 'OauthController@test1']);

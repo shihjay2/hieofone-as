@@ -14,7 +14,7 @@ use Hash;
 use Illuminate\Http\Request;
 use NaviOcean\Laravel\NameParser;
 use OAuth2\HttpFoundationBridge\Request as BridgeRequest;
-use OAuth2\HttpFoundationBridge\Response as BridgeResponse;
+use OAuth2\Response as BridgeResponse;
 use Response;
 use Socialite;
 use Storage;
@@ -764,65 +764,90 @@ class OauthController extends Controller
     *
     */
 
-    public function update_system()
+    public function update_system($type='')
     {
-        $current_version = File::get(base_path() . "/.version");
-        $result = $this->github_all();
-        $composer = false;
-        if ($current_version != $result[0]['sha']) {
-            $arr = [];
-            foreach ($result as $row) {
-                $arr[] = $row['sha'];
-                if ($current_version == $row['sha']) {
-                    break;
-                }
+        if ($type !== '') {
+            if ($type == 'composer_install') {
+                $install = new Process("/usr/local/bin/composer install");
+                $install->setWorkingDirectory(base_path());
+                $install->setEnv(['COMPOSER_HOME' => '/usr/local/bin/composer']);
+                $install->setTimeout(null);
+                $install->run();
+                return nl2br($install->getOutput());
             }
-            $arr2 = array_reverse($arr);
-            foreach ($arr2 as $sha) {
-                $result1 = $this->github_single($sha);
-                if (isset($result1['files'])) {
-                    foreach ($result1['files'] as $row1) {
-                        $filename = base_path() . "/" . $row1['filename'];
-                        if ($row1['status'] == 'added' || $row1['status'] == 'modified' || $row1['status'] == 'renamed') {
-                            $github_url = str_replace(' ', '%20', $row1['raw_url']);
-                            if ($github_url !== '') {
-                                $file = file_get_contents($github_url);
-                                $parts = explode('/', $row1['filename']);
-                                array_pop($parts);
-                                $dir = implode('/', $parts);
-                                if (!is_dir(base_path() . "/" . $dir)) {
-                                    if ($parts[0] == 'public') {
-                                        mkdir(base_path() . "/" . $dir, 0777, true);
-                                    } else {
-                                        mkdir(base_path() . "/" . $dir, 0755, true);
+            if ($type = 'migrate') {
+                $migrate = new Process("php artisan migrate --force");
+                $migrate->setWorkingDirectory(base_path());
+                $migrate->setTimeout(null);
+                $migrate->run();
+                return nl2br($migrate->getOutput());
+            }
+        } else {
+            $current_version = File::get(base_path() . "/.version");
+            $result = $this->github_all();
+            $composer = false;
+            if ($current_version != $result[0]['sha']) {
+                $arr = [];
+                foreach ($result as $row) {
+                    $arr[] = $row['sha'];
+                    if ($current_version == $row['sha']) {
+                        break;
+                    }
+                }
+                $arr2 = array_reverse($arr);
+                foreach ($arr2 as $sha) {
+                    $result1 = $this->github_single($sha);
+                    if (isset($result1['files'])) {
+                        foreach ($result1['files'] as $row1) {
+                            $filename = base_path() . "/" . $row1['filename'];
+                            if ($row1['status'] == 'added' || $row1['status'] == 'modified' || $row1['status'] == 'renamed') {
+                                $github_url = str_replace(' ', '%20', $row1['raw_url']);
+                                if ($github_url !== '') {
+                                    $file = file_get_contents($github_url);
+                                    $parts = explode('/', $row1['filename']);
+                                    array_pop($parts);
+                                    $dir = implode('/', $parts);
+                                    if (!is_dir(base_path() . "/" . $dir)) {
+                                        if ($parts[0] == 'public') {
+                                            mkdir(base_path() . "/" . $dir, 0777, true);
+                                        } else {
+                                            mkdir(base_path() . "/" . $dir, 0755, true);
+                                        }
+                                    }
+                                    file_put_contents($filename, $file);
+                                    if ($filename == 'composer.json') {
+                                        $composer = true;
                                     }
                                 }
-                                file_put_contents($filename, $file);
-                                if ($filename == 'composer.json') {
-                                    $composer = true;
-                                }
                             }
-                        }
-                        if ($row1['status'] == 'removed') {
-                            if (file_exists($filename)) {
-                                unlink($filename);
+                            if ($row1['status'] == 'removed') {
+                                if (file_exists($filename)) {
+                                    unlink($filename);
+                                }
                             }
                         }
                     }
                 }
+                define('STDIN',fopen("php://stdin","r"));
+                File::put(base_path() . "/.version", $result[0]['sha']);
+                $return = "System Updated with version " . $result[0]['sha'] . " from " . $current_version;
+                $migrate = new Process("php artisan migrate --force");
+                $migrate->setWorkingDirectory(base_path());
+                $migrate->setTimeout(null);
+                $migrate->run();
+                $return .= '<br>' . nl2br($migrate->getOutput());
+                if ($composer == true) {
+                    $install = new Process("/usr/local/bin/composer install");
+                    $install->setWorkingDirectory(base_path());
+                    $install->setEnv(['COMPOSER_HOME' => '/usr/local/bin/composer']);
+                    $install->setTimeout(null);
+                    $install->run();
+                    $return .= '<br>' .nl2br($install->getOutput());
+                }
+                return $return;
+            } else {
+                return "No update needed";
             }
-            define('STDIN',fopen("php://stdin","r"));
-            Artisan::call('migrate', array('--force' => true));
-            File::put(base_path() . "/.version", $result[0]['sha']);
-            if ($composer == true) {
-                putenv('COMPOSER_HOME=/usr/local/bin/composer');
-                $install = new Process("/usr/local/bin/composer install");
-                $install->setWorkingDirectory(base_path());
-                $install->run();
-            }
-            return "System Updated with version " . $result[0]['sha'] . " from " . $current_version;
-        } else {
-            return "No update needed";
         }
     }
 

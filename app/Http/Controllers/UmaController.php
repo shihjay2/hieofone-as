@@ -118,7 +118,7 @@ class UmaController extends Controller
     {
         // Parameters
         $resource_set_id = $request->input('resource_set_id');
-        $scopes_array = $request->input('scopes'); //array
+        $scopes_array = $request->input('resource_scopes'); //array
         $access_lifetime = App::make('oauth2')->getConfig('access_lifetime');
         $i = count($scopes_array);
         $valid_scopes_array = [];
@@ -165,9 +165,9 @@ class UmaController extends Controller
             }
         } else {
             $response = [
-           'error' => 'invalid_resource_set_id',
-           'error_description' => 'The provided resource set identifier was not found at the authorization server.'
-         ];
+                'error' => 'invalid_resource_set_id',
+                'error_description' => 'The provided resource set identifier was not found at the authorization server.'
+            ];
         }
         return $response;
     }
@@ -267,6 +267,12 @@ class UmaController extends Controller
                                                 'claim_id' => $claim_id
                                             ];
                                             DB::table('claim_to_permission_ticket')->insert($data);
+                                            // Attach permission ticket to client
+                                            $client_data = [
+                                                'permission_ticket_id' => $query1->permission_ticket_id,
+                                                'client_id' => $client_id
+                                            ];
+                                            DB::table('client_to_permission_ticket')->insert($client_data);
                                             // Set last_activity data to claim_to_policy
                                             $data1 = [
                                                 'last_activity' => time()
@@ -348,39 +354,47 @@ class UmaController extends Controller
                     //Valid ticket
                     $permission_id = $query->permission_id;
                     // Find client associated with permission ticket
-                    $token = str_replace('Bearer ', '', $request->header('Authorization'));
-                    $token_query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($token, 0, 255))->first();
-                    $client = DB::table('oauth_clients')->where('client_id', '=', $token_query->client_id)->first();
-                    // Create RPT
-                    $request->merge([
-                        'client_id' => $client->client_id,
-                        'client_secret' => $client->client_secret,
-                        'grant_type' => 'client_credentials'
-                    ]);
-                    $bridgedRequest = BridgeRequest::createFromRequest($request);
-                    $response = new BridgeResponse();
-                    $response = App::make('oauth2')->grantAccessToken($bridgedRequest, $response);
-                    $new_token_query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($response['access_token'], 0, 255))->first();
-                    $data = [
-                        'permission_id' => $permission_id,
-                        'jwt' => $response['access_token'],
-                        'expires' => $new_token_query->expires
-                    ];
-                    DB::table('oauth_access_tokens')->where('access_token', '=', substr($response['access_token'], 0, 255))->update($data);
-                    $response = [
-                        'rpt' => $response['access_token']
-                    ];
-                    // Expire permission ticket
-                    $expires1 = date('Y-m-d H:i:s', time());
-                    $data1 = [
-                        'expires' => $expires1
-                    ];
-                    DB::table('permission_ticket')->where('permission_id', '=', $permission_id)->update($data1);
-                    $statusCode = 200;
+                    $client_query = DB::table('client_to_permission_ticket')->where('permission_ticket_id', '=', $query->permission_ticket_id)->first();
+                    if ($client_query) {
+                        $client = DB::table('oauth_clients')->where('client_id', '=', $client_query->client_id)->first();
+                        // Create RPT
+                        $request->merge([
+                            'client_id' => $client->client_id,
+                            'client_secret' => $client->client_secret,
+                            'grant_type' => 'client_credentials'
+                        ]);
+                        $bridgedRequest = BridgeRequest::createFromRequest($request);
+                        $response = new BridgeResponse();
+                        $response = App::make('oauth2')->grantAccessToken($bridgedRequest, $response);
+                        $new_token_query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($response['access_token'], 0, 255))->first();
+                        $data = [
+                            'permission_id' => $permission_id,
+                            'jwt' => $response['access_token'],
+                            'expires' => $new_token_query->expires
+                        ];
+                        DB::table('oauth_access_tokens')->where('access_token', '=', substr($response['access_token'], 0, 255))->update($data);
+                        $response = [
+                            'access_token' => $response['access_token'],
+                            'token_type' => 'Bearer'
+                        ];
+                        // Expire permission ticket
+                        $expires1 = date('Y-m-d H:i:s', time());
+                        $data1 = [
+                            'expires' => $expires1
+                        ];
+                        DB::table('permission_ticket')->where('permission_id', '=', $permission_id)->update($data1);
+                        $statusCode = 200;
+                    } else {
+                        // Invalid ticket
+                        $response = [
+                            'error' => 'invalid_grant'
+                        ];
+                        $statusCode = 400;
+                    }
                 } else {
                     // Invalid ticket
                     $response = [
-                        'error' => 'invalid_ticket'
+                        'error' => 'invalid_grant'
                     ];
                     $statusCode = 400;
                 }
@@ -393,7 +407,7 @@ class UmaController extends Controller
             }
         } else {
             $response = [
-                'error' => 'invalid_ticket'
+                'error' => 'invalid_grant'
             ];
             $statusCode = 400;
         }

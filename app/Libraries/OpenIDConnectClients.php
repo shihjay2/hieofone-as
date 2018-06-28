@@ -132,12 +132,12 @@ class OpenIDConnectClient
 	private $certPath;
 
 	/**
-	 * @var string if we aquire an access token it will be stored here
+	 * @var string if we acquire an access token it will be stored here
 	 */
 	private $accessToken;
 
 	/**
-	 * @var string if we aquire a refresh token it will be stored here
+	 * @var string if we acquire a refresh token it will be stored here
 	 */
 	private $refreshToken;
 
@@ -145,6 +145,11 @@ class OpenIDConnectClient
 	* @var string if we acquire an id token it will be stored here
 	*/
 	private $idToken;
+
+	/**
+	 * @var string if we acquire a patient token it will be stored here
+	 */
+	private $patientToken;
 
 	/**
 	 * @var array holds scopes
@@ -166,6 +171,7 @@ class OpenIDConnectClient
 	 */
 	private $authParams = array();
 
+	private $result_token;
 	/**
 	 * @param $provider_url string optional
 	 *
@@ -201,7 +207,7 @@ class OpenIDConnectClient
 		if (isset($_REQUEST["code"]) && isset($_SESSION['openid_connect_state1'])) {
 			$code = $_REQUEST["code"];
 			$token_json = $this->requestTokens($code, $uma);
-
+			$this->result_token = json_encode($token_json);
 			// Throw an error if the server returns one
 			if (isset($token_json->error)) {
 				throw new OpenIDConnectClientException($token_json->error_description);
@@ -324,7 +330,7 @@ class OpenIDConnectClient
 				$well_known_config_url = rtrim($this->getProviderURL(),"/") . "/.well-known/openid-configuration";
 			} else {
 				if ($param != 'jwks_uri' && $param != 'revocation_endpoint') {
-					$well_known_config_url = rtrim($this->getProviderURL(),"/") . "/.well-known/uma-configuration";
+					$well_known_config_url = rtrim($this->getProviderURL(),"/") . "/.well-known/uma2-configuration";
 				} else {
 					$well_known_config_url = rtrim($this->getProviderURL(),"/") . "/.well-known/openid-configuration";
 				}
@@ -1141,7 +1147,7 @@ class OpenIDConnectClient
 		$permission_request_endpoint = $this->getProviderConfigValue('permission_registration_endpoint',true);
 		$send_object = (object)array(
 			'resource_set_id' => $resource_set_id,
-			'scopes' => array($this->getRedirectURL(), str_replace('oidc', 'fhir/oidc', $this->getRedirectURL()))
+			'resource_scopes' => array($this->getRedirectURL(), str_replace('oidc', 'fhir/oidc', $this->getRedirectURL()))
 		);
 		$response = $this->fetchURL($permission_request_endpoint, json_encode($send_object), $this->accessToken);
 		$json_response = json_decode($response);
@@ -1192,9 +1198,10 @@ class OpenIDConnectClient
 	public function rpt_request_token($permission_ticket) {
 		$rpt_request_endpoint = $this->getProviderConfigValue('rpt_endpoint',true);
 		$send_object = (object)array(
+			'grant_type' => 'urn:ietf:params:oauth:grant-type:uma-ticket',
 			'ticket' => $permission_ticket
 		);
-		$response = $this->fetchURL($rpt_request_endpoint, json_encode($send_object), $this->accessToken);
+		$response = $this->fetchURL($rpt_request_endpoint, json_encode($send_object));
 		$json_response = json_decode($response, true);
 		// Throw some errors if we encounter them
 		if ($json_response === false) {
