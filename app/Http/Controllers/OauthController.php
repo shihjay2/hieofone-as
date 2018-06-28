@@ -1314,8 +1314,7 @@ class OauthController extends Controller
             }
             $bridgedRequest = BridgeRequest::createFromRequest($request);
             $bridgedResponse = new BridgeResponse();
-            $bridgedResponse = App::make('oauth2')->handleAuthorizeRequest($bridgedRequest, $bridgedResponse, $authorized, Session::get('sub'));
-            return $bridgedResponse;
+            App::make('oauth2')->handleAuthorizeRequest($bridgedRequest, $bridgedResponse, $authorized, Session::get('sub'));
         } else {
             // Do client check
             $query = DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->first();
