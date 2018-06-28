@@ -22,6 +22,7 @@ App::singleton('oauth2', function () {
     $config['allow_implicit'] = true;
     $config['use_jwt_access_tokens'] = true;
     $config['refresh_token_lifetime'] = 0;
+    $config['auth_code_lifetime'] = 600;
     $refresh_config['always_issue_new_refresh_token'] = false;
     $refresh_config['unset_refresh_token_after_use'] = false;
     // create server
