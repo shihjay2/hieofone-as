@@ -100,7 +100,8 @@ Route::get('check_demo_self', ['as' => 'check_demo_self', 'middleware' => 'csrf'
 
 Route::post('token', ['as' => 'token', function () {
     $bridgedRequest = OAuth2\HttpFoundationBridge\Request::createFromRequest(Request::instance());
-    $bridgedResponse = new OAuth2\Response();
+    $bridgedResponse = new App\Libraries\BridgedResponse();
+    // $bridgedResponse = new OAuth2\Response();
     $bridgedResponse = App::make('oauth2')->handleTokenRequest($bridgedRequest, $bridgedResponse);
     return $bridgedResponse;
 }]);
