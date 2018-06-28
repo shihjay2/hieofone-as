@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Libraries;
+use \Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 /**
  * Copied from Symfony\Component\HttpFoundation\Response.php. Necessary due to
