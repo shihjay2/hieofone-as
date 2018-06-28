@@ -99,13 +99,7 @@ Route::any('invite_demo', ['as' => 'invite_demo', 'uses' => 'OauthController@inv
 Route::get('check_demo', ['as' => 'check_demo', 'uses' => 'OauthController@check_demo']);
 Route::get('check_demo_self', ['as' => 'check_demo_self', 'middleware' => 'csrf', 'uses' => 'OauthController@check_demo_self']);
 
-Route::post('token', ['as' => 'token', function () {
-    $bridgedRequest = OAuth2\HttpFoundationBridge\Request::createFromRequest(Request::instance());
-    $bridgedResponse = new App\Libraries\BridgedResponse();
-    // $bridgedResponse = new OAuth2\Response();
-    $bridgedResponse = App::make('oauth2')->handleTokenRequest($bridgedRequest, $bridgedResponse);
-    return $bridgedResponse;
-}]);
+Route::post('token', ['as' => 'token', 'uses' => 'OauthController@token']);
 
 Route::get('authorize', ['as' => 'authorize', 'uses' => 'OauthController@oauth_authorize']);
 

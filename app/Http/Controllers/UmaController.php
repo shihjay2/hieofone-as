@@ -8,7 +8,8 @@ use App\User;
 use DB;
 use Illuminate\Http\Request;
 use OAuth2\HttpFoundationBridge\Request as BridgeRequest;
-use OAuth2\HttpFoundationBridge\Response as BridgeResponse;
+use OAuth2\Response as OAuthResponse;
+// use OAuth2\HttpFoundationBridge\Response as BridgeResponse;
 use Response;
 use URL;
 
@@ -364,7 +365,8 @@ class UmaController extends Controller
                             'grant_type' => 'client_credentials'
                         ]);
                         $bridgedRequest = BridgeRequest::createFromRequest($request);
-                        $response = new BridgeResponse();
+                        $response = new OAuthResponse();
+                        // $response = new BridgeResponse();
                         $response = App::make('oauth2')->grantAccessToken($bridgedRequest, $response);
                         $new_token_query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($response['access_token'], 0, 255))->first();
                         $data = [

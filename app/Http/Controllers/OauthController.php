@@ -14,8 +14,8 @@ use Hash;
 use Illuminate\Http\Request;
 use NaviOcean\Laravel\NameParser;
 use OAuth2\HttpFoundationBridge\Request as BridgeRequest;
-use App\Libraries\BridgedResponse as BridgeResponse;
-// use OAuth2\Response as BridgeResponse;
+use OAuth2\Response as OAuthResponse;
+// use OAuth2\HttpFoundationBridge\Response as BridgeResponse;
 use Response;
 use Socialite;
 use Storage;
@@ -305,7 +305,8 @@ class OauthController extends Controller
                     'grant_type' => 'password'
                 ]);
                 $bridgedRequest = BridgeRequest::createFromRequest($request);
-                $bridgedResponse = new BridgeResponse();
+                $bridgedResponse = new OAuthResponse();
+                // $bridgedResponse = new BridgeResponse();
                 $bridgedResponse = App::make('oauth2')->grantAccessToken($bridgedRequest, $bridgedResponse);
                 if (isset($bridgedResponse['access_token'])) {
                     // Update to include JWT for introspection in the future if needed
@@ -1313,16 +1314,19 @@ class OauthController extends Controller
                 }
             }
             $bridgedRequest = BridgeRequest::createFromRequest($request);
-            $bridgedResponse = new BridgeResponse();
+            $bridgedResponse = new OAuthResponse();
+            // $bridgedResponse = new BridgeResponse();
             $bridgedResponse = App::make('oauth2')->handleAuthorizeRequest($bridgedRequest, $bridgedResponse, $authorized, Session::get('sub'));
-            return $bridgedResponse;
+            return $this->convertOAuthResponseToSymfonyResponse($bridgedResponse);
+            // return $bridgedResponse;
         } else {
             // Do client check
             $query = DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->first();
             if ($query) {
                 // Validate request
                 $bridgedRequest = BridgeRequest::createFromRequest($request);
-                $bridgedResponse = new BridgeResponse();
+                $bridgedResponse = new OAuthResponse();
+                // $bridgedResponse = new BridgeResponse();
                 $bridgedResponse = App::make('oauth2')->validateAuthorizeRequest($bridgedRequest, $bridgedResponse);
                 if ($bridgedResponse == true) {
                     // Save request input to session prior to going to login route
@@ -1342,6 +1346,18 @@ class OauthController extends Controller
         }
     }
 
+    public function token(Request $request)
+    {
+        // $bridgedRequest = OAuth2\HttpFoundationBridge\Request::createFromRequest(Request::instance());
+        // $bridgedResponse = new App\Libraries\BridgedResponse();
+        // $bridgedResponse = new OAuth2\Response();
+        // $bridgedResponse = App::make('oauth2')->handleTokenRequest($bridgedRequest, $bridgedResponse);
+        // return $bridgedResponse;
+        $bridgedRequest = BridgeRequest::createFromRequest($request);
+        $bridgedResponse = new OAuthResponse();
+        $bridgedResponse = App::make('oauth2')->handleTokenRequest($bridgedRequest, $bridgedResponse);
+        return $this->convertOAuthResponseToSymfonyResponse($bridgedResponse);
+    }
     /**
     * Userinfo endpoint
     *
@@ -1351,7 +1367,8 @@ class OauthController extends Controller
     public function userinfo(Request $request)
     {
         $bridgedRequest = BridgeRequest::createFromRequest($request);
-        $bridgedResponse = new BridgeResponse();
+        $bridgedResponse = new OAuthResponse();
+        // $bridgedResponse = new BridgeResponse();
         // Fix for Laravel
         $bridgedRequest->request = new \Symfony\Component\HttpFoundation\ParameterBag();
         $rawHeaders = getallheaders();
@@ -1446,7 +1463,8 @@ class OauthController extends Controller
     public function revoke(Request $request)
     {
         $bridgedRequest = BridgeRequest::createFromRequest($request);
-        $bridgedResponse = new BridgeResponse();
+        $bridgedResponse = new OAuthResponse();
+        // $bridgedResponse = new BridgeResponse();
         // Fix for Laravel
         $bridgedRequest->request = new \Symfony\Component\HttpFoundation\ParameterBag();
         $rawHeaders = getallheaders();
@@ -1455,7 +1473,8 @@ class OauthController extends Controller
             $bridgedRequest->headers->add([ 'Authorization' => $authorizationHeader]);
         }
         $bridgedResponse = App::make('oauth2')->handleRevokeRequest($bridgedRequest, $bridgedResponse);
-        return $bridgedResponse;
+        return $this->convertOAuthResponseToSymfonyResponse($bridgedResponse);
+        // return $bridgedResponse;
     }
 
     /**=
