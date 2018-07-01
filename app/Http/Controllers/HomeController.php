@@ -1192,4 +1192,139 @@ class HomeController extends Controller
         Session::put('current_client_id', $id);
         return redirect()->route('consents_resource_server');
     }
+
+    public function setup_mail(Request $request)
+    {
+        $query = DB::table('owner')->first();
+        if (Session::get('is_owner') == 'yes' || $query == false || Session::get('install') == 'yes') {
+            if ($request->isMethod('post')) {
+                $this->validate($request, [
+                    'mail_type' => 'required'
+                ]);
+                $mail_arr = [
+                    'gmail' => [
+                        'MAIL_DRIVER' => 'smtp',
+                        'MAIL_HOST' => 'smtp.gmail.com',
+                        'MAIL_PORT' => 465,
+                        'MAIL_ENCRYPTION' => 'ssl',
+                        'MAIL_USERNAME' => $request->input('mail_username'),
+                        'MAIL_PASSWORD' => '',
+                        'GOOGLE_KEY' => $request->input('google_client_id'),
+                        'GOOGLE_SECRET' => $request->input('google_client_secret'),
+                        'GOOGLE_REDIRECT_URI' => URL::to('account/google')
+                    ],
+                    'mailgun' => [
+                        'MAIL_DRIVER' => 'mailgun',
+                        'MAILGUN_DOMAIN' => $request->input('mailgun_domain'),
+                        'MAILGUN_SECRET' => $request->input('mailgun_secret'),
+                        'MAIL_HOST' => '',
+                        'MAIL_PORT' => '',
+                        'MAIL_ENCRYPTION' => '',
+                        'MAIL_USERNAME' => '',
+                        'MAIL_PASSWORD' => '',
+                        'GOOGLE_KEY' => '',
+                        'GOOGLE_SECRET' => '',
+                        'GOOGLE_REDIRECT_URI' => ''
+                    ],
+                    'sparkpost' => [
+                        'MAIL_DRIVER' => 'sparkpost',
+                        'SPARKPOST_SECRET' => $request->input('sparkpost_secret'),
+                        'MAIL_HOST' => '',
+                        'MAIL_PORT' => '',
+                        'MAIL_ENCRYPTION' => '',
+                        'MAIL_USERNAME' => '',
+                        'MAIL_PASSWORD' => '',
+                        'GOOGLE_KEY' => '',
+                        'GOOGLE_SECRET' => '',
+                        'GOOGLE_REDIRECT_URI' => ''
+                    ],
+                    'ses' => [
+                        'MAIL_DRIVER' => 'ses',
+                        'SES_KEY' => $request->input('ses_key'),
+                        'SES_SECRET' => $request->input('ses_secret'),
+                        'MAIL_HOST' => '',
+                        'MAIL_PORT' => '',
+                        'MAIL_ENCRYPTION' => '',
+                        'MAIL_USERNAME' => '',
+                        'MAIL_PASSWORD' => '',
+                        'GOOGLE_KEY' => '',
+                        'GOOGLE_SECRET' => '',
+                        'GOOGLE_REDIRECT_URI' => ''
+                    ],
+                    'unique' => [
+                        'MAIL_DRIVER' => 'smtp',
+                        'MAIL_HOST' => $request->input('mail_host'),
+                        'MAIL_PORT' => $request->input('mail_port'),
+                        'MAIL_ENCRYPTION' => $request->input('mail_encryption'),
+                        'MAIL_USERNAME' => $request->input('mail_username'),
+                        'MAIL_PASSWORD' => $request->input('mail_password'),
+                        'GOOGLE_KEY' => '',
+                        'GOOGLE_SECRET' => '',
+                        'GOOGLE_REDIRECT_URI' => ''
+                    ]
+                ];
+                $this->changeEnv($mail_arr[$request->input('mail_type')]);
+                if ($request->input('mail_type') == 'gmail') {
+                    $google_data = [
+                        'type' => 'google',
+                        'client_id' => $request->input('google_client_id'),
+                        'client_secret' => $request->input('google_client_secret'),
+                        'redirect_uri' => URL::to('account/google'),
+                        'smtp_username' => $request->input('mail_username')
+                    ];
+                    DB::table('oauth_rp')->insert($google_data);
+                    return redirect()->route('installgoogle');
+                } else {
+                    return redirect()->route('setup_mail_test');
+                }
+            } else {
+                $data2['noheader'] = true;
+                $data2['mail_type'] = '';
+                $data2['mail_host'] = env('MAIL_HOST');
+                $data2['mail_port'] = env('MAIL_PORT');
+                $data2['mail_encryption'] = env('MAIL_ENCRYPTION');
+                $data2['mail_username'] = env('MAIL_USERNAME');
+                $data2['mail_password'] = env('MAIL_PASSWORD');
+                $data2['google_client_id'] = env('GOOGLE_KEY');
+                $data2['google_client_secret'] = env('GOOGLE_SECRET');
+                $data2['mail_username'] = env('MAIL_USERNAME');
+                $data2['mailgun_domain'] = env('MAILGUN_DOMAIN');
+                $data2['mailgun_secret'] = env('MAILGUN_SECRET');
+                $data2['mail_type'] == 'sparkpost';
+                $data2['sparkpost_secret'] = env('SPARKPOST_SECRET');
+                $data2['ses_key'] = env('SES_KEY');
+                $data2['ses_secret'] = env('SES_SECRET');
+                if (env('MAIL_DRIVER') == 'smtp') {
+                    if (env('MAIL_HOST') == 'smtp.gmail.com') {
+                        $data2['mail_type'] = 'gmail';
+                    } else {
+                        $data2['mail_type'] = 'unique';
+                    }
+                } else {
+                    $data2['mail_type'] = env('MAIL_DRIVER');
+                }
+                $data2['message_action'] = Session::get('message_action');
+                Session::forget('message_action');
+                return view('setup_mail', $data2);
+            }
+        } else {
+            return redirect()->route('home');
+        }
+    }
+
+    public function setup_mail_test(Request $request)
+    {
+        $data_message['item'] = 'This is a test';
+        $query = DB::table('owner')->first();
+        $message_action = 'Check to see in your registered e-mail account if you have recieved it.  If not, please come back to the E-mail Service page and try again.';
+        try {
+            $this->send_mail('auth.emails.generic', $data_message, 'Test E-mail', $query->email);
+        } catch(\Exception $e){
+            $message_action = 'Error - There is an error in your configuration.  Please try again.';
+            Session::put('message_action', $message_action);
+            return redirect()->route('setup_mail');
+        }
+        Session::put('message_action', $message_action);
+        return redirect()->route('home');
+    }
 }

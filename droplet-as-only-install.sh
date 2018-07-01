@@ -108,7 +108,8 @@ cd $WEB
 composer create-project hieofone-as/hieofone-as --prefer-dist --stability dev
 cd $HIE
 # Edit .env file
-echo "URI=localhost
+echo "TRUSTED_PROXIES=
+URI=localhost
 
 TWITTER_KEY=yourkeyfortheservice
 TWITTER_SECRET=yoursecretfortheservice

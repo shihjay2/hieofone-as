@@ -86,6 +86,8 @@ Route::any('password_reset/{id}', ['as' => 'password_reset', 'uses' => 'OauthCon
 Route::any('change_password', ['as' => 'change_password', 'uses' => 'HomeController@change_password']);
 Route::get('my_info', ['as' => 'my_info', 'uses' => 'HomeController@my_info']);
 Route::any('my_info_edit', ['as' => 'my_info_edit', 'uses' => 'HomeController@my_info_edit']);
+Route::any('setup_mail', ['as' => 'setup_mail', 'uses' => 'HomeController@setup_mail']);
+Route::get('setup_mail_test', ['as' => 'setup_mail_test', 'uses' => 'HomeController@setup_mail_test']);
 Route::get('directories', ['as' => 'directories', 'uses' => 'HomeController@directories']);
 Route::any('directory_add/{type?}', ['as' => 'directory_add', 'uses' => 'HomeController@directory_add']);
 Route::get('directory_remove/{id}', ['as' => 'directory_remove', 'uses' => 'HomeController@directory_remove']);

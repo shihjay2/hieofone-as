@@ -893,7 +893,7 @@ class OauthController extends Controller
             $credentials = $google->authenticate($_GET['code']);
             $data['refresh_token'] = $credentials['refresh_token'];
             DB::table('oauth_rp')->where('type', '=', 'google')->update($data);
-            return redirect()->route('home');
+            return redirect()->route('setup_mail_test');
         } else {
             $authUrl = $google->createAuthUrl();
             header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL));

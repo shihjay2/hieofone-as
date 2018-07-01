@@ -90,6 +90,7 @@
 								<li><a href="{{ url('/change_password') }}"><i class="fa fa-btn fa-cog"></i>Change Password</a></li>
 								@if (Session::get('is_owner') == 'yes')
 									<li><a href="{{ url('/directories') }}"><i class="fa fa-btn fa-sitemap"></i>Directories</a></li>
+									<li><a href="{{ url('/setup_mail') }}"><i class="fa fa-btn fa-sitemap"></i>E-mail Service</a></li>
 								@endif
 								<li><a href="{{ url('/logout') }}"><i class="fa fa-btn fa-sign-out"></i>Logout</a></li>
 							</ul>
