@@ -81,17 +81,13 @@ class ResourceSetController extends Controller
             'user_access_policy_uri' => URL::to('policy')
         ];
         $client1 = DB::table('oauth_clients')->where('client_id', '=', $client->client_id)->first();
-        if ($client1->consent_login_direct == 1) {
-            $types[] = 'login_direct';
-        }
-        if ($client1->consent_login_md_nosh == 1) {
-            $types[] = 'login_md_nosh';
-        }
-        if ($client1->consent_any_npi == 1) {
-            $types[] = 'any_npi';
-        }
-        if ($client1->consent_login_google == 1) {
-            $types[] = 'login_google';
+        $types = [];
+        $default_policy_types = $this->default_policy_type();
+        foreach ($default_policy_types as $default_policy_type) {
+            $consent = 'consent_' . $default_policy_type;
+            if ($client1->{$consent} == 1) {
+                $types[] = $default_policy_type;
+            }
         }
         $this->group_policy($client->client_id, $types, 'update');
         return $return;
@@ -160,17 +156,13 @@ class ResourceSetController extends Controller
                 DB::table('resource_set_scopes')->insert($data1);
             }
             $client1 = DB::table('oauth_clients')->where('client_id', '=', $client->client_id)->first();
-            if ($client1->consent_login_direct == 1) {
-                $types[] = 'login_direct';
-            }
-            if ($client1->consent_login_md_nosh == 1) {
-                $types[] = 'login_md_nosh';
-            }
-            if ($client1->consent_any_npi == 1) {
-                $types[] = 'any_npi';
-            }
-            if ($client1->consent_login_google == 1) {
-                $types[] = 'login_google';
+            $types = [];
+            $default_policy_types = $this->default_policy_type();
+            foreach ($default_policy_types as $default_policy_type) {
+                $consent = 'consent_' . $default_policy_type;
+                if ($client1->{$consent} == 1) {
+                    $types[] = $default_policy_type;
+                }
             }
             $this->group_policy($client->client_id, $types, 'update');
             return Response::json('', 201);
@@ -195,17 +187,13 @@ class ResourceSetController extends Controller
         if ($query) {
             DB::table('resource_set')->where('resource_set_id', '=', $id)->delete();
             DB::table('resource_set_scopes')->where('resource_set_id', '=', $id)->delete();
-            if ($client1->consent_login_direct == 1) {
-                $types[] = 'login_direct';
-            }
-            if ($client1->consent_login_md_nosh == 1) {
-                $types[] = 'login_md_nosh';
-            }
-            if ($client1->consent_any_npi == 1) {
-                $types[] = 'any_npi';
-            }
-            if ($client1->consent_login_google == 1) {
-                $types[] = 'login_google';
+            $types = [];
+            $default_policy_types = $this->default_policy_type();
+            foreach ($default_policy_types as $default_policy_type) {
+                $consent = 'consent_' . $default_policy_type;
+                if ($client1->{$consent} == 1) {
+                    $types[] = $default_policy_type;
+                }
             }
             $this->group_policy($client->client_id, $types, 'update');
             return Response::json('', 204);
