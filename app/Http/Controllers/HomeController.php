@@ -534,7 +534,7 @@ class HomeController extends Controller
         DB::table('oauth_clients')->where('client_id', '=', $id)->update($data);
         $query = DB::table('oauth_clients')->where('client_id', '=', $id)->first();
         Session::put('message_action', 'You just authorized a client named ' . $query->client_name);
-        return redirect()->route('authorize_client');
+        return redirect()->route('clients');
     }
 
     public function authorize_client_disable(Request $request, $id)
@@ -542,7 +542,7 @@ class HomeController extends Controller
         $query = DB::table('oauth_clients')->where('client_id', '=', $id)->first();
         Session::put('message_action', 'You just unauthorized a client named ' . $query->client_name);
         DB::table('oauth_clients')->where('client_id', '=', $id)->delete();
-        return redirect()->route('authorize_client');
+        return redirect()->route('clients');
     }
 
     public function users(Request $request)
@@ -1314,7 +1314,7 @@ class HomeController extends Controller
 
     public function setup_mail_test(Request $request)
     {
-        $data_message['item'] = 'This is a test';
+        $data_message['message_data'] = 'This is a test';
         $query = DB::table('owner')->first();
         $message_action = 'Check to see in your registered e-mail account if you have recieved it.  If not, please come back to the E-mail Service page and try again.';
         try {
