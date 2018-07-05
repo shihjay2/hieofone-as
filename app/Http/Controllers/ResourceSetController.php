@@ -24,9 +24,7 @@ class ResourceSetController extends Controller
         $client_scopes = explode(' ', $client->scope);
         if (in_array('uma_authorization', $client_scopes)) {
             $return = [];
-            $token = str_replace('Bearer ', '', $request->header('Authorization'));
-            $query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($token, 0, 255))->first();
-            $query1 = DB::table('resource_set')->where('client_id', '=', $query->client_id)->get();
+            $query1 = DB::table('resource_set')->get();
             $i = 0;
             if ($query1) {
                 foreach ($query1 as $row) {
