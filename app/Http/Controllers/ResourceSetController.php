@@ -122,7 +122,7 @@ class ResourceSetController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $token = str_replace('Bearer ', '', $request->header('Authorization'));
         $client = DB::table('oauth_access_tokens')->where('access_token', '=', substr($token, 0, 255))->first();
@@ -165,7 +165,7 @@ class ResourceSetController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
         //
     }
@@ -237,7 +237,7 @@ class ResourceSetController extends Controller
      * @param  int  $id resource_set_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $token = str_replace('Bearer ', '', $request->header('Authorization'));
         $client = DB::table('oauth_access_tokens')->where('access_token', '=', substr($token, 0, 255))->first();
