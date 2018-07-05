@@ -1691,29 +1691,29 @@ class OauthController extends Controller
                 $this->validate($request, [
                     'email' => 'required'
                 ]);
-                $client = new Google_Client();
-                putenv("GOOGLE_APPLICATION_CREDENTIALS=" . base_path() . "/.google.json");
-                getenv('GOOGLE_APPLICATION_CREDENTIALS');
-                $client->useApplicationDefaultCredentials();
-                $client->setApplicationName("Sheets API");
-                $client->setScopes(['https://www.googleapis.com/auth/drive', 'https://spreadsheets.google.com/feeds']);
-                $fileId = '1CTTYbiMvR3EdS46-uWXDuRlm__JkUOQdRBCFWCD0QlA';
-                $tokenArray = $client->fetchAccessTokenWithAssertion();
-                $accessToken = $tokenArray["access_token"];
-                $url = "https://sheets.googleapis.com/v4/spreadsheets/" . $fileId . "/values/Resets!A1:B1:append?valueInputOption=USER_ENTERED";
-                $method = 'POST';
-                $headers = ["Authorization" => "Bearer $accessToken", 'Content-Type' => 'application/atom+xml'];
-                $value[] = $request->input('email');
-                $values[] = $value;
-                $post = [
-                    'range' => 'Resets!A1:B1',
-                    'majorDimension' => 'ROWS',
-                    'values' => $values,
-                ];
-                $postBody = json_encode($post);
-                //$postBody = '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended"><gsx:email>' . $request->input('email') . '</gsx:email></entry>';
-                $httpClient = new GuzzleHttp\Client(['headers' => $headers]);
-                $resp = $httpClient->request($method, $url, ['body' => $postBody]);
+                // $client = new Google_Client();
+                // putenv("GOOGLE_APPLICATION_CREDENTIALS=" . base_path() . "/.google.json");
+                // getenv('GOOGLE_APPLICATION_CREDENTIALS');
+                // $client->useApplicationDefaultCredentials();
+                // $client->setApplicationName("Sheets API");
+                // $client->setScopes(['https://www.googleapis.com/auth/drive', 'https://spreadsheets.google.com/feeds']);
+                // $fileId = '1CTTYbiMvR3EdS46-uWXDuRlm__JkUOQdRBCFWCD0QlA';
+                // $tokenArray = $client->fetchAccessTokenWithAssertion();
+                // $accessToken = $tokenArray["access_token"];
+                // $url = "https://sheets.googleapis.com/v4/spreadsheets/" . $fileId . "/values/Resets!A1:B1:append?valueInputOption=USER_ENTERED";
+                // $method = 'POST';
+                // $headers = ["Authorization" => "Bearer $accessToken", 'Content-Type' => 'application/atom+xml'];
+                // $value[] = $request->input('email');
+                // $values[] = $value;
+                // $post = [
+                //     'range' => 'Resets!A1:B1',
+                //     'majorDimension' => 'ROWS',
+                //     'values' => $values,
+                // ];
+                // $postBody = json_encode($post);
+                // //$postBody = '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended"><gsx:email>' . $request->input('email') . '</gsx:email></entry>';
+                // $httpClient = new GuzzleHttp\Client(['headers' => $headers]);
+                // $resp = $httpClient->request($method, $url, ['body' => $postBody]);
                 $time = time() + 600;
                 $file = $time . ',' . $request->ip();
                 File::put(base_path() . "/.timer", $file);
