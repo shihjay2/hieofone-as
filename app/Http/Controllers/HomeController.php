@@ -366,8 +366,13 @@ class HomeController extends Controller
                         $i++;
                     }
                 }
-                $data['content'] .= '</td><td><a href="' . route('authorize_client_disable', [$client->client_id]) . '" class="btn btn-primary" role="button">Unauthorize</a></td></tr>';
+                if ($client->redirect_uri == route('oauth_login')) {
+                    $data['content'] .= '</td><td></td></tr>';
+                } else {
+                    $data['content'] .= '</td><td><a href="' . route('authorize_client_disable', [$client->client_id]) . '" class="btn btn-primary" role="button">Unauthorize</a></td></tr>';
+                }
             }
+            $data['content'] .= '</tbody></table>';
         }
         return view('home', $data);
     }
@@ -524,6 +529,7 @@ class HomeController extends Controller
                 $data['content'] .= '</td><td><a href="' . route('authorize_client_action', [$client->client_id]) . '" class="btn btn-primary" role="button">Authorize</a>';
                 $data['content'] .= ' <a href="' . route('authorize_client_disable', [$client->client_id]) . '" class="btn btn-primary" role="button">Deny</a></td></tr>';
             }
+            $data['content'] .= '</tbody></table>';
         }
         return view('home', $data);
     }
@@ -589,6 +595,7 @@ class HomeController extends Controller
                 }
                 $data['content'] .= '</tr>';
             }
+            $data['content'] .= '</tbody></table>';
         }
         return view('home', $data);
     }
@@ -621,6 +628,7 @@ class HomeController extends Controller
                 $data['content'] .= '</td><td><a href="' . route('authorize_user_action', [$user->username]) . '" class="btn btn-primary" role="button">Authorize</a>';
                 $data['content'] .= ' <a href="' . route('authorize_user_disable', [$user->username]) . '" class="btn btn-primary" role="button">Deny</a></td></tr>';
             }
+            $data['content'] .= '</tbody></table>';
         }
         return view('home', $data);
     }
