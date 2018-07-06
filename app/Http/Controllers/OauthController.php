@@ -775,14 +775,14 @@ class OauthController extends Controller
                 $install->setEnv(['COMPOSER_HOME' => '/usr/local/bin/composer']);
                 $install->setTimeout(null);
                 $install->run();
-                return nl2br($install->getOutput());
+                $return = nl2br($install->getOutput());
             }
             if ($type = 'migrate') {
                 $migrate = new Process("php artisan migrate --force");
                 $migrate->setWorkingDirectory(base_path());
                 $migrate->setTimeout(null);
                 $migrate->run();
-                return nl2br($migrate->getOutput());
+                $return = nl2br($migrate->getOutput());
             }
         } else {
             $current_version = File::get(base_path() . "/.version");
@@ -846,10 +846,15 @@ class OauthController extends Controller
                     $install->run();
                     $return .= '<br>' .nl2br($install->getOutput());
                 }
-                return $return;
             } else {
-                return "No update needed";
+                $return = "No update needed";
             }
+        }
+        if (Auth::guest()) {
+            return $return;
+        } else {
+            Session::put('message_action', $return);
+            return back();
         }
     }
 

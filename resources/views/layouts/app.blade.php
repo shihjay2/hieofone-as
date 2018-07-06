@@ -86,11 +86,12 @@
 							</a>
 
 							<ul class="dropdown-menu" role="menu">
-								<li><a href="{{ url('/my_info') }}"><i class="fa fa-btn fa-cogs"></i>My Information</a></li>
+								<li><a href="{{ url('/my_info') }}"><i class="fa fa-btn fa-user"></i>My Information</a></li>
 								<li><a href="{{ url('/change_password') }}"><i class="fa fa-btn fa-cog"></i>Change Password</a></li>
 								@if (Session::get('is_owner') == 'yes')
 									<li><a href="{{ url('/directories') }}"><i class="fa fa-btn fa-sitemap"></i>Directories</a></li>
-									<li><a href="{{ url('/setup_mail') }}"><i class="fa fa-btn fa-sitemap"></i>E-mail Service</a></li>
+									<li><a href="{{ url('/setup_mail') }}"><i class="fa fa-btn fa-envelope"></i>E-mail Service</a></li>
+									<li><a href="{{ url('/update_system') }}"><i class="fa fa-btn fa-download"></i>Update System</a></li>
 								@endif
 								<li><a href="{{ url('/logout') }}"><i class="fa fa-btn fa-sign-out"></i>Logout</a></li>
 							</ul>
