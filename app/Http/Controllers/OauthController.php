@@ -1695,7 +1695,7 @@ class OauthController extends Controller
         $return = [];
         if ($authorized) {
             foreach ($authorized as $row) {
-                if (strpos('mdNOSH', $row->client_name)) {
+                if (preg_match('/\bmdNOSH\b/',$row->client_name)) {
                     $user_array = explode(' ', $row->user_id);
                     if (in_array($query->user_id, $user_array)) {
                         $return['urls'][] = $row->client_uri;
