@@ -1687,6 +1687,25 @@ class OauthController extends Controller
         return $return;
     }
 
+    public function get_mdnosh(Request $request)
+    {
+        $token = str_replace('Bearer ', '', $request->header('Authorization'));
+        $query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($token, 0, 255))->first();
+        $authorized = DB::table('oauth_clients')->where('client_id', '!=', $query->client_id)->where('authorized', '=', 1)->get();
+        $return = [];
+        if ($authorized) {
+            foreach ($authorized as $row) {
+                if (strpos('mdNOSH', $row->client_name)) {
+                    $user_array = explode(' ', $row->user_id);
+                    if (in_array($query->user_id, $user_array)) {
+                        $return[] = $row->client_uri;
+                    }
+                }
+            }
+        }
+        return $return;
+    }
+
     public function reset_demo(Request $request)
     {
         if (route('welcome') == 'https://shihjay.xyz') {

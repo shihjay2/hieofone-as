@@ -134,6 +134,9 @@ Route::group(['middleware' => 'token'], function () {
 
     // Revocation
     Route::post('revoke', ['as' => 'revoke', 'uses' => 'OauthController@revoke']);
+
+    // get mdNOSH URI
+    Route::get('get_mdnosh', ['as' => 'get_mdnosh', 'uses' => 'OauthController@get_mdnosh']);
 });
 
 // OpenID Connect relying party routes
