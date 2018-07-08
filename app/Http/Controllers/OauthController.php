@@ -1698,11 +1698,14 @@ class OauthController extends Controller
                 if (strpos('mdNOSH', $row->client_name)) {
                     $user_array = explode(' ', $row->user_id);
                     if (in_array($query->user_id, $user_array)) {
-                        $return[] = $row->client_uri;
+                        $return['urls'][] = $row->client_uri;
                     }
                 }
             }
         }
+        $return['access_token'] = $token;
+        $return['user_id'] = $query->user_id;
+        $return['client_id'] = $query->client_id;
         return $return;
     }
 
