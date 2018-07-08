@@ -342,8 +342,7 @@ class OauthController extends Controller
                     if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
                         // If generated from rqp_claims endpoint, do this
                         return redirect()->route('rqp_claims');
-                    }
-                    if (Session::get('oauth_response_type') == 'code') {
+                    } elseif (Session::get('oauth_response_type') == 'code') {
                         // Confirm if client is authorized
                         $authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
                         if ($authorized) {
@@ -491,8 +490,7 @@ class OauthController extends Controller
                 if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
                     // If generated from rqp_claims endpoint, do this
                     $return['url'] = route('rqp_claims');
-                }
-                if (Session::get('oauth_response_type') == 'code') {
+                } elseif (Session::get('oauth_response_type') == 'code') {
                     // Confirm if client is authorized
                     $authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
                     if ($authorized) {
