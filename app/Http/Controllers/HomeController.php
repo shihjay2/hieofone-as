@@ -1186,9 +1186,9 @@ class HomeController extends Controller
                             $data['content'] .= '<td><i class="fa fa-times fa-lg" style="color:red;"></i></td>';
                         }
                     } else  {
-                        if ($default_policy_type == 'Patient') {
+                        if ($default_policy_type == 'patient_user') {
                             $data['content'] .= '<td><i class="fa fa-check fa-lg" style="color:green;"></i></td>';
-                        } elseif ($default_policy_type == 'Root Support') {
+                        } elseif ($default_policy_type == 'root_support') {
                             $data['content'] .= '<td><i class="fa fa-times fa-lg" style="color:red;"></i></td>';
                         } else {
                             $data['content'] .= '<td></td>';
