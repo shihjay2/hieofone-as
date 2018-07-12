@@ -1161,7 +1161,9 @@ class HomeController extends Controller
             'public_publish_directory' => 'Public in HIE of One Directory',
             'private_publish_directory' => 'Private in HIE of One Directory',
             'any_npi' => 'Verfied Clnicians Only',
-            'ask_me' => 'Ask Me'
+            'ask_me' => 'Ask Me',
+            'root_support' => 'Root Support',
+            'patient_user' => 'Patient'
         ];
         $policy_arr = [];
         $data['title'] = 'Consent Table';
@@ -1184,7 +1186,13 @@ class HomeController extends Controller
                             $data['content'] .= '<td><i class="fa fa-times fa-lg" style="color:red;"></i></td>';
                         }
                     } else  {
-                        $data['content'] .= '<td></td>';
+                        if ($default_policy_type == 'Patient') {
+                            $data['content'] .= '<td><i class="fa fa-check fa-lg" style="color:green;"></i></td>';
+                        } elseif ($default_policy_type == 'Root Support') {
+                            $data['content'] .= '<td><i class="fa fa-times fa-lg" style="color:red;"></i></td>';
+                        } else {
+                            $data['content'] .= '<td></td>';
+                        }
                     }
                 }
                 $data['content'] .= '</tr>';
