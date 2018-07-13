@@ -36,13 +36,6 @@ read -e -p "Enter the domain name (example.com): " -i "" DOMAIN
 USERNAME=$(echo "$EMAIL" | cut -d@ -f1)
 
 if [[ ! -z $DOMAIN ]]; then
-	if [ ! -f /usr/local/bin/certbot-auto ]; then
-		cd /usr/local/bin
-		wget https://dl.eff.org/certbot-auto
-		chmod a+x /usr/local/bin/certbot-auto
-		./certbot-auto --apache certonly -d $DOMAIN
-	fi
-
 	if [ -e "$WEB_CONF"/hie.conf ]; then
 		rm "$WEB_CONF"/hie.conf
 	fi
@@ -141,6 +134,12 @@ if [[ ! -z $DOMAIN ]]; then
 	echo "SSL Certificate set for $DOMAIN"
 	/etc/init.d/apache2 restart
 	echo "Restarting Apache service."
+	cd /usr/local/bin
+	if [ ! -f /usr/local/bin/certbot-auto ]; then
+		wget https://dl.eff.org/certbot-auto
+		chmod a+x /usr/local/bin/certbot-auto
+	fi
+	./certbot-auto --apache certonly -d $DOMAIN
 	if [ -f $SSLCRON ]; then
 		rm -rf $SSLCRON
 	fi
