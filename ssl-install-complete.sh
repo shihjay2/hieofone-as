@@ -130,8 +130,6 @@ if [[ ! -z $DOMAIN ]]; then
 	echo "$APACHE_CONF" >> "$WEB_CONF"/nosh2.conf
 	echo "NOSH ChartingSystem Apache configuration file set."
 	echo "Restarting Apache service."
-	$APACHE >> $LOG 2>&1
-	echo "SSL Certificate set for $DOMAIN"
 	/etc/init.d/apache2 restart
 	echo "Restarting Apache service."
 	cd /usr/local/bin
@@ -140,6 +138,7 @@ if [[ ! -z $DOMAIN ]]; then
 		chmod a+x /usr/local/bin/certbot-auto
 	fi
 	./certbot-auto --apache certonly -d $DOMAIN
+	echo "SSL Certificate set for $DOMAIN"
 	if [ -f $SSLCRON ]; then
 		rm -rf $SSLCRON
 	fi
