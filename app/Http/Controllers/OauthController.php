@@ -240,7 +240,30 @@ class OauthController extends Controller
                 }
                 // Go register with Google to get refresh token for email setup
                 // return redirect()->route('installgoogle');
-                return redirect()->route('home');
+                // Check if pNOSH associated in same domain as this authorization server and begin installation There
+                $url0 = URL::to('/') . '/nosh';
+                $ch0 = curl_init();
+                curl_setopt($ch0,CURLOPT_URL, $url0);
+                curl_setopt($ch0,CURLOPT_FAILONERROR,1);
+                curl_setopt($ch0,CURLOPT_FOLLOWLOCATION,1);
+                curl_setopt($ch0,CURLOPT_RETURNTRANSFER,1);
+                curl_setopt($ch0,CURLOPT_TIMEOUT, 60);
+                curl_setopt($ch0,CURLOPT_CONNECTTIMEOUT ,0);
+                $httpCode0 = curl_getinfo($ch0, CURLINFO_HTTP_CODE);
+                curl_close ($ch0);
+                if ($httpCode0 !== 404 && $httpCode0 !== 0) {
+                    $data['pnosh'] = true;
+                    $data['pnosh_url'] = $url0;
+                    $owner = DB::table('owner')->first();
+                    setcookie('pnosh_firstname', $owner->firstname, 0, '/');
+                    setcookie('pnosh_lastname', $owner->lastname, 0, '/');
+                    setcookie('pnosh_dob', date("m/d/Y", strtotime($owner->DOB)), 0, '/');
+                    setcookie('pnosh_email', $owner->email, 0, '/');
+                    setcookie('pnosh_username', $request->input('username'), 0, '/');
+                    return redirect($url0);
+                } else {
+                    return redirect()->route('home');
+                }
             } else {
                 $data2['noheader'] = true;
                 return view('install', $data2);
@@ -259,8 +282,11 @@ class OauthController extends Controller
             $data = [
                 'name' => $query->firstname . ' ' . $query->lastname
             ];
+            $data['message_action'] = Session::get('message_action');
+            Session::forget('message_action');
             return view('welcome', $data);
         } else {
+            $update = $this->update_system('', true);
             return redirect()->route('install');
         }
     }
@@ -764,7 +790,7 @@ class OauthController extends Controller
     *
     */
 
-    public function update_system($type='')
+    public function update_system($type='', $local=false)
     {
         if ($type !== '') {
             if ($type == 'composer_install') {
@@ -848,11 +874,15 @@ class OauthController extends Controller
                 $return = "No update needed";
             }
         }
-        if (Auth::guest()) {
-            return $return;
-        } else {
+        if ($local == false) {
             Session::put('message_action', $return);
-            return back();
+            if (Auth::guest()) {
+                return redirect()->route('welcome');
+            } else {
+                return back();
+            }
+        } else {
+            return $return;
         }
     }
 

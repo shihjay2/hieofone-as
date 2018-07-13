@@ -8,6 +8,11 @@
 				<div class="panel-heading">Welcome</div>
 
 				<div class="panel-body">
+					@if (isset($message_action))
+						<div class="alert alert-success">
+							<strong>{!! $message_action !!}</strong>
+						</div>
+					@endif
 					<p>Welome to the HIE of One Authorization Server for {{ $name }}.</p>
 					<p><a href="https://github.com/shihjay2/hieofone-as/wiki" target="_blank">Click here</a> more information about how to interface with this User Managed Access Server.</p>
 				</div>

@@ -129,68 +129,6 @@ php artisan migrate:install
 php artisan migrate
 a2enmod rewrite
 a2enmod ssl
-if [ -e "$WEB_CONF"/hie.conf ]; then
-	rm "$WEB_CONF"/hie.conf
-fi
-touch "$WEB_CONF"/hie.conf
-AS_APACHE_CONF="<VirtualHost _default_:80>
-	DocumentRoot $HIE/public/
-	ErrorLog ${APACHE_LOG_DIR}/error.log
-	CustomLog ${APACHE_LOG_DIR}/access.log combined
-</VirtualHost>
-<IfModule mod_ssl.c>
-	<VirtualHost _default_:443>
-		DocumentRoot $HIE/public/
-		ErrorLog ${APACHE_LOG_DIR}/error.log
-		CustomLog ${APACHE_LOG_DIR}/access.log combined
-		SSLEngine on
-		SSLProtocol all -SSLv2 -SSLv3
-		SSLCertificateFile /etc/ssl/certs/ssl-cert-snakeoil.pem
-        SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
-		<FilesMatch \"\.(cgi|shtml|phtml|php)$\">
-			SSLOptions +StdEnvVars
-		</FilesMatch>
-		<Directory /usr/lib/cgi-bin>
-			SSLOptions +StdEnvVars
-        </Directory>
-		BrowserMatch \"MSIE [2-6]\" \
-		nokeepalive ssl-unclean-shutdown \
-		downgrade-1.0 force-response-1.0
-		BrowserMatch \"MSIE [17-9]\" ssl-unclean-shutdown
-	</VirtualHost>
-</IfModule>
-<Directory $HIE/public>
-	Options Indexes FollowSymLinks MultiViews
-	AllowOverride All"
-if [ "$APACHE_VER" = "4" ]; then
-	AS_APACHE_CONF="$AS_APACHE_CONF
-	Require all granted"
-else
-	AS_APACHE_CONF="$AS_APACHE_CONF
-	Order allow,deny
-	allow from all"
-fi
-AS_APACHE_CONF="$AS_APACHE_CONF
-	RewriteEngine On
-	# Redirect Trailing Slashes...
-	RewriteRule ^(.*)/$ /\$1 [L,R=301]
-	RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-	# Handle Front Controller...
-	RewriteCond %{REQUEST_FILENAME} !-d
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule ^ index.php [L]
-	# Force SSL
-	RewriteCond %{HTTPS} !=on
-	RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-	<IfModule mod_php5.c>
-		php_value upload_max_filesize 512M
-		php_value post_max_size 512M
-		php_flag magic_quotes_gpc off
-		php_flag register_long_arrays off
-	</IfModule>
-</Directory>"
-echo "$AS_APACHE_CONF" >> "$WEB_CONF"/hie.conf
-log_only "HIE of One Authorization Server Apache configuration file set."
 
 # Create cron scripts
 if [ -f $HIECRON ]; then
@@ -200,7 +138,6 @@ touch $HIECRON
 echo "*/10 *  * * *   root    $NEWNOSH/noshfax" >> $HIECRON
 echo "*/1 *   * * *   root    $NEWNOSH/noshreminder" >> $HIECRON
 echo "0 0     * * *   root    $NEWNOSH/noshbackup" >> $HIECRON
-echo "30 0    * * 1   root    /usr/local/bin/certbot-auto renew >>  /var/log/le-renew.log" >> $HIECRON
 chown root.root $HIECRON
 chmod 644 $HIECRON
 log_only "Created cron scripts."
@@ -271,54 +208,8 @@ echo "create database $MYSQL_DATABASE" | sudo mysql -u $MYSQL_USERNAME -p$MYSQL_
 php artisan migrate:install
 php artisan migrate
 log_only "Installed NOSH ChartingSystem database schema."
-if [ -e "$WEB_CONF"/nosh2.conf ]; then
-	rm "$WEB_CONF"/nosh2.conf
-fi
-touch "$WEB_CONF"/nosh2.conf
-APACHE_CONF="Alias /nosh $NEWNOSH/public
-<Directory $NEWNOSH/public>
-	Options Indexes FollowSymLinks MultiViews
-	AllowOverride None"
-if [ "$APACHE_VER" = "4" ]; then
-	APACHE_CONF="$APACHE_CONF
-	Require all granted"
-else
-	APACHE_CONF="$APACHE_CONF
-	Order allow,deny
-	allow from all"
-fi
-APACHE_CONF="$APACHE_CONF
-	RewriteEngine On
-	# Redirect Trailing Slashes...
-	RewriteRule ^(.*)/$ /\$1 [L,R=301]
-	RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-	# Handle Front Controller...
-	RewriteCond %{REQUEST_FILENAME} !-d
-	RewriteCond %{REQUEST_FILENAME} !-f
-	RewriteRule ^ index.php [L]
-	# Force SSL
-	RewriteCond %{HTTPS} !=on
-	RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-	<IfModule mod_php5.c>
-		php_value upload_max_filesize 512M
-		php_value post_max_size 512M
-		php_flag magic_quotes_gpc off
-		php_flag register_long_arrays off
-	</IfModule>
-</Directory>"
-echo "$APACHE_CONF" >> "$WEB_CONF"/nosh2.conf
-log_only "NOSH ChartingSystem Apache configuration file set."
-log_only "Restarting Apache service."
-$APACHE >> $LOG 2>&1
-# Install LetsEncrypt
-cd /usr/local/bin
-wget https://dl.eff.org/certbot-auto
-chmod a+x /usr/local/bin/certbot-auto
-./certbot-auto --apache -d $URL
-log_only "Let's Encrypt SSL certificate is set."
+
 # Installation completed
-log_only "You can now complete your new installation of HIE of One Authorization Server by browsing to:"
-log_only "https://$URL"
-log_only "You can now complete your new installation of NOSH ChartingSystem by browsing to:"
-log_only "https://$URL/nosh"
+echo 'alias install-trustee="sudo bash /opt/hieofone-as/ssl-install-complete.sh"' >> /root/.bashrc
+log_only "Trustee MVP Base installation complete.  Run install-trustee once a domain name is set and to set a temporary password"
 exit 0

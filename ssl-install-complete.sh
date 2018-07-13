@@ -8,9 +8,21 @@ UBUNTU_VER=$(lsb_release -rs)
 APACHE_VER=$(apache2 -v | awk -F"[..]" 'NR<2{print $2}')
 WEB=/opt
 HIE=$WEB/hieofone-as
-NOSHCRON=/etc/cron.d/nosh-cs
+SSLCRON=/etc/cron.d/certbot
 NOSH_DIR=/noshdocuments
 NEWNOSH=$NOSH_DIR/nosh2
+
+generate_post_data()
+{
+  cat <<EOF
+{
+  "email": "$EMAIL",
+  "url": "$DOMAIN",
+  "password": "$PASS",
+  "username": "$USERNAME"
+}
+EOF
+}
 
 # Check if running as root user
 if [[ $EUID -ne 0 ]]; then
@@ -18,7 +30,10 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
-read -e -p "Enter your domain name (example.com): " -i "" DOMAIN
+read -e -p "Enter email address: " -i "" EMAIL
+read -e -p "Enter the domain name (example.com): " -i "" DOMAIN
+
+USERNAME=$(echo "$EMAIL" | cut -d@ -f1)
 
 if [[ ! -z $DOMAIN ]]; then
 	if [ ! -f /usr/local/bin/certbot-auto ]; then
@@ -120,19 +135,25 @@ if [[ ! -z $DOMAIN ]]; then
 		</IfModule>
 	</Directory>"
 	echo "$APACHE_CONF" >> "$WEB_CONF"/nosh2.conf
-	log_only "NOSH ChartingSystem Apache configuration file set."
-	log_only "Restarting Apache service."
+	echo "NOSH ChartingSystem Apache configuration file set."
+	echo "Restarting Apache service."
 	$APACHE >> $LOG 2>&1
 	echo "SSL Certificate set for $DOMAIN"
 	/etc/init.d/apache2 restart
 	echo "Restarting Apache service."
-	if [ -f $NOSHCRON ]; then
-		rm -rf $NOSHCRON
+	if [ -f $SSLCRON ]; then
+		rm -rf $SSLCRON
 	fi
-	touch $NOSHCRON
-	echo "30 0    * * 1   root    /usr/local/bin/certbot-auto renew >>  /var/log/le-renew.log" >> $NOSHCRON
-	chown root.root $NOSHCRON
-	chmod 644 $NOSHCRON
-	echo "Created Let'sEncrypt cron scripts."
+	touch $SSLCRON
+	echo "30 0    * * 1   root    /usr/local/bin/certbot-auto renew >>  /var/log/le-renew.log" >> $SSLCRON
+	chown root.root $SSLCRON
+	chmod 644 $SSLCRON
+	echo "Created LetsEncrypt cron scripts."
+	PASS=`tr -dc A-Za-z0-9_ < /dev/urandom | head -c8`
+	adduser --disabled-login --gecos "" $USERNAME
+	echo "$USERNAME:$PASS" | chpasswd
+	chage -d 0 $USERNAME
+	curl -d "$(generate_post_data)" -H "Content-Type: application/json" -X POST https://dir.hieofone.org/container_create/complete
+	echo ""
 fi
 exit 0
