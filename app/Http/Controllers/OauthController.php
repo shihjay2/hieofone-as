@@ -93,6 +93,7 @@ class OauthController extends Controller
               $result = $this->github_all();
                 File::put(base_path() . "/.version", $result[0]['sha']);
             }
+            $update = $this->update_system('', true);
             // Is this from a submit request or not
             if ($request->isMethod('post')) {
                 $this->validate($request, [
@@ -286,7 +287,6 @@ class OauthController extends Controller
             Session::forget('message_action');
             return view('welcome', $data);
         } else {
-            $update = $this->update_system('', true);
             return redirect()->route('install');
         }
     }
