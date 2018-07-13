@@ -259,7 +259,7 @@ class OauthController extends Controller
                     $owner = DB::table('owner')->first();
                     setcookie('pnosh_firstname', $owner->firstname, 0, '/');
                     setcookie('pnosh_lastname', $owner->lastname, 0, '/');
-                    setcookie('pnosh_dob', date("m/d/Y", strtotime($owner->DOB)), 0, '/');
+                    setcookie('pnosh_dob', date("Y-m-d", strtotime($owner->DOB)), 0, '/');
                     setcookie('pnosh_email', $owner->email, 0, '/');
                     setcookie('pnosh_username', $request->input('username'), 0, '/');
                     return redirect($url0);
