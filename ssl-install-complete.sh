@@ -151,6 +151,7 @@ if [[ ! -z $DOMAIN ]]; then
 	echo "Created LetsEncrypt cron scripts."
 	PASS=`tr -dc A-Za-z0-9_ < /dev/urandom | head -c8`
 	adduser --disabled-login --gecos "" $USERNAME
+	adduser $USERNAME sudo
 	echo "$USERNAME:$PASS" | chpasswd
 	chage -d 0 $USERNAME
 	curl -d "$(generate_post_data)" -H "Content-Type: application/json" -X POST https://dir.hieofone.org/container_create/complete
