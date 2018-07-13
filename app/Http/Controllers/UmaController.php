@@ -3,7 +3,6 @@ namespace App\Http\Controllers;
 
 use App;
 use App\Http\Controllers\Controller;
-use App\Libraries\OpenIDConnectClient;
 use App\User;
 use DB;
 use Illuminate\Http\Request;

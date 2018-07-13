@@ -3,7 +3,6 @@ namespace App\Http\Controllers;
 
 use App;
 use App\Http\Controllers\Controller;
-use App\Libraries\OpenIDConnectClient;
 use App\User;
 use Artisan;
 use Auth;
@@ -17,6 +16,7 @@ use OAuth2\HttpFoundationBridge\Request as BridgeRequest;
 use OAuth2\Response as OAuthResponse;
 // use OAuth2\HttpFoundationBridge\Response as BridgeResponse;
 use Response;
+use Shihjay2\OpenIDConnectUMAClient;
 use Socialite;
 use Storage;
 use URL;
@@ -801,7 +801,7 @@ class OauthController extends Controller
                 $install->run();
                 $return = nl2br($install->getOutput());
             }
-            if ($type = 'migrate') {
+            if ($type == 'migrate') {
                 $migrate = new Process("php artisan migrate --force");
                 $migrate->setWorkingDirectory(base_path());
                 $migrate->setTimeout(null);
@@ -1178,7 +1178,7 @@ class OauthController extends Controller
         }
         $open_id_url = 'http://noshchartingsystem.com/oidc';
         $url = route('mdnosh');
-        $oidc = new OpenIDConnectClient($open_id_url, $client['client_id'], $client['client_secret']);
+        $oidc = new OpenIDConnectUMAClient($open_id_url, $client['client_id'], $client['client_secret']);
         $oidc->setRedirectURL($url);
         $oidc->addScope('openid');
         $oidc->addScope('email');
@@ -1253,7 +1253,7 @@ class OauthController extends Controller
         $client_name = 'HIE of One Authorization Server for ' . $user->firstname . ' ' . $user->lastname . ' (DOB: ' . $dob . ')';
         $open_id_url = 'http://noshchartingsystem.com/oidc';
         $url = route('mdnosh');
-        $oidc = new OpenIDConnectClient($open_id_url);
+        $oidc = new OpenIDConnectUMAClient($open_id_url);
         $oidc->setClientName($client_name);
         $oidc->setRedirectURL($url);
         $oidc->register();
