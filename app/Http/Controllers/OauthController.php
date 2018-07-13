@@ -250,6 +250,7 @@ class OauthController extends Controller
                 curl_setopt($ch0,CURLOPT_RETURNTRANSFER,1);
                 curl_setopt($ch0,CURLOPT_TIMEOUT, 60);
                 curl_setopt($ch0,CURLOPT_CONNECTTIMEOUT ,0);
+                $nosh_result = curl_exec($ch0);
                 $httpCode0 = curl_getinfo($ch0, CURLINFO_HTTP_CODE);
                 curl_close ($ch0);
                 if ($httpCode0 !== 404 && $httpCode0 !== 0) {
