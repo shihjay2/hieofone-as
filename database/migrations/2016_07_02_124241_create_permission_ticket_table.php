@@ -16,7 +16,7 @@ class CreatePermissionTicketTable extends Migration
             $table->increments('permission_ticket_id');
             $table->bigInteger('permission_id');
             $table->string('ticket', 255);
-            $table->timestamp('expires', 255);
+            $table->timestamp('expires');
         });
     }
 
