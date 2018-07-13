@@ -36,6 +36,13 @@ read -e -p "Enter the domain name (example.com): " -i "" DOMAIN
 USERNAME=$(echo "$EMAIL" | cut -d@ -f1)
 
 if [[ ! -z $DOMAIN ]]; then
+	cd /usr/local/bin
+	if [ ! -f /usr/local/bin/certbot-auto ]; then
+		wget https://dl.eff.org/certbot-auto
+		chmod a+x /usr/local/bin/certbot-auto
+	fi
+	./certbot-auto --apache certonly -d $DOMAIN
+	echo "SSL Certificate set for $DOMAIN"
 	if [ -e "$WEB_CONF"/hie.conf ]; then
 		rm "$WEB_CONF"/hie.conf
 	fi
@@ -95,50 +102,9 @@ if [[ ! -z $DOMAIN ]]; then
 	</IfModule>
 </Directory>"
 	echo "$AS_APACHE_CONF" >> "$WEB_CONF"/hie.conf
-	touch "$WEB_CONF"/nosh2.conf
-	APACHE_CONF="Alias /nosh $NEWNOSH/public
-	<Directory $NEWNOSH/public>
-		Options Indexes FollowSymLinks MultiViews
-		AllowOverride None"
-	if [ "$APACHE_VER" = "4" ]; then
-		APACHE_CONF="$APACHE_CONF
-		Require all granted"
-	else
-		APACHE_CONF="$APACHE_CONF
-		Order allow,deny
-		allow from all"
-	fi
-	APACHE_CONF="$APACHE_CONF
-		RewriteEngine On
-		# Redirect Trailing Slashes...
-		RewriteRule ^(.*)/$ /\$1 [L,R=301]
-		RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-		# Handle Front Controller...
-		RewriteCond %{REQUEST_FILENAME} !-d
-		RewriteCond %{REQUEST_FILENAME} !-f
-		RewriteRule ^ index.php [L]
-		# Force SSL
-		RewriteCond %{HTTPS} !=on
-		RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-		<IfModule mod_php5.c>
-			php_value upload_max_filesize 512M
-			php_value post_max_size 512M
-			php_flag magic_quotes_gpc off
-			php_flag register_long_arrays off
-		</IfModule>
-	</Directory>"
-	echo "$APACHE_CONF" >> "$WEB_CONF"/nosh2.conf
-	echo "NOSH ChartingSystem Apache configuration file set."
 	echo "Restarting Apache service."
 	/etc/init.d/apache2 restart
 	echo "Restarting Apache service."
-	cd /usr/local/bin
-	if [ ! -f /usr/local/bin/certbot-auto ]; then
-		wget https://dl.eff.org/certbot-auto
-		chmod a+x /usr/local/bin/certbot-auto
-	fi
-	./certbot-auto --apache certonly -d $DOMAIN
-	echo "SSL Certificate set for $DOMAIN"
 	if [ -f $SSLCRON ]; then
 		rm -rf $SSLCRON
 	fi
