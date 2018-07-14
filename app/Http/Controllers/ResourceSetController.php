@@ -77,10 +77,10 @@ class ResourceSetController extends Controller
         $client_info = DB::table('oauth_clients')->where('client_id', '=', $client->client_id)->first();
         $name = $request->input('name');
         if (strpos($client_info->client_name, $name) == FALSE) {
-            $name .= 'from ' . $client->client_name;
+            $name .= 'from ' . $client_info->client_name;
         }
         // Check if there is a uma_protection scope
-        $client_scopes = explode(' ', $client->scope);
+        $client_scopes = explode(' ', $client_info->scope);
         if (in_array('uma_protection', $client_scopes)) {
             $data = [
                 'name' => $request->input('name'),
