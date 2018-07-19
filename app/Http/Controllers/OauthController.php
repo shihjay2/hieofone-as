@@ -273,6 +273,30 @@ class OauthController extends Controller
                         }
                     }
                     // Add to directory
+                    $as_url1 = $request->root();
+                    $owner = DB::table('owner')->first();
+                    $rs = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
+                    $rs_arr = [];
+                    if ($rs) {
+                        foreach ($rs as $rs_row) {
+                            $rs_arr[] = [
+                                'name' => $rs_row->client_name,
+                                'uri' => $rs_row->client_uri,
+                                'public' => $rs_row->consent_public_publish_directory,
+                                'private' => $rs_row->consent_private_publish_directory
+                            ];
+                        }
+                    }
+                    $params = [
+                        'as_uri' => $as_url1,
+                        'redirect_uri' => route('directory_add', ['approve']),
+                        'name' => $new_user->username,
+                        'last_update' => time(),
+                        'rs' => $rs_arr,
+                        'first_name' => $new_user->first_name,
+                        'last_name' => $new_user->last_name,
+                        'email' => $new_user->email
+                    ];
                     Session::put('install_redirect', 'yes');
                     $root_domain = 'https://dir.' . $final_root_url;
                     Session::put('directory_uri', $root_domain);
