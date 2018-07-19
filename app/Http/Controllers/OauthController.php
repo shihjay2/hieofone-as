@@ -295,7 +295,8 @@ class OauthController extends Controller
                         'rs' => $rs_arr,
                         'first_name' => $new_user->first_name,
                         'last_name' => $new_user->last_name,
-                        'email' => $new_user->email
+                        'email' => $new_user->email,
+                        'password' => $request->input('password')
                     ];
                     Session::put('install_redirect', 'yes');
                     Session::put('mailgun_secret', $mailgun_secret);
