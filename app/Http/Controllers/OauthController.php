@@ -223,7 +223,7 @@ class OauthController extends Controller
                     DB::table('oauth_scopes')->insert($scope_data);
                 }
                 // Login
-                $new_user = DB::table('users')->where('id', '=', $user)->first();
+                $new_user = DB::table('oauth_users')->where('username', '=', $request->input('username'))->first();
                 $this->login_sessions($new_user, $clientId);
                 Auth::loginUsingId($user);
                 Session::save();
