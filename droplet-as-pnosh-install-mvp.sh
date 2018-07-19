@@ -189,6 +189,9 @@ AS_APACHE_CONF="$AS_APACHE_CONF
 </Directory>"
 echo "$AS_APACHE_CONF" >> "$WEB_CONF"/hie.conf
 log_only "HIE of One Authorization Server Apache configuration file set."
+SHA=$(curl -s 'https://api.github.com/repos/shihjay2/hieofone-as/commits' | jq -r '.[0] .sha')
+touch $HIE/.version
+echo $SHA >> $HIE.version
 
 # Create cron scripts
 if [ -f $HIECRON ]; then
@@ -306,6 +309,9 @@ APACHE_CONF="$APACHE_CONF
 </Directory>"
 echo "$APACHE_CONF" >> "$WEB_CONF"/nosh2.conf
 log_only "NOSH ChartingSystem Apache configuration file set."
+SHA=$(curl -s 'https://api.github.com/repos/shihjay2/nosh2/commits' | jq -r '.[0] .sha')
+touch $NEWNOSH/.version
+echo $NEWNOSH >> $NEWNOSH.version
 
 # Installation completed
 echo 'alias install-trustee="sudo bash /opt/hieofone-as/ssl-install-complete.sh"' >> /root/.bashrc
