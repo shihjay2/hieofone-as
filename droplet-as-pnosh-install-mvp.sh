@@ -56,7 +56,8 @@ if [ ! -d $LOGDIR ]; then
 fi
 
 # Install PHP and MariaDB
-apt-get -y install software-properties-common build-essential binutils-doc git subversion bc apache2 php php-cli php-common php-curl php-gd php-imagick php-imap php-mbstring php-mysql php-pear php-soap php-ssh2 php-xml php-zip libapache2-mod-php libdbi-perl libdbd-mysql-perl libssh2-1-dev imagemagick openssh-server pwgen
+apt-get update
+apt-get -y install software-properties-common build-essential binutils-doc git subversion bc apache2 php php-cli php-common php-curl php-gd php-imagick php-imap php-mbstring php-mysql php-pear php-soap php-ssh2 php-xml php-zip libapache2-mod-php libdbi-perl libdbd-mysql-perl libssh2-1-dev imagemagick openssh-server pwgen jq
 export DEBIAN_FRONTEND=noninteractive
 # Randomly generated password for MariaDB
 MYSQL_PASSWORD=`pwgen -s 40 1`
