@@ -118,6 +118,9 @@ sed -i '/^DB_USERNAME=/s/=.*/='"$MYSQL_USERNAME"'/' .env
 sed -i '/^DB_PASSWORD=/s/=.*/='"$MYSQL_PASSWORD"'/' .env
 openssl genrsa -out $PRIVKEY 2048
 openssl rsa -in $PRIVKEY -pubout -out $PUBKEY
+SHA=$(curl -s 'https://api.github.com/repos/shihjay2/hieofone-as/commits' | jq -r '.[0] .sha')
+touch $HIE/.version
+echo $SHA >> $HIE/.version
 chown -R $WEB_GROUP.$WEB_USER $HIE
 chmod -R 755 $HIE
 chmod -R 777 $HIE/storage
@@ -190,9 +193,6 @@ AS_APACHE_CONF="$AS_APACHE_CONF
 </Directory>"
 echo "$AS_APACHE_CONF" >> "$WEB_CONF"/hie.conf
 log_only "HIE of One Authorization Server Apache configuration file set."
-SHA=$(curl -s 'https://api.github.com/repos/shihjay2/hieofone-as/commits' | jq -r '.[0] .sha')
-touch $HIE/.version
-echo $SHA >> $HIE.version
 
 # Create cron scripts
 if [ -f $HIECRON ]; then
@@ -259,6 +259,9 @@ GOOGLE_KEY=yourkeyfortheservice
 GOOGLE_SECRET=yoursecretfortheservice
 GOOGLE_REDIRECT_URI=https://example.com/login
 " >> $ENV
+SHA1=$(curl -s 'https://api.github.com/repos/shihjay2/nosh2/commits' | jq -r '.[0] .sha')
+touch $NEWNOSH/.version
+echo $SHA1 >> $NEWNOSH/.version
 
 chown -R $WEB_GROUP.$WEB_USER $NEWNOSH
 chmod -R 755 $NEWNOSH
@@ -310,9 +313,6 @@ APACHE_CONF="$APACHE_CONF
 </Directory>"
 echo "$APACHE_CONF" >> "$WEB_CONF"/nosh2.conf
 log_only "NOSH ChartingSystem Apache configuration file set."
-SHA=$(curl -s 'https://api.github.com/repos/shihjay2/nosh2/commits' | jq -r '.[0] .sha')
-touch $NEWNOSH/.version
-echo $NEWNOSH >> $NEWNOSH.version
 
 # Installation completed
 echo 'alias install-trustee="sudo bash /opt/hieofone-as/ssl-install-complete.sh"' >> /root/.bashrc
