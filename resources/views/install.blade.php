@@ -52,8 +52,9 @@
 						<div class="alert alert-success">
 							Any information set below will not be shown or stored in the Directory.<br>
 							@if (isset($pnosh))
-								It is only used to initialize your Patient Centered EHR (NOSH).
+								It is only used to initialize your Patient Centered EHR (NOSH).<br>
 							@endif
+							<a href="https://dir.hieofone.org/privacy_policy" target="_blank">Click here to view the Privacy Policy for the Directory</a>
 						</div>
 
 						<div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
