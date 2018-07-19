@@ -376,7 +376,7 @@ class Controller extends BaseController
 		return $response;
 	}
 
-	protected function directory_update_api(Request $request)
+	protected function directory_update_api()
     {
         $as_url = url('/');
         $owner = DB::table('owner')->first();
