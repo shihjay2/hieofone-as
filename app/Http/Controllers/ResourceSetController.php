@@ -110,6 +110,7 @@ class ResourceSetController extends Controller
                 }
             }
             $this->group_policy($client->client_id, $types, 'update');
+            $this->directory_update_api();
             $statusCode = 200;
         } else {
             $statusCode = 401;
@@ -217,6 +218,7 @@ class ResourceSetController extends Controller
                     }
                 }
                 $this->group_policy($client->client_id, $types, 'update');
+                $this->directory_update_api();
                 $return = '';
                 $statusCode = 201;
             } else {
@@ -262,6 +264,7 @@ class ResourceSetController extends Controller
                     }
                 }
                 $this->group_policy($client->client_id, $types, 'update');
+                $this->directory_update_api();
                 $return = '';
                 $statusCode = 204;
             } else {

@@ -31,7 +31,6 @@ class OauthController extends Controller
 {
     /**
     * Base funtions
-    *
     */
 
     public function github_all()
@@ -76,9 +75,24 @@ class OauthController extends Controller
         return $result;
     }
 
+    public function welcome(Request $request)
+    {
+        $query = DB::table('owner')->first();
+        if ($query) {
+            if (Auth::check() && Session::get('is_owner') == 'yes') {
+                return redirect()->route('consent_table');
+            }
+            $data['name'] = $query->firstname . ' ' . $query->lastname;
+            $data['message_action'] = Session::get('message_action');
+            Session::forget('message_action');
+            return view('welcome', $data);
+        } else {
+            return redirect()->route('install');
+        }
+    }
+
     /**
     * Installation
-    *
     */
 
     public function install(Request $request)
@@ -87,16 +101,30 @@ class OauthController extends Controller
         $query = DB::table('owner')->first();
         // if ($query) {
         if (! $query) {
+            $as_url = $request->root();
+            $as_url = str_replace(array('http://','https://'), '', $as_url);
+            $root_url = explode('/', $as_url);
+            $root_url1 = explode('.', $root_url[0]);
+            $final_root_url = $root_url1[1] . '.' . $root_url1[2];
             // Tag version number for baseline prior to updating system in the future
             if (!File::exists(base_path() . "/.version")) {
                 // First time after install
               $result = $this->github_all();
                 File::put(base_path() . "/.version", $result[0]['sha']);
             }
-            $update = $this->update_system('', true);
+            // $update = $this->update_system('', true);
+            $pnosh_exists = false;
+            if (File::exists('/noshdocuments/nosh2/.env')) {
+                $pnosh_exists = true;
+            }
+            $pnosh_exists = true;
             // Is this from a submit request or not
             if ($request->isMethod('post')) {
-                $this->validate($request, [
+                if (Session::has('search_as')) {
+                    $search_as = Session::get('search_as');
+                    Session::forget('search_as');
+                }
+                $val_arr = [
                     'username' => 'required',
                     'email' => 'required',
                     'password' => 'required|min:4',
@@ -107,7 +135,30 @@ class OauthController extends Controller
                     // 'google_client_id' => 'required',
                     // 'google_client_secret' => 'required',
                     // 'smtp_username' => 'required'
-                ]);
+                ];
+                if ($pnosh_exists == true) {
+                    $val_arr = [
+                        'username' => 'required',
+                        'email' => 'required',
+                        'password' => 'required|min:4',
+                        'confirm_password' => 'required|min:4|same:password',
+                        'first_name' => 'required',
+                        'last_name' => 'required',
+                        'date_of_birth' => 'required',
+                        'gender' => 'required',
+                        'address' => 'required',
+                        'city' => 'required',
+                        'state' => 'required',
+                        'zip' => 'required',
+                        // 'google_client_id' => 'required',
+                        // 'google_client_secret' => 'required',
+                        // 'smtp_username' => 'required'
+                    ];
+                }
+                $this->validate($request, $val_arr);
+                if (in_array($request->input('username'), $search_as)) {
+                    return redirect()->back()->withErrors(['username' => 'Username already exists in the Directory.  Try again']);
+                }
                 // Register user
                 $sub = $this->gen_uuid();
                 $user_data = [
@@ -124,7 +175,7 @@ class OauthController extends Controller
                     'name' => $request->input('username'),
                     'email' => $request->input('email')
                 ];
-                DB::table('users')->insert($user_data1);
+                $user = DB::table('users')->insertGetId($user_data1);
                 // Register owner
                 $clientId = $this->gen_uuid();
                 $clientSecret = $this->gen_secret();
@@ -138,12 +189,46 @@ class OauthController extends Controller
                     'sub' => $sub
                 ];
                 DB::table('owner')->insert($owner_data);
+                // Register server as its own client
+                $grant_types = 'client_credentials password authorization_code implicit jwt-bearer refresh_token';
+                $scopes = 'openid profile email address phone offline_access';
+                $data = [
+                    'client_id' => $clientId,
+                    'client_secret' => $clientSecret,
+                    'grant_types' => $grant_types,
+                    'scope' => $scopes,
+                    'user_id' => $request->input('username'),
+                    'client_name' => 'HIE of One AS for ' . $request->input('first_name') . ' ' . $request->input('last_name'),
+                    'client_uri' => URL::to('/'),
+                    'redirect_uri' => URL::to('oauth_login'),
+                    'authorized' => 1,
+                    'allow_introspection' => 1
+                ];
+                DB::table('oauth_clients')->insert($data);
+                $data1 = [
+                    'type' => 'self',
+                    'client_id' => $clientId,
+                    'client_secret' => $clientSecret
+                ];
+                DB::table('oauth_rp')->insert($data1);
+                // Register scopes as default
+                $scopes_array = explode(' ', $scopes);
+                $scopes_array[] = 'uma_protection';
+                $scopes_array[] = 'uma_authorization';
+                foreach ($scopes_array as $scope) {
+                    $scope_data = [
+                        'scope' => $scope,
+                        'is_default' => 1
+                    ];
+                    DB::table('oauth_scopes')->insert($scope_data);
+                }
+                // Login
+                $new_user = DB::table('users')->where('id', '=', $user)->first();
+                $this->login_sessions($new_user, $clientId);
+                Auth::loginUsingId($user);
+                Session::save();
                 // Setup e-mail server with Mailgun
-                $as_url = $request->root();
-                $as_url = str_replace(array('http://','https://'), '', $as_url);
-                $root_url = explode('/', $as_url);
-                $root_url1 = explode('.', $root_url[0]);
-                $final_root_url = $root_url1[1] . '.' . $root_url1[2];
+                $mailgun_secret = '';
                 if ($final_root_url == 'hieofone.org') {
                     $mailgun_url = 'https://dir.' . $final_root_url . '/mailgun';
                     $params = ['uri' => $as_url];
@@ -187,6 +272,7 @@ class OauthController extends Controller
 
                         }
                     }
+                    // Add to directory
                 }
                 // Register oauth for Google and Twitter
                 // $google_data = [
@@ -206,95 +292,82 @@ class OauthController extends Controller
                 //     ];
                 //     DB::table('oauth_rp')->insert($twitter_data);
                 // }
-                // Register server as its own client
-                $grant_types = 'client_credentials password authorization_code implicit jwt-bearer refresh_token';
-                $scopes = 'openid profile email address phone offline_access';
-                $data = [
-                    'client_id' => $clientId,
-                    'client_secret' => $clientSecret,
-                    'grant_types' => $grant_types,
-                    'scope' => $scopes,
-                    'user_id' => $request->input('username'),
-                    'client_name' => 'HIE of One AS for ' . $request->input('first_name') . ' ' . $request->input('last_name'),
-                    'client_uri' => URL::to('/'),
-                    'redirect_uri' => URL::to('oauth_login'),
-                    'authorized' => 1,
-                    'allow_introspection' => 1
-                ];
-                DB::table('oauth_clients')->insert($data);
-                $data1 = [
-                    'type' => 'self',
-                    'client_id' => $clientId,
-                    'client_secret' => $clientSecret
-                ];
-                DB::table('oauth_rp')->insert($data1);
-                // Register scopes as default
-                $scopes_array = explode(' ', $scopes);
-                $scopes_array[] = 'uma_protection';
-                $scopes_array[] = 'uma_authorization';
-                foreach ($scopes_array as $scope) {
-                    $scope_data = [
-                        'scope' => $scope,
-                        'is_default' => 1
-                    ];
-                    DB::table('oauth_scopes')->insert($scope_data);
-                }
                 // Go register with Google to get refresh token for email setup
                 // return redirect()->route('installgoogle');
-                // Check if pNOSH associated in same domain as this authorization server and begin installation There
-                $url0 = URL::to('/') . '/nosh';
-                $ch0 = curl_init();
-                curl_setopt($ch0,CURLOPT_URL, $url0);
-                curl_setopt($ch0,CURLOPT_FAILONERROR,1);
-                curl_setopt($ch0,CURLOPT_FOLLOWLOCATION,1);
-                curl_setopt($ch0,CURLOPT_RETURNTRANSFER,1);
-                curl_setopt($ch0,CURLOPT_TIMEOUT, 60);
-                curl_setopt($ch0,CURLOPT_CONNECTTIMEOUT ,0);
-                $nosh_result = curl_exec($ch0);
-                $httpCode0 = curl_getinfo($ch0, CURLINFO_HTTP_CODE);
-                curl_close ($ch0);
-                if ($httpCode0 !== 404 && $httpCode0 !== 0) {
-                    $data['pnosh'] = true;
-                    $data['pnosh_url'] = $url0;
-                    $owner = DB::table('owner')->first();
-                    setcookie('pnosh_firstname', $owner->firstname, 0, '/');
-                    setcookie('pnosh_lastname', $owner->lastname, 0, '/');
-                    setcookie('pnosh_dob', date("Y-m-d", strtotime($owner->DOB)), 0, '/');
-                    setcookie('pnosh_email', $owner->email, 0, '/');
-                    setcookie('pnosh_username', $request->input('username'), 0, '/');
-                    return redirect($url0);
+                // Check if pNOSH associated in same domain as this authorization server and begin installation there
+                if ($pnosh_exists == true) {
+                    $url0 = URL::to('/') . '/nosh';
+                    $params1 = [
+                        'username' => 'admin',
+                        'password' => $request->input('password'),
+                        'firstname' => $request->input('first_name'),
+                        'lastname' => $request->input('last_name'),
+                        'address' => $request->input('address'),
+                        'city' => $request->input('city'),
+                        'state' => $request->input('state'),
+                        'zip' => $request->input('zip'),
+                        'DOB' => $request->input('date_of_birth'),
+                        'gender' => $request->input('gender'),
+                        'pt_username' => $request->input('username'),
+                        'email' => $request->input('email'),
+                        'mailgun_secret' => $mailgun_secret
+                    ];
+                    $post_body1 = json_encode($params1);
+                    $content_type1 = 'application/json';
+                    $ch1 = curl_init();
+                    $pnosh_url = $url0 . '/pnosh_install';
+                    curl_setopt($ch1,CURLOPT_URL, $pnosh_url);
+                    curl_setopt($ch1, CURLOPT_POST, 1);
+                    curl_setopt($ch1, CURLOPT_POSTFIELDS, $post_body1);
+                    curl_setopt($ch1, CURLOPT_HTTPHEADER, [
+                        "Content-Type: {$content_type1}",
+                        'Content-Length: ' . strlen($post_body1)
+                    ]);
+                    curl_setopt($ch1, CURLOPT_HEADER, 0);
+                    curl_setopt($ch1, CURLOPT_SSL_VERIFYPEER, FALSE);
+                    curl_setopt($ch1,CURLOPT_FAILONERROR,1);
+                    curl_setopt($ch1,CURLOPT_FOLLOWLOCATION,1);
+                    curl_setopt($ch1,CURLOPT_RETURNTRANSFER,1);
+                    curl_setopt($ch1,CURLOPT_TIMEOUT, 60);
+                    curl_setopt($ch1,CURLOPT_CONNECTTIMEOUT ,0);
+                    $pnosh_result = curl_exec($ch1);
+                    curl_close ($ch1);
+                    if ($pnosh_result == 'Success') {
+                        // Register pNOSH resoures
+                        return redirect($url0);
+                    } else {
+                        Session::put('message_action', $pnosh_result);
+                        return redirect()->route('consent_table');
+                    }
                 } else {
-                    return redirect()->route('home');
+                    return redirect()->route('consent_table');
                 }
             } else {
+                if ($final_root_url == 'hieofone.org') {
+                    $search_url = 'https://dir.' . $final_root_url . '/check_as';
+                    $ch2 = curl_init($search_url);
+                    curl_setopt($ch2, CURLOPT_TIMEOUT, 10);
+                    curl_setopt($ch2, CURLOPT_CONNECTTIMEOUT, 10);
+                    curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+                    $search_arr = curl_exec($ch);
+                    $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                    if($httpcode=200){
+                        Session::put('search_as', json_decode($search_arr, true));
+                    }
+                }
                 $data2['noheader'] = true;
+                if ($pnosh_exists == true) {
+                    $data2['pnosh'] = true;
+                }
                 return view('install', $data2);
             }
         }
-        return redirect()->route('home');
-    }
-
-    public function welcome(Request $request)
-    {
-        $query = DB::table('owner')->first();
-        if ($query) {
-            if (Auth::check() && Session::get('is_owner') == 'yes') {
-                return redirect()->route('home');
-            }
-            $data = [
-                'name' => $query->firstname . ' ' . $query->lastname
-            ];
-            $data['message_action'] = Session::get('message_action');
-            Session::forget('message_action');
-            return view('welcome', $data);
-        } else {
-            return redirect()->route('install');
-        }
+        return redirect()->route('consent_table');
     }
 
     /**
     * Login and logout functions
-    *
     */
 
     public function login(Request $request)
@@ -359,6 +432,9 @@ class OauthController extends Controller
                     Session::put('is_owner', 'no');
                     if ($oauth_user->sub == $owner_query->sub || in_array($oauth_user->sub, $proxy_arr)) {
                         Session::put('is_owner', 'yes');
+                        if ($oauth_user->sub == $owner_query->sub) {
+                            Session::put('password', $request->input('password'));
+                        }
                     }
                     if ($owner_query->sub == $oauth_user->sub) {
                         Session::put('invite', 'yes');
@@ -399,7 +475,7 @@ class OauthController extends Controller
                         }
                     } else {
                         //  This call is directly from the home route.
-                        return redirect()->intended('home');
+                        return redirect()->intended('consent_table');
                     }
                 } else {
                     //  Incorrect login information
@@ -457,7 +533,7 @@ class OauthController extends Controller
                 // If generated from rqp_claims endpoint, do this
                 return redirect()->route('rqp_claims');
             }
-            return redirect()->route('home');
+            return redirect()->route('consent_table');
         }
     }
 
@@ -547,7 +623,7 @@ class OauthController extends Controller
                     }
                 } else {
                     //  This call is directly from the home route.
-                    $return['url'] = route('home');
+                    $return['url'] = route('consent_table');
                 }
             } else {
                 // Check if NPI field exists
@@ -656,7 +732,7 @@ class OauthController extends Controller
                             'email' => $request->input('email')
                         ];
                         DB::table('users')->insert($uport_data1);
-                        $data1['message_data'] = $name . ' has just attempted to login using your HIE of One Authorizaion Server via uPort.';
+                        $data1['message_data'] = $name . ' has just attempted to login using your Trustee Authorizaion Server via uPort.';
                         $data1['message_data'] .= 'Go to ' . route('authorize_user') . '/ to review and authorize.';
                         $title = 'New uPort User';
                         $to = $owner_query->email;
@@ -720,7 +796,7 @@ class OauthController extends Controller
             return redirect()->route('authorize');
         } else {
             Session::save();
-            return redirect()->route('home');
+            return redirect()->route('consent_table');
         }
     }
 
@@ -749,7 +825,7 @@ class OauthController extends Controller
                 $data['password'] = $this->gen_secret();
                 DB::table('oauth_users')->where('email', '=', $request->input('email'))->update($data);
                 $url = URL::to('password_reset') . '/' . $data['password'];
-                $data2['message_data'] = 'This message is to notify you that you have reset your password with the HIE of One Auhtorization Server for ' . $owner->firstname . ' ' . $owner->lastname . '.<br>';
+                $data2['message_data'] = 'This message is to notify you that you have reset your password with the Trustee Authorization Server for ' . $owner->firstname . ' ' . $owner->lastname . '.<br>';
                 $data2['message_data'] .= 'To finish this process, please click on the following link or point your web browser to:<br>';
                 $data2['message_data'] .= $url;
                 $title = 'Reset password for ' . $owner->firstname . ' ' . $owner->lastname  . "'s Authorization Server";
@@ -774,7 +850,7 @@ class OauthController extends Controller
                 $data['password'] = sha1($request->input('password'));
                 DB::table('oauth_users')->where('password', '=', $id)->update($data);
             }
-            return redirect()->route('home');
+            return redirect()->route('consent_table');
         } else {
             $query1 = DB::table('oauth_users')->where('password', '=', $id)->first();
             if ($query1) {
@@ -788,7 +864,6 @@ class OauthController extends Controller
 
     /**
     * Update system through GitHub
-    *
     */
 
     public function update_system($type='', $local=false)
@@ -889,7 +964,6 @@ class OauthController extends Controller
 
     /**
     * Client registration page if they are given a QR code by the owner of this authorization server
-    *
     */
     public function client_register(Request $request)
     {
@@ -997,7 +1071,7 @@ class OauthController extends Controller
                 $this->login_sessions($google_user, $client_id);
                 Auth::loginUsingId($local_user->id);
                 Session::save();
-                return redirect()->route('home');
+                return redirect()->route('consent_table');
             }
         } else {
             if ($owner_query->any_npi == 1 || $owner_query->login_google == 1) {
@@ -1061,7 +1135,7 @@ class OauthController extends Controller
             return redirect()->route('authorize');
         } else {
             Session::save();
-            return redirect()->route('home');
+            return redirect()->route('consent_table');
         }
     }
 
@@ -1112,7 +1186,7 @@ class OauthController extends Controller
                 return redirect()->route('authorize');
             } else {
                 Session::save();
-                return redirect()->route('home');
+                return redirect()->route('consent_table');
             }
         } else {
             $data['noheader'] = true;
@@ -1135,149 +1209,6 @@ class OauthController extends Controller
             $data['npi'] .= '</div>';
             return view('google_md', $data);
         }
-    }
-
-    public function twitter_redirect()
-    {
-        $query0 = DB::table('oauth_rp')->where('type', '=', 'twitter')->first();
-        config(['services.twitter.client_id' => $query0->client_id]);
-        config(['services.twitter.client_secret' => $query0->client_secret]);
-        config(['services.twitter.redirect' => $query0->redirect_uri]);
-        return Socialite::driver('twitter')->redirect();
-    }
-
-    public function twitter(Request $request)
-    {
-        $query0 = DB::table('oauth_rp')->where('type', '=', 'twitter')->first();
-        config(['services.twitter.client_id' => $query0->client_id]);
-        config(['services.twitter.client_secret' => $query0->client_secret]);
-        config(['services.twitter.redirect' => $query0->redirect_uri]);
-        $user = Socialize::driver('twitter')->user();
-        Session::put('email', $user->getEmail());
-        Session::put('login_origin', 'login_twitter');
-        if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
-            // If generated from rqp_claims endpoint, do this
-            return redirect()->route('rqp_claims');
-        } else {
-            $this->oauth_authenticate($user->getEmail());
-            return redirect()->route('home');
-        }
-    }
-
-    public function mdnosh(Request $request)
-    {
-        // Check if dynamically registered
-        $query0 = DB::table('oauth_rp')->where('type', '=', 'mdnosh')->first();
-        if ($query0) {
-            // Registered
-            $client = [
-                'client_id' => $query0->client_id,
-                'client_secret' => $query0->client_secret
-            ];
-        } else {
-            $client = $this->mdnosh_register_client();
-        }
-        $open_id_url = 'http://noshchartingsystem.com/oidc';
-        $url = route('mdnosh');
-        $oidc = new OpenIDConnectUMAClient($open_id_url, $client['client_id'], $client['client_secret']);
-        $oidc->setRedirectURL($url);
-        $oidc->addScope('openid');
-        $oidc->addScope('email');
-        $oidc->addScope('profile');
-        $oidc->authenticate();
-        $firstname = $oidc->requestUserInfo('given_name');
-        $lastname = $oidc->requestUserInfo('family_name');
-        $email = $oidc->requestUserInfo('email');
-        $npi = $oidc->requestUserInfo('npi');
-        $sub = $oidc->requestUserInfo('sub');
-        $access_token = $oidc->getAccessToken();
-        Session::put('email',  $oidc->requestUserInfo('email'));
-        Session::put('login_origin', 'login_md_nosh');
-        Session::put('npi', $npi);
-        if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
-            // If generated from rqp_claims endpoint, do this
-            return redirect()->route('rqp_claims');
-        } elseif (Session::get('oauth_response_type') == 'code') {
-            $client_id = Session::get('oauth_client_id');
-            $authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
-            if ($authorized) {
-                Session::put('is_authorized', 'true');
-                $owner_query = DB::table('owner')->first();
-                $proxies = DB::table('owner')->where('sub', '!=', $owner_query->sub)->get();
-                $proxy_arr = [];
-                if ($proxies) {
-                    foreach ($proxies as $proxy_row) {
-                        $proxy_arr[] = $proxy_row->sub;
-                    }
-                }
-                if ($owner_query->login_md_nosh == 1) {
-                    // Add user if not added already
-                    $sub_query = DB::table('oauth_users')->where('sub', '=', $sub)->first();
-                    if (!$sub_query) {
-                        $user_data = [
-                            'username' => $sub,
-                            'password' => sha1($sub),
-                            'first_name' => $firstname,
-                            'last_name' => $lastname,
-                            'sub' => $sub,
-                            'email' => $email,
-                            'npi' => $npi
-                        ];
-                        DB::table('oauth_users')->insert($user_data);
-                        $user_data1 = [
-                            'name' => $sub,
-                            'email' => $email
-                        ];
-                        DB::table('users')->insert($user_data1);
-                    }
-                    Session::put('sub', $sub);
-                    Session::save();
-                    $user1 = DB::table('users')->where('name', '=', $sub)->first();
-                    Auth::loginUsingId($user1->id);
-                    return redirect()->route('authorize');
-                } else {
-                    return redirect()->route('login')->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
-                }
-            } else {
-                return redirect()->route('login')->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
-            }
-        } else {
-            $this->oauth_authenticate($oidc->requestUserInfo('email'));
-            return redirect()->route('home');
-        }
-    }
-
-    public function mdnosh_register_client()
-    {
-        $user = DB::table('owner')->where('id', '=', '1')->first();
-        $dob = date('m/d/Y', strtotime($user->DOB));
-        $client_name = 'HIE of One Authorization Server for ' . $user->firstname . ' ' . $user->lastname . ' (DOB: ' . $dob . ')';
-        $open_id_url = 'http://noshchartingsystem.com/oidc';
-        $url = route('mdnosh');
-        $oidc = new OpenIDConnectUMAClient($open_id_url);
-        $oidc->setClientName($client_name);
-        $oidc->setRedirectURL($url);
-        $oidc->register();
-        $client_id = $oidc->getClientID();
-        $client_secret = $oidc->getClientSecret();
-        $data = [
-            'type' => 'mdnosh',
-            'client_id' => $client_id,
-            'client_secret' => $client_secret,
-            'redirect_uri' => $url
-        ];
-        DB::table('oauth_rp')->insert($data);
-        return $data;
-    }
-
-    public function oauth_authenticate($email)
-    {
-        $user = User::where('email', '=', $email)->first();
-        //$query = DB::table('oauth_users')->where('email', '=', $email)->first();
-        if ($user) {
-            Auth::login($user);
-        }
-        return true;
     }
 
     /**
@@ -1605,7 +1536,7 @@ class OauthController extends Controller
                     //     }
                     // }
                     DB::table('invitation')->where('code', '=', $id)->delete();
-                    return redirect()->route('home');
+                    return redirect()->route('consent_table');
                 } else {
                     $data['noheader'] = true;
                     $owner = DB::table('owner')->first();
@@ -1660,7 +1591,7 @@ class OauthController extends Controller
                         if ($owner_query->any_npi == 0) {
                             DB::table('oauth_users')->insert($user_data);
                             DB::table('users')->insert($user_data1);
-                            $data1['message_data'] = $name . ' has just subscribed to your HIE of One Authorizaion Server via the ' . $client->client_name . ' Directory.<br>';
+                            $data1['message_data'] = $name . ' has just subscribed to your Trustee Authorizaion Server via the ' . $client->client_name . ' Directory.<br>';
                             $data1['message_data'] .= 'Go to ' . route('authorize_user') . '/ to review and authorize.';
                             $title1 = 'New User from the ' . $client->client_name . ' Directory';
                             $to1 = $owner_query->email;
@@ -1740,6 +1671,83 @@ class OauthController extends Controller
         return $return;
     }
 
+    // Demo functions
+
+    public function check_demo(Request $request)
+    {
+        $file = File::get(base_path() . "/.timer");
+        $arr = explode(',', $file);
+        if (time() < $arr[0]) {
+            $left = ($arr[0] - time()) / 60;
+            $return = round($left) . ',' . $arr[1];
+            return $return;
+        } else {
+            return 'OK';
+        }
+    }
+
+    public function check_demo_self(Request $request)
+	{
+        $return = 'OK';
+        $return1 = 'OK';
+        $file = File::get(base_path() . "/.timer");
+        $arr = explode(',', $file);
+        if (time() < $arr[0]) {
+            $left = ($arr[0] - time()) / 60;
+            $return = round($left) . ',' . $arr[1];
+        }
+		if ($return !== 'OK') {
+			$arr = explode(',', $return);
+			if ($arr[1] !== $request->ip()) {
+				// Alert
+				$return1 = 'You have ' . $arr[0] . ' minutes left to finish the demo.';
+			}
+		}
+		return $return1;
+	}
+
+    public function invite_demo(Request $request)
+    {
+        if (route('home') == 'https://shihjay.xyz/home') {
+            if ($request->isMethod('post')) {
+                $this->validate($request, [
+                    'email' => 'required'
+                ]);
+                $data['email'] = $request->input('email');
+                $owner = DB::table('owner')->first();
+                DB::table('oauth_users')->where('sub', '=', $owner->sub)->update($data);
+                $oauth_user = DB::table('oauth_users')->where('sub', '=', $owner->sub)->first();
+                DB::table('users')->where('name', '=', $oauth_user->username)->update($data);
+                $time = time() + 600;
+                $file = $time . ',' . $request->ip();
+                File::put(base_path() . "/.timer", $file);
+                Session::flush();
+                Auth::logout();
+                return redirect()->route('login');
+            } else {
+                $data = [
+                    'noheader' => true,
+                    'timer' => true
+                ];
+                $file = File::get(base_path() . "/.timer");
+                $arr = explode(',', $file);
+                if (time() > $arr[0]) {
+                    $data['timer'] = false;
+                }
+                if ($data['timer'] == true) {
+                    $left = ($arr[0] - time()) / 60;
+                    $data['timer_val'] = round($left);
+                    $data['timer_val1'] = 10 - $data['timer_val'];
+                    $newfile = $arr[0] . ',' . $request->ip();
+                    File::put(base_path() . "/.timer", $newfile);
+                }
+                return view('reset_demo', $data);
+            }
+        } else {
+            return redirect()->route('welcome');
+        }
+    }
+
     public function reset_demo(Request $request)
     {
         if (route('welcome') == 'https://shihjay.xyz') {
@@ -1800,106 +1808,7 @@ class OauthController extends Controller
         }
     }
 
-    public function invite_demo(Request $request)
-    {
-        if (route('home') == 'https://shihjay.xyz/home') {
-            if ($request->isMethod('post')) {
-                $this->validate($request, [
-                    'email' => 'required'
-                ]);
-                $data['email'] = $request->input('email');
-                $owner = DB::table('owner')->first();
-                DB::table('oauth_users')->where('sub', '=', $owner->sub)->update($data);
-                $oauth_user = DB::table('oauth_users')->where('sub', '=', $owner->sub)->first();
-                DB::table('users')->where('name', '=', $oauth_user->username)->update($data);
-                $time = time() + 600;
-                $file = $time . ',' . $request->ip();
-                File::put(base_path() . "/.timer", $file);
-                Session::flush();
-                Auth::logout();
-                return redirect()->route('login');
-            } else {
-                $data = [
-                    'noheader' => true,
-                    'timer' => true
-                ];
-                $file = File::get(base_path() . "/.timer");
-                $arr = explode(',', $file);
-                if (time() > $arr[0]) {
-                    $data['timer'] = false;
-                }
-                if ($data['timer'] == true) {
-                    $left = ($arr[0] - time()) / 60;
-                    $data['timer_val'] = round($left);
-                    $data['timer_val1'] = 10 - $data['timer_val'];
-                    $newfile = $arr[0] . ',' . $request->ip();
-                    File::put(base_path() . "/.timer", $newfile);
-                }
-                return view('reset_demo', $data);
-            }
-        } else {
-            return redirect()->route('welcome');
-        }
-    }
-
-    public function check_demo(Request $request)
-    {
-        $file = File::get(base_path() . "/.timer");
-        $arr = explode(',', $file);
-        if (time() < $arr[0]) {
-            $left = ($arr[0] - time()) / 60;
-            $return = round($left) . ',' . $arr[1];
-            return $return;
-        } else {
-            return 'OK';
-        }
-    }
-
-    public function check_demo_self(Request $request)
-	{
-        $return = 'OK';
-        $return1 = 'OK';
-        $file = File::get(base_path() . "/.timer");
-        $arr = explode(',', $file);
-        if (time() < $arr[0]) {
-            $left = ($arr[0] - time()) / 60;
-            $return = round($left) . ',' . $arr[1];
-        }
-		if ($return !== 'OK') {
-			$arr = explode(',', $return);
-			if ($arr[1] !== $request->ip()) {
-				// Alert
-				$return1 = 'You have ' . $arr[0] . ' minutes left to finish the demo.';
-			}
-		}
-		return $return1;
-	}
-
     public function test1(Request $request)
     {
-        $as_url = $request->root();
-        $as_url = str_replace(array('http://','https://'), '', $as_url);
-        $params = ['uri' => $as_url];
-        $post_body = json_encode($params);
-        $content_type = 'application/json';
-        $ch = curl_init();
-        curl_setopt($ch,CURLOPT_URL, $mailgun_url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "Content-Type: {$content_type}",
-            'Content-Length: ' . strlen($post_body)
-        ]);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-        curl_setopt($ch,CURLOPT_FAILONERROR,1);
-        curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
-        curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
-        curl_setopt($ch,CURLOPT_TIMEOUT, 60);
-        curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
-        $mailgun_secret = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close ($ch);
-        return $mailgun_secret;
     }
 }

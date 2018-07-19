@@ -6,7 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="csrf-token" content="{{ csrf_token() }}">
 
-	<title>HIE of One Authorization Server</title>
+	<title>Trustee Authorization Server</title>
 
 	<!-- Styles -->
 	<link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
@@ -38,7 +38,7 @@
 
 				<!-- Branding Image -->
 				<a class="navbar-brand" href="{{ url('/') }}">
-					HIE of One Authorization Server
+					Trustee Authorization Server
 					@if (isset($name))
 						for {{ $name }}
 					@endif
@@ -50,6 +50,7 @@
 				<ul class="nav navbar-nav">
 					@if (!Auth::guest())
 						@if (Session::get('is_owner') == 'yes')
+							<li><a href="{{ url('/consent_table') }}">Consent Table</a></li>
 							<li><a href="{{ url('/home') }}">My Resources</a></li>
 							<li><a href="{{ url('/default_policies') }}">My Policies</a></li>
 							<li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">My Clients <span class="caret"></span></a>
@@ -64,7 +65,6 @@
 									<li><a href="{{ url('/authorize_user') }}">Pending Authorization</a></li>
 								</ul>
 							</li>
-							<li><a href="{{ url('/consent_table') }}">Consent Table</a></li>
 							@if (Session::get('invite') == 'yes')
 								<li><a href="{{ url('/make_invitation') }}">Invite</a></li>
 							@endif

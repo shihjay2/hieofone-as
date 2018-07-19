@@ -32,120 +32,119 @@ class HomeController extends Controller
     {
         if (Session::get('is_owner') == 'no') {
             return redirect()->route('welcome');
-        } else {
-            $data['name'] = Session::get('owner');
-            $data['title'] = 'My Resource Services';
-            $data['content'] = 'No resource services yet.';
-            $data['blockchain_count'] = '0';
-            $data['blockchain_table'] = 'None';
-            // $mdnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', '%mdNOSH%')->first();
-            // if (! $mdnosh) {
-            //     $data['mdnosh'] = true;
-            // }
-            $smart_on_fhir = [];
-            $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
-            if (! $pnosh) {
-                $url0 = URL::to('/') . '/nosh';
-                $ch0 = curl_init();
-                curl_setopt($ch0,CURLOPT_URL, $url0);
-                curl_setopt($ch0,CURLOPT_FAILONERROR,1);
-                curl_setopt($ch0,CURLOPT_FOLLOWLOCATION,1);
-                curl_setopt($ch0,CURLOPT_RETURNTRANSFER,1);
-                curl_setopt($ch0,CURLOPT_TIMEOUT, 60);
-                curl_setopt($ch0,CURLOPT_CONNECTTIMEOUT ,0);
-                $httpCode0 = curl_getinfo($ch0, CURLINFO_HTTP_CODE);
-                curl_close ($ch0);
-                if ($httpCode0 !== 404 && $httpCode0 !== 0) {
-                    $data['pnosh'] = true;
-                    $data['pnosh_url'] = $url0;
-                    $owner = DB::table('owner')->first();
-                    setcookie('pnosh_firstname', $owner->firstname);
-                    setcookie('pnosh_lastname', $owner->lastname);
-                    setcookie('pnosh_dob', date("m/d/Y", strtotime($owner->DOB)));
-                    setcookie('pnosh_email', $owner->email);
-                    setcookie('pnosh_username', Session::get('username'));
-                }
-            } else {
-                $pnosh_url = $pnosh->client_uri;
-                $url = $pnosh->client_uri . '/smart_on_fhir_list';
-                $ch = curl_init();
-                curl_setopt($ch,CURLOPT_URL, $url);
-                curl_setopt($ch,CURLOPT_FAILONERROR,1);
-                curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
-                curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
-                curl_setopt($ch,CURLOPT_TIMEOUT, 60);
-                curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
-                $result = curl_exec($ch);
-                curl_close ($ch);
-                $smart_on_fhir = json_decode($result, true);
-                $url1 = $pnosh_url . '/transactions';
-                $ch1 = curl_init();
-                curl_setopt($ch1,CURLOPT_URL, $url1);
-                curl_setopt($ch1,CURLOPT_FAILONERROR,1);
-                curl_setopt($ch1,CURLOPT_FOLLOWLOCATION,1);
-                curl_setopt($ch1,CURLOPT_RETURNTRANSFER,1);
-                curl_setopt($ch1,CURLOPT_TIMEOUT, 60);
-                curl_setopt($ch1,CURLOPT_CONNECTTIMEOUT ,0);
-                $blockchain = curl_exec($ch1);
-                $httpCode = curl_getinfo($ch1, CURLINFO_HTTP_CODE);
-                curl_close ($ch1);
-                if ($httpCode !== 404 && $httpCode !== 0) {
-                    $blockchain_arr = json_decode($blockchain, true);
-                    $data['blockchain_count'] = $blockchain_arr['count'];
-                    if ($blockchain_arr['count'] !== 0) {
-                        $data['blockchain_table'] = '<table class="table table-striped"><thead><tr><th>Date</th><th>Provider</th><th>Transaction Receipt</th></thead><tbody>';
-                        foreach ($blockchain_arr['transactions'] as $blockchain_row) {
-                            $data['blockchain_table'] .= '<tr><td>' . date('Y-m-d', $blockchain_row['date']) . '</td><td>' . $blockchain_row['provider'] . '</td><td><a href="https://rinkeby.etherscan.io/tx/' . $blockchain_row['transaction'] . '" target="_blank">' . $blockchain_row['transaction'] . '</a></td></tr>';
-                        }
-                        $data['blockchain_table'] .= '</tbody></table>';
-                        $data['blockchain_table'] .= '<strong>Top 5 Provider Users</strong>';
-                        $data['blockchain_table'] .= '<table class="table table-striped"><thead><tr><th>Provider</th><th>Number of Transactions</th></thead><tbody>';
-                        foreach ($blockchain_arr['providers'] as $blockchain_row1) {
-                            $data['blockchain_table'] .= '<tr><td>' . $blockchain_row1['provider'] . '</td><td>' . $blockchain_row1['count'] . '</td></tr>';
-                        }
-                        $data['blockchain_table'] .= '</tbody></table>';
-                    }
-                }
-            }
-            $data['message_action'] = Session::get('message_action');
-            Session::forget('message_action');
-            $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
-            if ($query || ! empty($smart_on_fhir)) {
-                $data['content'] = '<div class="list-group">';
-                if ($query) {
-                    foreach ($query as $client) {
-                        $link = '';
-                        if ($pnosh) {
-                            if ($client->client_id == $pnosh->client_id) {
-                                $link = '<span class="label label-success pnosh_link" nosh-link="' . $pnosh_url . '/uma_auth">Go There</span>';
-                            }
-                        }
-                        $data['content'] .= '<a href="' . URL::to('resources') . '/' . $client->client_id . '" class="list-group-item"><img src="' . $client->logo_uri . '" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $client->client_name . '</span>' . $link . '</a>';
-                    }
-                }
-                if (! empty($smart_on_fhir)) {
-                    foreach ($smart_on_fhir as $smart_row) {
-                        $copy_link = '<i class="fa fa-cog fa-lg pnosh_copy_set" hie-val="' . $smart_row['endpoint_uri_raw'] . '" title="Settings" style="cursor:pointer;"></i>';
-                        $fhir_db = DB::table('fhir_clients')->where('endpoint_uri', '=', $smart_row['endpoint_uri_raw'])->first();
-                        if ($fhir_db) {
-                            if ($fhir_db->username !== null && $fhir_db->username !== '') {
-                                $copy_link .= '<span style="margin:10px"></span><i class="fa fa-clone fa-lg pnosh_copy" hie-val="' . $fhir_db->username . '" title="Copy username" style="cursor:pointer;"></i><span style="margin:10px"></span><i class="fa fa-key fa-lg pnosh_copy" hie-val="' . decrypt($fhir_db->password) . '" title="Copy password" style="cursor:pointer;"></i>';
-                            }
-                        } else {
-                            $fhir_data = [
-                                'name' => $smart_row['org_name'],
-                                'endpoint_uri' => $smart_row['endpoint_uri_raw'],
-                            ];
-                            DB::table('fhir_clients')->insert($fhir_data);
-                        }
-                        $data['content'] .= '<a href="' . $smart_row['endpoint_uri'] . '" class="list-group-item list-group-item-success container-fluid" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">SMART-on-FHIR Resource (no refresh token): ' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a>';
-
-                    }
-                }
-                $data['content'] .= '</div>';
-            }
-            return view('home', $data);
         }
+        $data['name'] = Session::get('owner');
+        $data['title'] = 'My Resource Services';
+        $data['content'] = 'No resource services yet.';
+        $data['blockchain_count'] = '0';
+        $data['blockchain_table'] = 'None';
+        // $mdnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', '%mdNOSH%')->first();
+        // if (! $mdnosh) {
+        //     $data['mdnosh'] = true;
+        // }
+        $smart_on_fhir = [];
+        $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
+        if (! $pnosh) {
+            $url0 = URL::to('/') . '/nosh';
+            $ch0 = curl_init();
+            curl_setopt($ch0,CURLOPT_URL, $url0);
+            curl_setopt($ch0,CURLOPT_FAILONERROR,1);
+            curl_setopt($ch0,CURLOPT_FOLLOWLOCATION,1);
+            curl_setopt($ch0,CURLOPT_RETURNTRANSFER,1);
+            curl_setopt($ch0,CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch0,CURLOPT_CONNECTTIMEOUT ,0);
+            $httpCode0 = curl_getinfo($ch0, CURLINFO_HTTP_CODE);
+            curl_close ($ch0);
+            if ($httpCode0 !== 404 && $httpCode0 !== 0) {
+                $data['pnosh'] = true;
+                $data['pnosh_url'] = $url0;
+                $owner = DB::table('owner')->first();
+                setcookie('pnosh_firstname', $owner->firstname);
+                setcookie('pnosh_lastname', $owner->lastname);
+                setcookie('pnosh_dob', date("m/d/Y", strtotime($owner->DOB)));
+                setcookie('pnosh_email', $owner->email);
+                setcookie('pnosh_username', Session::get('username'));
+            }
+        } else {
+            $pnosh_url = $pnosh->client_uri;
+            $url = $pnosh->client_uri . '/smart_on_fhir_list';
+            $ch = curl_init();
+            curl_setopt($ch,CURLOPT_URL, $url);
+            curl_setopt($ch,CURLOPT_FAILONERROR,1);
+            curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+            curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+            curl_setopt($ch,CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
+            $result = curl_exec($ch);
+            curl_close ($ch);
+            $smart_on_fhir = json_decode($result, true);
+            $url1 = $pnosh_url . '/transactions';
+            $ch1 = curl_init();
+            curl_setopt($ch1,CURLOPT_URL, $url1);
+            curl_setopt($ch1,CURLOPT_FAILONERROR,1);
+            curl_setopt($ch1,CURLOPT_FOLLOWLOCATION,1);
+            curl_setopt($ch1,CURLOPT_RETURNTRANSFER,1);
+            curl_setopt($ch1,CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch1,CURLOPT_CONNECTTIMEOUT ,0);
+            $blockchain = curl_exec($ch1);
+            $httpCode = curl_getinfo($ch1, CURLINFO_HTTP_CODE);
+            curl_close ($ch1);
+            if ($httpCode !== 404 && $httpCode !== 0) {
+                $blockchain_arr = json_decode($blockchain, true);
+                $data['blockchain_count'] = $blockchain_arr['count'];
+                if ($blockchain_arr['count'] !== 0) {
+                    $data['blockchain_table'] = '<table class="table table-striped"><thead><tr><th>Date</th><th>Provider</th><th>Transaction Receipt</th></thead><tbody>';
+                    foreach ($blockchain_arr['transactions'] as $blockchain_row) {
+                        $data['blockchain_table'] .= '<tr><td>' . date('Y-m-d', $blockchain_row['date']) . '</td><td>' . $blockchain_row['provider'] . '</td><td><a href="https://rinkeby.etherscan.io/tx/' . $blockchain_row['transaction'] . '" target="_blank">' . $blockchain_row['transaction'] . '</a></td></tr>';
+                    }
+                    $data['blockchain_table'] .= '</tbody></table>';
+                    $data['blockchain_table'] .= '<strong>Top 5 Provider Users</strong>';
+                    $data['blockchain_table'] .= '<table class="table table-striped"><thead><tr><th>Provider</th><th>Number of Transactions</th></thead><tbody>';
+                    foreach ($blockchain_arr['providers'] as $blockchain_row1) {
+                        $data['blockchain_table'] .= '<tr><td>' . $blockchain_row1['provider'] . '</td><td>' . $blockchain_row1['count'] . '</td></tr>';
+                    }
+                    $data['blockchain_table'] .= '</tbody></table>';
+                }
+            }
+        }
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
+        $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
+        if ($query || ! empty($smart_on_fhir)) {
+            $data['content'] = '<div class="list-group">';
+            if ($query) {
+                foreach ($query as $client) {
+                    $link = '';
+                    if ($pnosh) {
+                        if ($client->client_id == $pnosh->client_id) {
+                            $link = '<span class="label label-success pnosh_link" nosh-link="' . $pnosh_url . '/uma_auth">Go There</span>';
+                        }
+                    }
+                    $data['content'] .= '<a href="' . URL::to('resources') . '/' . $client->client_id . '" class="list-group-item"><img src="' . $client->logo_uri . '" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $client->client_name . '</span>' . $link . '</a>';
+                }
+            }
+            if (! empty($smart_on_fhir)) {
+                foreach ($smart_on_fhir as $smart_row) {
+                    $copy_link = '<i class="fa fa-cog fa-lg pnosh_copy_set" hie-val="' . $smart_row['endpoint_uri_raw'] . '" title="Settings" style="cursor:pointer;"></i>';
+                    $fhir_db = DB::table('fhir_clients')->where('endpoint_uri', '=', $smart_row['endpoint_uri_raw'])->first();
+                    if ($fhir_db) {
+                        if ($fhir_db->username !== null && $fhir_db->username !== '') {
+                            $copy_link .= '<span style="margin:10px"></span><i class="fa fa-clone fa-lg pnosh_copy" hie-val="' . $fhir_db->username . '" title="Copy username" style="cursor:pointer;"></i><span style="margin:10px"></span><i class="fa fa-key fa-lg pnosh_copy" hie-val="' . decrypt($fhir_db->password) . '" title="Copy password" style="cursor:pointer;"></i>';
+                        }
+                    } else {
+                        $fhir_data = [
+                            'name' => $smart_row['org_name'],
+                            'endpoint_uri' => $smart_row['endpoint_uri_raw'],
+                        ];
+                        DB::table('fhir_clients')->insert($fhir_data);
+                    }
+                    $data['content'] .= '<a href="' . $smart_row['endpoint_uri'] . '" class="list-group-item list-group-item-success container-fluid" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">SMART-on-FHIR Resource (no refresh token): ' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a>';
+
+                }
+            }
+            $data['content'] .= '</div>';
+        }
+        return view('home', $data);
     }
 
     /**
@@ -469,7 +468,7 @@ class HomeController extends Controller
             } else {
                 Session::put('message_action', 'You updated a resource server named ' . $client->client_name);
             }
-        } else {
+        } elseif ($request->input('submit') == 'deny') {
             if ($type == '') {
                 Session::put('message_action', 'You just unauthorized a resource server named ' . $client->client_name);
                 if (Session::get('oauth_response_type') == 'code') {
@@ -484,6 +483,10 @@ class HomeController extends Controller
                 Session::forget('back');
                 return redirect($route);
             }
+        } else {
+            $data2['authorized'] = 0;
+            DB::table('oauth_clients')->where('client_id', '=', $request->input('client_id'))->update($data2);
+            $this->group_policy($request->input('client_id'), $types, 'delete');
         }
         if (Session::get('oauth_response_type') == 'code') {
             return redirect()->route('authorize');
@@ -709,7 +712,7 @@ class HomeController extends Controller
             // Send email to invitee
             $url = URL::to('accept_invitation') . '/' . $code;
             $query0 = DB::table('oauth_rp')->where('type', '=', 'google')->first();
-            $data2['message_data'] = 'You are invited to the HIE of One Authorization Server for ' . $owner->firstname . ' ' . $owner->lastname . '.<br>';
+            $data2['message_data'] = 'You are invited to the Trustee Authorization Server for ' . $owner->firstname . ' ' . $owner->lastname . '.<br>';
             $data2['message_data'] .= 'Go to ' . $url . ' to get registered.';
             $title = 'Invitation to ' . $owner->firstname . ' ' . $owner->lastname  . "'s Authorization Server";
             $to = $request->input('email');
@@ -817,7 +820,8 @@ class HomeController extends Controller
                 $data1['password'] = sha1($request->input('password'));
                 DB::table('oauth_users')->where('username', '=', Session::get('username'))->update($data1);
                 Session::put('message_action', 'Password changed!');
-                return redirect()->route('home');
+                $this->directory_update_api();
+                return redirect()->route('consent_table');
             } else {
                 return redirect()->back()->withErrors(['tryagain' => 'Your old password was incorrect.  Try again.']);
             }
@@ -1034,6 +1038,7 @@ class HomeController extends Controller
     {
         $as_url = $request->root();
         $owner = DB::table('owner')->first();
+        $user = DB::table('oauth_users')->where('sub', '=', $owner->sub)->first();
         $rs = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
         $rs_arr = [];
         if ($rs) {
@@ -1049,10 +1054,16 @@ class HomeController extends Controller
         $params = [
             'as_uri' => $as_url,
             'redirect_uri' => route('directory_add', ['approve']),
-            'name' => $owner->firstname . ' ' . $owner->lastname,
+            'name' => $user->username,
             'last_update' => time(),
-            'rs' => $rs_arr
+            'rs' => $rs_arr,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'email' => $user->email
         ];
+        if (Session::has('password')) {
+            $params['password'] = Session::get('password');
+        }
         if ($type == 'approve') {
             if (Session::has('directory_uri')) {
                 $directory = [
@@ -1102,14 +1113,17 @@ class HomeController extends Controller
     public function directory_remove(Request $request, $id)
     {
         $directory = DB::table('directories')->where('id', '=', $id)->first();
+        $owner = DB::table('owner')->first();
+		$user = DB::table('oauth_users')->where('sub', '=', $owner->sub)->first();
         $client = DB::table('oauth_clients')->where('client_uri', '=', rtrim($directory->uri, '/'))->first();
         $params['client_id'] = '0';
         if ($client) {
             $params['client_id'] = $client->client_id;
+            $params['name'] = $user->username;
             DB::table('oauth_clients')->where('client_id', '=', $client_id)->delete();
         }
         $url = rtrim($directory->uri, '/');
-        $response = $this->directory_api($url, $params, 'directory_update', $directory->directory_id);
+        $response = $this->directory_api($url, $params, 'directory_remove', $directory->directory_id);
         if ($response['arr']['message'] == 'Directory removed') {
             DB::table('directories')->where('id', '=', $id)->delete();
         }
@@ -1119,59 +1133,60 @@ class HomeController extends Controller
 
     public function directory_update(Request $request)
     {
-        $as_url = $request->root();
-        $owner = DB::table('owner')->first();
-        $rs = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
-        $rs_arr = [];
-        if ($rs) {
-            foreach ($rs as $rs_row) {
-                $rs_arr[] = [
-                    'name' => $rs_row->client_name,
-                    'uri' => $rs_row->client_uri,
-                    'public' => $rs_row->consent_public_publish_directory,
-                    'private' => $rs_row->consent_private_publish_directory
-                ];
-            }
-        }
-        $params = [
-            'as_uri' => $as_url,
-            'name' => $owner->firstname . ' ' . $owner->lastname,
-            'last_update' => time(),
-            'rs' => $rs_arr
-        ];
-        $query = DB::table('directories')->get();
+        $response = $this->directory_update_api();
         $response1 = '<ul>';
-        if ($query) {
-            foreach ($query as $directory) {
-                $url = rtrim($directory->uri, '/');
-                $response = $this->directory_api($url, $params, 'directory_update', $directory->directory_id);
-                $response1 = $directory->name . ': ' . $response['arr']['message'];
+        if (count($response) > 0) {
+            foreach ($response as $row) {
+                $response1 .= '<li>' . $row . '</li>';
             }
         }
-        $response1 .= '</ul'>
+        $response1 .= '</ul>';
         Session::put('message_action', $repsonse1);
         return redirect()->route('directories');
     }
 
     public function consent_table(Request $request)
     {
+        if (Session::get('is_owner') == 'no') {
+            return redirect()->route('welcome');
+        }
         $data['message_action'] = Session::get('message_action');
         $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
         $policy_labels = [
-            'public_publish_directory' => 'Public in HIE of One Directory',
-            'private_publish_directory' => 'Private in HIE of One Directory',
-            'any_npi' => 'Verfied Clnicians Only',
-            'ask_me' => 'Ask Me',
-            'root_support' => 'Root Support',
-            'patient_user' => 'Patient'
+            'public_publish_directory' => [
+                'label' => 'Public in HIE of One Directory',
+                'info' => 'Any party that has access to a Directory that you participate in can see where this resource is found.'
+            ],
+            'private_publish_directory' => [
+                'label' => 'Private in HIE of One Directory',
+                'info' => 'Only previously authorized users that has access to a Directory that you participate in can see where this resource is found.'
+            ],
+            'any_npi' => [
+                'label' => 'Verfied Clnicians Only',
+                'info' => 'By setting this as a default, you allow any healthcare provider with a National Provider Identifier (NPI), known or unknown at any given time to access and edit your protected health information.'
+            ],
+            'ask_me' => [
+                'label' => 'Ask Me',
+                'info' => 'Ask Me'
+            ],
+            'root_support' => [
+                'label' => 'Root Support',
+                'info' => 'Support from your Trustee Directory in case you have difficulties with your authorization server.'
+            ],
+            'patient_user' => [
+                'label' => 'Patient',
+                'info' => 'It must be you!'
+            ]
         ];
         $policy_arr = [];
         $data['title'] = 'Consent Table';
-        $data['content'] = '<table class="table table-striped"><thead><tr><th><div><span>Resource</span></div></th>';
+        $data['content'] = '<div class="alert alert-success">Click on a <i class="fa fa-check fa-lg" style="color:green;"></i> or <i class="fa fa-times fa-lg" style="color:red;"></i> to change the policy.  Click on a policy name for for information about the policy.</div>';
+        $data['content'] .= '<table class="table table-striped"><thead><tr><th><div><span>Resource</span></div></th>';
         foreach ($policy_labels as $policy_label_k => $policy_label_v) {
-            $data['content'] .= '<th><div><span>' . $policy_label_v . '</span></div></th>';
+            $data['content'] .= '<th><div class="as-info" as-info="' . $policy_label_v['info'] . '"><span>' . $policy_label_v['label'] . '</span></div></th>';
             $policy_arr[] = $policy_label_k;
         }
+        $data['content'] .= '<th><div class="as-info" as-info="Last time when the resource server was accessed by any client."><span>Last Accessed</span></div></th>';
         $data['content'] .= '</tr></thead><tbody><tr>';
         if ($query) {
             foreach ($query as $client) {
@@ -1181,32 +1196,52 @@ class HomeController extends Controller
                     $consent = 'consent_' . $default_policy_type;
                     if (isset($client->{$consent})) {
                         if ($client->{$consent} == 1) {
-                            $data['content'] .= '<td><i class="fa fa-check fa-lg" style="color:green;"></i></td>';
+                            $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->{$consent}, $default_policy_type]) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a></td>';
                         } else {
-                            $data['content'] .= '<td><i class="fa fa-times fa-lg" style="color:red;"></i></td>';
+                            $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->{$consent}, $default_policy_type]) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
                         }
                     } else  {
                         if ($default_policy_type == 'patient_user') {
-                            $data['content'] .= '<td><i class="fa fa-check fa-lg" style="color:green;"></i></td>';
+                            $data['content'] .= '<td><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
                         } elseif ($default_policy_type == 'root_support') {
-                            $data['content'] .= '<td><i class="fa fa-times fa-lg" style="color:red;"></i></td>';
+                            $data['content'] .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
                         } else {
                             $data['content'] .= '<td></td>';
                         }
                     }
                 }
+                if ($client->last_access !== null) {
+                    $data['content'] .= '<td>' . date('Y-m-d H:i:s', $client->last_access) . '</td>';
+                } else {
+                    $data['content'] .= '<td></td>';
+                }
                 $data['content'] .= '</tr>';
             }
         }
+        $data['content'] .= '<tr><td><a href="' . url('/') . '/nosh/fhir_connect" target="_blank">Connect to your hospital EHR Account</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+        $data['content'] .= '<tr><td><a href="' . url('/') . '/nosh/cms_bluebutton" target"_blank">Connect to your Medicare Benefits Account</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+        $data['content'] .= '<tr><td><a href="#" class="as-info" as-info="Coming Soon!">Connect to additional resources</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
         $data['content'] .= '</tbody></table>';
         Session::put('back', $request->fullUrl());
         return view('home', $data);
     }
 
-    public function consent_edit(Request $request, $id)
+    public function consent_edit(Request $request, $id, $toggle='', $policy='')
     {
-        Session::put('current_client_id', $id);
-        return redirect()->route('consents_resource_server');
+        if ($toggle == '') {
+            Session::put('current_client_id', $id);
+            return redirect()->route('consents_resource_server');
+        }
+        $types = [];
+        if ($toggle == 0) {
+            $data['consent_' .$policy] = 1;
+            $types[] = $policy;
+        } else {
+            $data['consent_' .$policy] = 0;
+        }
+        DB::table('oauth_clients')->where('client_id', '=', $id)->update($data);
+        $this->group_policy($id, $types, 'update');
+        return redirect()->route('consent_table');
     }
 
     public function setup_mail(Request $request)
@@ -1324,7 +1359,7 @@ class HomeController extends Controller
                 return view('setup_mail', $data2);
             }
         } else {
-            return redirect()->route('home');
+            return redirect()->route('consent_table');
         }
     }
 
@@ -1341,6 +1376,6 @@ class HomeController extends Controller
             return redirect()->route('setup_mail');
         }
         Session::put('message_action', $message_action);
-        return redirect()->route('home');
+        return redirect()->route('consent_table');
     }
 }

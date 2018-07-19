@@ -96,7 +96,11 @@
 						<div class="form-group">
 							<div class="col-md-6 col-md-offset-3">
 								<button type="submit" class="btn btn-success btn-block" name="submit" value="allow">
-									<i class="fa fa-btn fa-check"></i> Allow Registration
+									@if (isset($set))
+										<i class="fa fa-btn fa-check"></i> Save
+									@else
+										<i class="fa fa-btn fa-check"></i> Allow Registration
+									@endif
 								</button>
 								<button type="submit" class="btn btn-danger btn-block" name="submit" value="deny">
 									@if (isset($set))
@@ -105,6 +109,11 @@
 										<i class="fa fa-btn fa-times"></i> Cancel Registration
 									@endif
 								</button>
+								@if (isset($set))
+								<button type="submit" class="btn btn-warning btn-block" id="disconnect" name="submit" value="disconnect">
+									<i class="fa fa-btn fa-chain-broken"></i> Disconnect Resource
+								</button>
+								@endif
 							</div>
 						</div>
 					</form>
@@ -118,6 +127,14 @@
 @section('view.scripts')
 <script type="text/javascript">
 	$(document).ready(function() {
+		$('#disconnect').css('cursor', 'pointer').click(function() {
+			var r = confirm('Are you sure you want to disconnect this resource?');
+			if (r === true) {
+				return true;
+			} else {
+				return false;
+			}
+		});
 	});
 </script>
 @endsection

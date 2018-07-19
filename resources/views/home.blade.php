@@ -3,7 +3,7 @@
 @section('view.stylesheet')
 	<link rel="stylesheet" href="{{ asset('assets/css/toastr.min.css') }}">
 	<style>
-	
+
 	</style>
 @endsection
 
@@ -185,6 +185,14 @@
 			$('#endpoint_uri').val('');
 		});
 		$('[data-toggle="tooltip"]').tooltip();
+		$('.no-edit').click(function(){
+			toastr.error('You cannot change this policy.');
+		});
+		$('.as-info').click(function(){
+			event.preventDefault();
+			var info = $(this).attr('as-info');
+			toastr.info(info);
+		});
 	});
 </script>
 @endsection

@@ -69,7 +69,7 @@
 							<label for="password" class="col-md-4 control-label">Password</label>
 
 							<div class="col-md-6">
-								<input id="password" type="password" class="form-control" name="password" data-toggle="tooltip" title="Demo Password: demo">
+								<input id="password" type="password" class="form-control" name="password" data-toggle="tooltip" title="{{ $demo_password }}">
 
 								@if ($errors->has('password'))
 									<span class="help-block">
@@ -107,17 +107,9 @@
 								<button type="button" class="btn btn-primary btn-block" id="connectUportBtn1">Add NPI credential to uPort using Doximity Verification</button>
 								<!-- <button type="button" class="btn btn-primary btn-block" id="connectUportBtn1" onclick="uportConnect()">Connect uPort</button> -->
 								<!-- <button type="button" class="btn btn-primary btn-block" id="connectUportBtn2" onclick="sendEther()">Send Ether</button> -->
-								<!-- <a class="btn btn-primary btn-block" href="{{ url('/mdnosh') }}">
-									<i class="fa fa-btn fa-openid"></i> Login with mdNOSH
-								</a> -->
 								@if (isset($google))
 									<a class="btn btn-primary btn-block" href="{{ url('/google') }}">
 										<i class="fa fa-btn fa-google"></i> Login with Google
-									</a>
-								@endif
-								@if (isset($twitter))
-									<a class="btn btn-primary btn-block" href="{{ url('/twitter') }}">
-										<i class="fa fa-btn fa-twitter"></i> Login with Twitter
 									</a>
 								@endif
 							</div>

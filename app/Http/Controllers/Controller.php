@@ -376,6 +376,47 @@ class Controller extends BaseController
 		return $response;
 	}
 
+	protected function directory_update_api(Request $request)
+    {
+        $as_url = url('/');
+        $owner = DB::table('owner')->first();
+		$user = DB::table('oauth_users')->where('sub', '=', $owner->sub)->first();
+        $rs = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
+        $rs_arr = [];
+        if ($rs) {
+            foreach ($rs as $rs_row) {
+                $rs_arr[] = [
+                    'name' => $rs_row->client_name,
+                    'uri' => $rs_row->client_uri,
+                    'public' => $rs_row->consent_public_publish_directory,
+                    'private' => $rs_row->consent_private_publish_directory
+                ];
+            }
+        }
+		$params = [
+            'as_uri' => $as_url,
+            'name' => $user->username,
+            'last_update' => time(),
+            'rs' => $rs_arr,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+			'email' => $user->email
+        ];
+		if (Session::has('password')) {
+            $params['password'] = Session::get('password');
+        }
+        $query = DB::table('directories')->get();
+        $response1 = [];
+        if ($query) {
+            foreach ($query as $directory) {
+                $url = rtrim($directory->uri, '/');
+                $response = $this->directory_api($url, $params, 'directory_update', $directory->directory_id);
+                $response1[] = $directory->name . ': ' . $response['arr']['message'];
+            }
+        }
+        return $response1;
+    }
+
 	/**
 	* SMS notifcation with TextBelt
 	*

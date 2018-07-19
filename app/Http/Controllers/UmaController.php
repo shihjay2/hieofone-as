@@ -81,6 +81,7 @@ class UmaController extends Controller
             $data['allow_introspection'] = 1;
             // Make sure authorization owner knows that a resource server is being registered and needs authorization
             $data['authorized'] = 0;
+            $data['last_access'] = time();
         } else {
             $data['allow_introspection'] = 0;
         }
@@ -90,20 +91,23 @@ class UmaController extends Controller
             'client_secret' => $clientSecret,
             'client_id_issued_at' => time()
         ];
-        // Email notification to owner to authorize the client or resource server
-        if ($uma_protection == true) {
-            $data1['message_data'] = 'You have a new resource server awaiting authorization on your HIE of One Authorization Server.  ';
-            $data1['message_data'] .= 'Go to ' . URL::to('authorize_resource_server') . '/ to review and authorize.';
-            $title = 'New Resource server Registered';
-        } else {
-            $data1['message_data'] = 'You have a new client awaiting authorization on your HIE of One Authorization Server.  ';
-            $data1['message_data'] .= 'Go to ' . URL::to('authorize_client') . '/ to review and authorize.';
-            $title = 'New Client Registered';
-        }
-        $to = $owner->email;
-        $this->send_mail('auth.emails.generic', $data1, $title, $to);
-        if ($owner->mobile != '') {
-            $this->textbelt($owner->mobile, $data1['message_data']);
+        // Email notification to owner to authorize the client or resource server except pNOSH
+        $client_name_arr = explode(' ', $request->input('client_name'));
+        if ($client_name_arr[0] . $client_name_arr[1] !== 'PatientNOSH') {
+            if ($uma_protection == true) {
+                $data1['message_data'] = 'You have a new resource server awaiting authorization on your Trustee Authorization Server.  ';
+                $data1['message_data'] .= 'Go to ' . URL::to('authorize_resource_server') . '/ to review and authorize.';
+                $title = 'New Resource Server Registered';
+            } else {
+                $data1['message_data'] = 'You have a new client awaiting authorization on your Trustee Authorization Server.  ';
+                $data1['message_data'] .= 'Go to ' . URL::to('authorize_client') . '/ to review and authorize.';
+                $title = 'New Client Registered';
+            }
+            $to = $owner->email;
+            $this->send_mail('auth.emails.generic', $data1, $title, $to);
+            if ($owner->mobile != '') {
+                $this->textbelt($owner->mobile, $data1['message_data']);
+            }
         }
         return $response;
     }
@@ -278,6 +282,9 @@ class UmaController extends Controller
                                                 'last_activity' => time()
                                             ];
                                             DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->update($data1);
+                                            // Set last access for resource servers
+                                            $rs_data['last_access'] = time();
+                                            DB::table('oauth_clients')->where('client_id', '=', $rs_query2->client_id)->update($rs_data);
                                             $params['authorization_state'] = 'claims_submitted';
                                         } else {
                                             // No matching claim, not authorized$params['authorization_state'] = 'not_authorized';
