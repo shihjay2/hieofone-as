@@ -299,7 +299,24 @@ class OauthController extends Controller
                         'password' => $request->input('password')
                     ];
                     Session::put('install_redirect', 'yes');
-                    Session::put('mailgun_secret', $mailgun_secret);
+                    if ($pnosh_exists == true) {
+                        $params1 = [
+                            'username' => 'admin',
+                            'password' => $request->input('password'),
+                            'firstname' => $request->input('first_name'),
+                            'lastname' => $request->input('last_name'),
+                            'address' => $request->input('address'),
+                            'city' => $request->input('city'),
+                            'state' => $request->input('state'),
+                            'zip' => $request->input('zip'),
+                            'DOB' => $request->input('date_of_birth'),
+                            'gender' => $request->input('gender'),
+                            'pt_username' => $request->input('username'),
+                            'email' => $request->input('email'),
+                            'mailgun_secret' => $mailgun_secret
+                        ];
+                        Session::put('pnosh_params', $params1);
+                    }
                     $root_domain = 'https://dir.' . $final_root_url;
                     Session::put('directory_uri', $root_domain);
                     $response = $this->directory_api($root_domain, $params);
@@ -353,25 +370,10 @@ class OauthController extends Controller
         } else {
             if (Session::has('install_redirect')) {
                 Session::forget('install_redirect');
-                $mailgun_secret = Session::get('mailgun_secret');
-                Session::forget('mailgun_secret');
                 if ($pnosh_exists == true) {
                     $url0 = URL::to('/') . '/nosh';
-                    $params1 = [
-                        'username' => 'admin',
-                        'password' => $request->input('password'),
-                        'firstname' => $request->input('first_name'),
-                        'lastname' => $request->input('last_name'),
-                        'address' => $request->input('address'),
-                        'city' => $request->input('city'),
-                        'state' => $request->input('state'),
-                        'zip' => $request->input('zip'),
-                        'DOB' => $request->input('date_of_birth'),
-                        'gender' => $request->input('gender'),
-                        'pt_username' => $request->input('username'),
-                        'email' => $request->input('email'),
-                        'mailgun_secret' => $mailgun_secret
-                    ];
+                    $params1 = Session::get('pnosh_params');
+                    Session::forget('pnosh_params');
                     $post_body1 = json_encode($params1);
                     $content_type1 = 'application/json';
                     $ch1 = curl_init();
