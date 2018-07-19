@@ -99,6 +99,11 @@ class OauthController extends Controller
     {
         // Check if already installed, if so, go back to home page
         $query = DB::table('owner')->first();
+        $pnosh_exists = false;
+        if (File::exists('/noshdocuments/nosh2/.env')) {
+            $pnosh_exists = true;
+        }
+        $pnosh_exists = true;
         // if ($query) {
         if (! $query) {
             $as_url = $request->root();
@@ -113,11 +118,6 @@ class OauthController extends Controller
                 File::put(base_path() . "/.version", $result[0]['sha']);
             }
             // $update = $this->update_system('', true);
-            $pnosh_exists = false;
-            if (File::exists('/noshdocuments/nosh2/.env')) {
-                $pnosh_exists = true;
-            }
-            $pnosh_exists = true;
             // Is this from a submit request or not
             if ($request->isMethod('post')) {
                 if (Session::has('search_as')) {
@@ -273,6 +273,15 @@ class OauthController extends Controller
                         }
                     }
                     // Add to directory
+                    Session::put('install_redirect', 'yes');
+                    $root_domain = 'https://dir.' . $final_root_url;
+                    Session::put('directory_uri', $root_domain);
+                    $response = $this->directory_api($root_domain, $params);
+                    if ($response['status'] == 'error') {
+                        return $response['message'];
+                    } else {
+                        return redirect($response['arr']['uri']);
+                    }
                 }
                 // Register oauth for Google and Twitter
                 // $google_data = [
@@ -295,6 +304,29 @@ class OauthController extends Controller
                 // Go register with Google to get refresh token for email setup
                 // return redirect()->route('installgoogle');
                 // Check if pNOSH associated in same domain as this authorization server and begin installation there
+            } else {
+                if ($final_root_url == 'hieofone.org') {
+                    $search_url = 'https://dir.' . $final_root_url . '/check_as';
+                    $ch2 = curl_init($search_url);
+                    curl_setopt($ch2, CURLOPT_TIMEOUT, 10);
+                    curl_setopt($ch2, CURLOPT_CONNECTTIMEOUT, 10);
+                    curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+                    $search_arr = curl_exec($ch2);
+                    $httpcode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+                    curl_close($ch2);
+                    if($httpcode=200){
+                        Session::put('search_as', json_decode($search_arr, true));
+                    }
+                }
+                $data2['noheader'] = true;
+                if ($pnosh_exists == true) {
+                    $data2['pnosh'] = true;
+                }
+                return view('install', $data2);
+            }
+        } else {
+            if (Session::has('install_redirect')) {
+                Session::forget('install_redirect');
                 if ($pnosh_exists == true) {
                     $url0 = URL::to('/') . '/nosh';
                     $params1 = [
@@ -342,25 +374,6 @@ class OauthController extends Controller
                 } else {
                     return redirect()->route('consent_table');
                 }
-            } else {
-                if ($final_root_url == 'hieofone.org') {
-                    $search_url = 'https://dir.' . $final_root_url . '/check_as';
-                    $ch2 = curl_init($search_url);
-                    curl_setopt($ch2, CURLOPT_TIMEOUT, 10);
-                    curl_setopt($ch2, CURLOPT_CONNECTTIMEOUT, 10);
-                    curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
-                    $search_arr = curl_exec($ch2);
-                    $httpcode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
-                    curl_close($ch2);
-                    if($httpcode=200){
-                        Session::put('search_as', json_decode($search_arr, true));
-                    }
-                }
-                $data2['noheader'] = true;
-                if ($pnosh_exists == true) {
-                    $data2['pnosh'] = true;
-                }
-                return view('install', $data2);
             }
         }
         return redirect()->route('consent_table');

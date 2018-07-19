@@ -1073,6 +1073,9 @@ class HomeController extends Controller
                 ];
                 DB::table('directories')->insert($directory);
                 Session::forget('directory_uri');
+                if (Session::has('install_redirect')) {
+                    return redirect()->route('install');
+                }
                 Session::put('message_action', $request->input('name') . ' added');
                 return redirect()->route('directories');
             } else {
