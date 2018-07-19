@@ -349,9 +349,9 @@ class OauthController extends Controller
                     curl_setopt($ch2, CURLOPT_TIMEOUT, 10);
                     curl_setopt($ch2, CURLOPT_CONNECTTIMEOUT, 10);
                     curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
-                    $search_arr = curl_exec($ch);
-                    $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                    curl_close($ch);
+                    $search_arr = curl_exec($ch2);
+                    $httpcode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+                    curl_close($ch2);
                     if($httpcode=200){
                         Session::put('search_as', json_decode($search_arr, true));
                     }
