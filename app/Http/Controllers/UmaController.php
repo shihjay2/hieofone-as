@@ -93,20 +93,22 @@ class UmaController extends Controller
         ];
         // Email notification to owner to authorize the client or resource server except pNOSH
         $client_name_arr = explode(' ', $request->input('client_name'));
-        if ($client_name_arr[0] . $client_name_arr[1] !== 'PatientNOSH') {
-            if ($uma_protection == true) {
-                $data1['message_data'] = 'You have a new resource server awaiting authorization on your Trustee Authorization Server.  ';
-                $data1['message_data'] .= 'Go to ' . URL::to('authorize_resource_server') . '/ to review and authorize.';
-                $title = 'New Resource Server Registered';
-            } else {
-                $data1['message_data'] = 'You have a new client awaiting authorization on your Trustee Authorization Server.  ';
-                $data1['message_data'] .= 'Go to ' . URL::to('authorize_client') . '/ to review and authorize.';
-                $title = 'New Client Registered';
-            }
-            $to = $owner->email;
-            $this->send_mail('auth.emails.generic', $data1, $title, $to);
-            if ($owner->mobile != '') {
-                $this->textbelt($owner->mobile, $data1['message_data']);
+        if ($data['authorized'] == 0) {
+            if ($client_name_arr[0] . $client_name_arr[1] !== 'PatientNOSH') {
+                if ($uma_protection == true) {
+                    $data1['message_data'] = 'You have a new resource server awaiting authorization on your Trustee Authorization Server.  ';
+                    $data1['message_data'] .= 'Go to ' . URL::to('authorize_resource_server') . '/ to review and authorize.';
+                    $title = 'New Resource Server Registered';
+                } else {
+                    $data1['message_data'] = 'You have a new client awaiting authorization on your Trustee Authorization Server.  ';
+                    $data1['message_data'] .= 'Go to ' . URL::to('authorize_client') . '/ to review and authorize.';
+                    $title = 'New Client Registered';
+                }
+                $to = $owner->email;
+                $this->send_mail('auth.emails.generic', $data1, $title, $to);
+                if ($owner->mobile != '') {
+                    $this->textbelt($owner->mobile, $data1['message_data']);
+                }
             }
         }
         return $response;

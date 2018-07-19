@@ -298,6 +298,7 @@ class OauthController extends Controller
                         'email' => $new_user->email
                     ];
                     Session::put('install_redirect', 'yes');
+                    Session::put('mailgun_secret', $mailgun_secret);
                     $root_domain = 'https://dir.' . $final_root_url;
                     Session::put('directory_uri', $root_domain);
                     $response = $this->directory_api($root_domain, $params);
@@ -351,6 +352,8 @@ class OauthController extends Controller
         } else {
             if (Session::has('install_redirect')) {
                 Session::forget('install_redirect');
+                $mailgun_secret = Session::get('mailgun_secret');
+                Session::forget('mailgun_secret');
                 if ($pnosh_exists == true) {
                     $url0 = URL::to('/') . '/nosh';
                     $params1 = [
