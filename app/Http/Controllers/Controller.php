@@ -343,7 +343,7 @@ class Controller extends BaseController
 		if ($httpCode !== 404 && $httpCode !== 0) {
 			Session::put('directory_uri', $pre_url . '/');
 			$endpoint = $pre_url . '/'. $action;
-			if ($action == 'directory_update') {
+			if ($action == 'directory_update' || $action == 'directory_remove') {
 				$endpoint .= '/' . $id;
 			}
 			$post_body = json_encode($params);

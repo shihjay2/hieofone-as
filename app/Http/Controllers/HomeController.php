@@ -415,6 +415,47 @@ class HomeController extends Controller
         Session::forget('message_action');
         $query = DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->first();
         if ($query) {
+            $client_name_arr = explode(' ', $query->client_name);
+            if ($client_name_arr[0] . $client_name_arr[1] == 'PatientNOSH' && Session::get('oauth_response_type') == 'code') {
+                $as_url = $request->root();
+                $as_url = str_replace(array('http://','https://'), '', $as_url);
+                $root_url = explode('/', $as_url);
+                $root_url1 = explode('.', $root_url[0]);
+                if (isset($root_url1[1])) {
+                    $final_root_url = $root_url1[1] . '.' . $root_url1[2];
+                } else {
+                    $final_root_url = $root_url[0];
+                }
+                $dir_uri = 'https://dir.' . $final_root_url;
+                $directory = DB::table('oauth_clients')->where('client_uri', '=', $dir_uri)->first();
+                if ($directory) {
+                    $response = $this->directory_api($dir_uri, $params, 'directory_default_policy_type');
+                    if ($response['status'] !== 'error') {
+                        // if own pNOSH - skip this step;
+                        $default_policy_types = $this->default_policy_type();
+                        $types = [];
+                        foreach ($response['arr'] as $default_policy_type_k => $default_policy_type_v) {
+                            $consent = 'consent_' . $default_policy_type_k;
+                            $data1[$consent] = $default_policy_type_v;
+                            $data2[$default_policy_type_k] = $default_policy_type_v;
+                            if ($default_policy_type_v == 1) {
+                                $types[] = $default_policy_type_k;
+                            }
+                        }
+                        $data1['authorized'] = 1;
+                        $user_array = explode(' ', $query->user_id);
+                        $user_array[] = Session::get('username');
+                        $data1['user_id'] = implode(' ', $user_array);
+                        Session::put('is_authorized', 'true');
+                        DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->update($data1);
+                        $this->group_policy($request->input('client_id'), $types, 'update');
+                        $owner = DB::table('owner')->first();
+                        DB::table('owner')->where('id', '=', $owner->id)->update($data2);
+                        // Session::put('message_action', 'You just authorized a resource server named ' . $query->client_name);
+                        return redirect()->route('authorize');
+                    }
+                }
+            }
             $scopes_array = explode(' ', $query->scope);
             if ($query->logo_uri == '') {
                 $data['content'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';

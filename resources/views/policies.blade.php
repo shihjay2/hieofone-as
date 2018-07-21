@@ -22,6 +22,28 @@
 								</div>
 							</div>
 						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
+									<label><input type="checkbox" name="public_publish_directory" {!! $public_publish_directory !!}> Anyone can see where this resource is located in a Directory</label>
+									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#public_publish_directory_detail" style="margin-left:20px">Details</button>
+								</div>
+								<div id="public_publish_directory_detail" class="collapse">
+									<p>Any party that has access to a Directory that you participate in can see where this resource is found.</p>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
+									<label><input type="checkbox" name="private_publish_directory" {!! $private_publish_directory !!}> Only previously authorized users can see where this resource is located in a Directory</label>
+									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#private_publish_directory_detail" style="margin-left:20px">Details</button>
+								</div>
+								<div id="private_publish_directory_detail" class="collapse">
+									<p>Only previously authorized users that has access to a Directory that you participate in can see where this resource is found.</p>
+								</div>
+							</div>
+						</div>
 
 						<!-- <div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
