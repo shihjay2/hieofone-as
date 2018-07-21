@@ -11,6 +11,8 @@ HIE=$WEB/hieofone-as
 SSLCRON=/etc/cron.d/certbot
 NOSH_DIR=/noshdocuments
 NEWNOSH=$NOSH_DIR/nosh2
+WEB_GROUP=www-data
+WEB_USER=www-data
 
 generate_post_data()
 {
@@ -34,6 +36,10 @@ read -e -p "Enter email address: " -i "" EMAIL
 read -e -p "Enter the domain name (example.com): " -i "" DOMAIN
 
 USERNAME=$(echo "$EMAIL" | cut -d@ -f1)
+touch $HIE/.email
+chown $WEB_GROUP.$WEB_USER $HIE/.email
+chmod 755 $HIE/.email
+echo $EMAIL >> $HIE/.email
 
 if [[ ! -z $DOMAIN ]]; then
 	cd /usr/local/bin
@@ -73,7 +79,7 @@ if [[ ! -z $DOMAIN ]]; then
 </IfModule>
 <Directory $HIE/public>
 	Options Indexes FollowSymLinks MultiViews
-	AllowOverride All"
+	AllowOverride None"
 	if [ "$APACHE_VER" = "4" ]; then
 		AS_APACHE_CONF="$AS_APACHE_CONF
 		Require all granted"

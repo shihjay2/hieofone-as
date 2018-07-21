@@ -1193,7 +1193,12 @@ class HomeController extends Controller
         $data['content'] .= '</tr></thead><tbody><tr>';
         if ($query) {
             foreach ($query as $client) {
-                $data['content'] .= '<tr><td><a href="'. route('consent_edit', [$client->client_id]) . '">' . $client->client_name . '</a></td>';
+                $data['content'] .= '<tr><td><a href="'. route('consent_edit', [$client->client_id]) . '">' . $client->client_name . '</a>';
+                $client_name_arr = explode(' ', $client->client_name);
+                if ($client_name_arr[0] . $client_name_arr[1] == 'PatientNOSH') {
+                    $data['content'] .= '<br><span class="label label-success pnosh_link" nosh-link="' . $client->client_uri . '/uma_auth">Go There</span>';
+                }
+                $data['content'] .= '</td>';
                 foreach ($policy_arr as $default_policy_type) {
                     $data[$default_policy_type] = '';
                     $consent = 'consent_' . $default_policy_type;

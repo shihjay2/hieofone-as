@@ -58,7 +58,8 @@ fi
 read -e -p "Enter your registered URL: " -i "" URL
 
 # Install PHP and MariaDB
-apt-get -y install software-properties-common build-essential binutils-doc git subversion bc apache2 php php-cli php-common php-curl php-gd php-imagick php-imap php-mbstring php-mysql php-pear php-soap php-ssh2 php-xml php-zip libapache2-mod-php libdbi-perl libdbd-mysql-perl libssh2-1-dev imagemagick openssh-server pwgen
+apt-get update
+apt-get -y install software-properties-common build-essential binutils-doc git subversion bc apache2 php php-cli php-common php-curl php-gd php-imagick php-imap php-mbstring php-mysql php-pear php-soap php-ssh2 php-xml php-zip libapache2-mod-php libdbi-perl libdbd-mysql-perl libssh2-1-dev imagemagick openssh-server pwgen jq
 export DEBIAN_FRONTEND=noninteractive
 # Randomly generated password for MariaDB
 MYSQL_PASSWORD=`pwgen -s 40 1`
@@ -120,6 +121,9 @@ sed -i '/^DB_PASSWORD=/s/=.*/='"$MYSQL_PASSWORD"'/' .env
 openssl genrsa -out $PRIVKEY 2048
 openssl rsa -in $PRIVKEY -pubout -out $PUBKEY
 chown -R $WEB_GROUP.$WEB_USER $HIE
+SHA=$(curl -s 'https://api.github.com/repos/shihjay2/hieofone-as/commits' | jq -r '.[0] .sha')
+touch $HIE/.version
+echo $SHA >> $HIE/.version
 chmod -R 755 $HIE
 chmod -R 777 $HIE/storage
 chmod -R 777 $HIE/public
@@ -258,7 +262,9 @@ GOOGLE_KEY=yourkeyfortheservice
 GOOGLE_SECRET=yoursecretfortheservice
 GOOGLE_REDIRECT_URI=https://example.com/login
 " >> $ENV
-
+SHA1=$(curl -s 'https://api.github.com/repos/shihjay2/nosh2/commits' | jq -r '.[0] .sha')
+touch $NEWNOSH/.version
+echo $SHA1 >> $NEWNOSH/.version
 chown -R $WEB_GROUP.$WEB_USER $NEWNOSH
 chmod -R 755 $NEWNOSH
 chmod -R 777 $NEWNOSH/storage

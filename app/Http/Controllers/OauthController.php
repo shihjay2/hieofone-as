@@ -103,14 +103,18 @@ class OauthController extends Controller
         if (File::exists('/noshdocuments/nosh2/.env')) {
             $pnosh_exists = true;
         }
-        $pnosh_exists = true;
+        // $pnosh_exists = true;
         // if ($query) {
         if (! $query) {
             $as_url = $request->root();
             $as_url = str_replace(array('http://','https://'), '', $as_url);
             $root_url = explode('/', $as_url);
             $root_url1 = explode('.', $root_url[0]);
-            $final_root_url = $root_url1[1] . '.' . $root_url1[2];
+            if (isset($root_url1[1])) {
+                $final_root_url = $root_url1[1] . '.' . $root_url1[2];
+            } else {
+                $final_root_url = $root_url[0];
+            }
             // Tag version number for baseline prior to updating system in the future
             if (!File::exists(base_path() . "/.version")) {
                 // First time after install
@@ -157,7 +161,7 @@ class OauthController extends Controller
                 }
                 $this->validate($request, $val_arr);
                 if (in_array($request->input('username'), $search_as)) {
-                    return redirect()->back()->withErrors(['username' => 'Username already exists in the Directory.  Try again']);
+                    return redirect()->back()->withErrors(['username' => 'Username already exists in the Directory.  Try again'])->withInput();
                 }
                 // Register user
                 $sub = $this->gen_uuid();
@@ -362,8 +366,12 @@ class OauthController extends Controller
                     }
                 }
                 $data2['noheader'] = true;
+                $data2['email_default'] = '';
                 if ($pnosh_exists == true) {
                     $data2['pnosh'] = true;
+                }
+                if (File::exists(base_path() . "/.email")) {
+                    $data2['email_default'] = File::get(base_path(). "/.email");
                 }
                 return view('install', $data2);
             }
@@ -1312,7 +1320,14 @@ class OauthController extends Controller
                         Session::put('oauth_nonce', $request->input('nonce'));
                         Session::put('oauth_state', $request->input('state'));
                         Session::put('oauth_scope', $request->input('scope'));
-                        return redirect()->route('authorize_resource_server');
+                        $scopes = $request->input('scope');
+                        $scopes_array = explode(' ', $scopes);
+                        // check if this client is a resource server
+                        if (in_array('uma_protection', $scopes_array)) {
+                            return redirect()->route('authorize_resource_server');
+                        } else {
+                            return redirect()->route('login_authorize');
+                        }
                     } else {
                         // Somehow, this is a registered user, but not the owner, and is using an unauthorized client - logout and return back to login screen
                         Session::flush();
