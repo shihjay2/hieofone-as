@@ -362,9 +362,9 @@ class Controller extends BaseController
 			curl_setopt($ch1, CURLOPT_TIMEOUT, 60);
 			curl_setopt($ch1, CURLOPT_CONNECTTIMEOUT ,0);
 			$output = curl_exec($ch1);
-			curl_close ($ch1);
 			$response['status'] = 'OK';
 			$response['arr'] = json_decode($output, true);
+			curl_close ($ch1);
 		} else {
 			$response['status'] = 'error';
 			if ($action == 'directory_registration') {
