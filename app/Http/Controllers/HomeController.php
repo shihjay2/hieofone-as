@@ -429,6 +429,7 @@ class HomeController extends Controller
                 $dir_uri = 'https://dir.' . $final_root_url;
                 $directory = DB::table('oauth_clients')->where('client_uri', '=', $dir_uri)->first();
                 if ($directory) {
+                    $params = [];
                     $response = $this->directory_api($dir_uri, $params, 'directory_default_policy_type');
                     if ($response['status'] !== 'error') {
                         // if own pNOSH - skip this step;
