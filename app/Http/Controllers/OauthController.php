@@ -327,6 +327,11 @@ class OauthController extends Controller
                     if ($response['status'] == 'error') {
                         return $response['message'];
                     } else {
+                        $default_policy_types = $this->default_policy_type();
+                        foreach ($response['arr']['policies'] as $default_policy_type_k => $default_policy_type_v) {
+                            $dir_data[$default_policy_type_k] = $default_policy_type_v;
+                        }
+                        DB::table('owner')->where('id', '=', $owner->id)->update($dir_data);
                         return redirect($response['arr']['uri']);
                     }
                 }
@@ -622,7 +627,11 @@ class OauthController extends Controller
             $name = $request->input('name');
             $parser = new NameParser();
             $name_arr = $parser->parse_name($name);
-            $uport_user = DB::table('oauth_users')->where('first_name', '=', $name_arr['fname'])->where('last_name', '=', $name_arr['lname'])->first();
+            if ($request->has('npi')) {
+                $uport_user = DB::table('oauth_users')->where('first_name', '=', $name_arr['fname'])->where('last_name', '=', $name_arr['lname'])->first();
+            } else {
+                $uport_user = DB::table('oauth_users')->where('first_name', '=', $name_arr['fname'])->where('last_name', '=', $name_arr['lname'])->where('npi', '=', $request->input('npi'))->first();
+            }
             if ($uport_user) {
                 // Save uport id, keep updating for demo purposes for now
                 // if ($uport_user->uport_id == null || $uport_user->uport_id = '') {

@@ -36,6 +36,9 @@ read -e -p "Enter email address: " -i "" EMAIL
 read -e -p "Enter the domain name (example.com): " -i "" DOMAIN
 
 USERNAME=$(echo "$EMAIL" | cut -d@ -f1)
+if [ -f  $HIE/.email ]; then
+	rm -rf  $HIE/.email
+fi
 touch $HIE/.email
 chown $WEB_GROUP.$WEB_USER $HIE/.email
 chmod 755 $HIE/.email
