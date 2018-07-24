@@ -424,7 +424,7 @@ class HomeController extends Controller
                     $consent = 'consent_' . $default_policy_type;
                     $data1[$consent] = $owner->{$default_policy_type};
                     if ($owner->{$default_policy_type} == 1) {
-                        $types[] = $default_policy_type_k;
+                        $types[] = $default_policy_type;
                     }
                 }
                 $data1['authorized'] = 1;
