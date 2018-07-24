@@ -416,26 +416,47 @@ class HomeController extends Controller
         $query = DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->first();
         if ($query) {
             $client_name_arr = explode(' ', $query->client_name);
-            if ($client_name_arr[0] . $client_name_arr[1] == 'PatientNOSH' && Session::get('oauth_response_type') == 'code') {
-                $owner = DB::table('owner')->first();
-                $default_policy_types = $this->default_policy_type();
-                $types = [];
-                foreach ($default_policy_types as $default_policy_type) {
-                    $consent = 'consent_' . $default_policy_type;
-                    $data1[$consent] = $owner->{$default_policy_type};
-                    if ($owner->{$default_policy_type} == 1) {
-                        $types[] = $default_policy_type;
-                    }
+            if (Session::get('oauth_response_type') == 'code') {
+                // Automatic registration if pNOSH or Directory from subdomain
+                $as_url = $request->root();
+                $as_url = str_replace(array('http://','https://'), '', $as_url);
+                $root_url = explode('/', $as_url);
+                $root_url1 = explode('.', $root_url[0]);
+                if (isset($root_url1[1])) {
+                    $final_root_url = $root_url1[1] . '.' . $root_url1[2];
+                } else {
+                    $final_root_url = $root_url[0];
                 }
-                $data1['authorized'] = 1;
-                $user_array = explode(' ', $query->user_id);
-                $user_array[] = Session::get('username');
-                $data1['user_id'] = implode(' ', $user_array);
-                Session::put('is_authorized', 'true');
-                DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->update($data1);
-                $this->group_policy($request->input('client_id'), $types, 'update');
-                // Session::put('message_action', 'You just authorized a resource server named ' . $query->client_name);
-                return redirect()->route('authorize');
+                $target_url = $query->client_uri;
+                $target_url = str_replace(array('http://','https://'), '', $target_url);
+                $root_url2 = explode('/', $target_url);
+                $root_url3 = explode('.', $root_url2[0]);
+                if (isset($root_url3[1])) {
+                    $final_root_url1 = $root_url3[1] . '.' . $root_url3[2];
+                } else {
+                    $final_root_url1 = $root_url2[0];
+                }
+                if ($client_name_arr[0] . $client_name_arr[1] == 'PatientNOSH' || $final_root_url == $final_root_url1) {
+                    $owner = DB::table('owner')->first();
+                    $default_policy_types = $this->default_policy_type();
+                    $types = [];
+                    foreach ($default_policy_types as $default_policy_type) {
+                        $consent = 'consent_' . $default_policy_type;
+                        $data1[$consent] = $owner->{$default_policy_type};
+                        if ($owner->{$default_policy_type} == 1) {
+                            $types[] = $default_policy_type;
+                        }
+                    }
+                    $data1['authorized'] = 1;
+                    $user_array = explode(' ', $query->user_id);
+                    $user_array[] = Session::get('username');
+                    $data1['user_id'] = implode(' ', $user_array);
+                    Session::put('is_authorized', 'true');
+                    DB::table('oauth_clients')->where('client_id', '=', Session::get('oauth_client_id'))->update($data1);
+                    $this->group_policy($request->input('client_id'), $types, 'update');
+                    // Session::put('message_action', 'You just authorized a resource server named ' . $query->client_name);
+                    return redirect()->route('authorize');
+                }
             }
             $scopes_array = explode(' ', $query->scope);
             if ($query->logo_uri == '') {
