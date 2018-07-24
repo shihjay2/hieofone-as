@@ -94,7 +94,25 @@ class UmaController extends Controller
         // Email notification to owner to authorize the client or resource server except pNOSH
         $client_name_arr = explode(' ', $request->input('client_name'));
         if ($data['authorized'] == 0) {
-            if ($client_name_arr[0] . $client_name_arr[1] !== 'PatientNOSH') {
+            $as_url = $request->root();
+            $as_url = str_replace(array('http://','https://'), '', $as_url);
+            $root_url = explode('/', $as_url);
+            $root_url1 = explode('.', $root_url[0]);
+            if (isset($root_url1[1])) {
+                $final_root_url = $root_url1[1] . '.' . $root_url1[2];
+            } else {
+                $final_root_url = $root_url[0];
+            }
+            $target_url = $client_uri;
+            $target_url = str_replace(array('http://','https://'), '', $target_url);
+            $root_url2 = explode('/', $target_url);
+            $root_url3 = explode('.', $root_url2[0]);
+            if (isset($root_url3[1])) {
+                $final_root_url1 = $root_url3[1] . '.' . $root_url3[2];
+            } else {
+                $final_root_url1 = $root_url2[0];
+            }
+            if ($client_name_arr[0] . $client_name_arr[1] !== 'PatientNOSH' && $final_root_url !== $final_root_url1) {
                 if ($uma_protection == true) {
                     $data1['message_data'] = 'You have a new resource server awaiting authorization on your Trustee Authorization Server.  ';
                     $data1['message_data'] .= 'Go to ' . URL::to('authorize_resource_server') . '/ to review and authorize.';
