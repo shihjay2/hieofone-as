@@ -322,7 +322,8 @@ class Controller extends BaseController
 			// 'login_google',
 			'login_uport',
 			'public_publish_directory',
-			'private_publish_directory'
+			'private_publish_directory',
+			'last_activity'
 		];
 		return $return;
 	}

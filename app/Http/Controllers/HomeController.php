@@ -1200,39 +1200,43 @@ class HomeController extends Controller
         $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
         $policy_labels = [
             'public_publish_directory' => [
-                'label' => 'Public in HIE of One Directory',
+                'label' => 'Public<br>in Directory',
                 'info' => 'Any party that has access to a Directory that you participate in can see where this resource is found.'
             ],
             'private_publish_directory' => [
-                'label' => 'Private in HIE of One Directory',
+                'label' => 'Private<br>Directory',
                 'info' => 'Only previously authorized users that has access to a Directory that you participate in can see where this resource is found.'
             ],
             'any_npi' => [
-                'label' => 'Verfied Clnicians Only',
+                'label' => 'Verfied<br>Clnicians<br>Only',
                 'info' => 'By setting this as a default, you allow any healthcare provider with a National Provider Identifier (NPI), known or unknown at any given time to access and edit your protected health information.'
             ],
+            'last_activity' => [
+                'label' => 'Show<br>Last<br>Activity',
+                'info' => 'Timestap of the most recent activity of this resource server, published to the Directory.'
+            ],
             'ask_me' => [
-                'label' => 'Ask Me',
+                'label' => 'Ask<br>Me',
                 'info' => 'Ask Me'
             ],
             'root_support' => [
-                'label' => 'Root Support',
+                'label' => 'Root<br>Support',
                 'info' => 'Support from your Trustee Directory in case you have difficulties with your authorization server.'
             ],
             'patient_user' => [
                 'label' => 'Patient',
                 'info' => 'It must be you!'
-            ]
+            ],
         ];
         $policy_arr = [];
         $data['title'] = 'Consent Table';
         $data['content'] = '<div class="alert alert-success">Click on a <i class="fa fa-check fa-lg" style="color:green;"></i> or <i class="fa fa-times fa-lg" style="color:red;"></i> to change the policy.  Click on a policy name for for information about the policy.</div>';
-        $data['content'] .= '<table class="table table-striped"><thead><tr><th><div><span>Resource</span></div></th>';
+        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th>';
         foreach ($policy_labels as $policy_label_k => $policy_label_v) {
             $data['content'] .= '<th><div class="as-info" as-info="' . $policy_label_v['info'] . '"><span>' . $policy_label_v['label'] . '</span></div></th>';
             $policy_arr[] = $policy_label_k;
         }
-        $data['content'] .= '<th><div class="as-info" as-info="Last time when the resource server was accessed by any client."><span>Last Accessed</span></div></th>';
+        // $data['content'] .= '<th><div class="as-info" as-info="Last time when the resource server was accessed by any client."><span>Last Accessed</span></div></th>';
         $data['content'] .= '</tr></thead><tbody><tr>';
         if ($query) {
             foreach ($query as $client) {
@@ -1247,7 +1251,11 @@ class HomeController extends Controller
                     $consent = 'consent_' . $default_policy_type;
                     if (isset($client->{$consent})) {
                         if ($client->{$consent} == 1) {
-                            $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->{$consent}, $default_policy_type]) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a></td>';
+                            $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->{$consent}, $default_policy_type]) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ';
+                            if ($default_policy_type == 'last_activity' && $client->last_access !== null) {
+                                $data['content'] .= date('Y-m-d H:i:s', $client->last_access);
+                            }
+                            $data['content'] .= '</a></td>';
                         } else {
                             $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->{$consent}, $default_policy_type]) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
                         }
@@ -1261,18 +1269,18 @@ class HomeController extends Controller
                         }
                     }
                 }
-                if ($client->last_access !== null) {
-                    $data['content'] .= '<td>' . date('Y-m-d H:i:s', $client->last_access) . '</td>';
-                } else {
-                    $data['content'] .= '<td></td>';
-                }
+                // if ($client->last_access !== null) {
+                //     $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->consent_last_activity, 'last_activity']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ' . date('Y-m-d H:i:s', $client->last_access) . '</a></td>';
+                // } else {
+                //     $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->consent_last_activity, 'last_activity']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
+                // }
                 $data['content'] .= '</tr>';
             }
         }
         $data['content'] .= '<tr><td><a href="' . url('/') . '/nosh/fhir_connect" target="_blank">Connect to your hospital EHR Account</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
         $data['content'] .= '<tr><td><a href="' . url('/') . '/nosh/cms_bluebutton" target"_blank">Connect to your Medicare Benefits Account</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
         $data['content'] .= '<tr><td><a href="#" class="as-info" as-info="Coming Soon!">Connect to additional resources</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
-        $data['content'] .= '</tbody></table>';
+        $data['content'] .= '</tbody></table></div>';
         Session::put('back', $request->fullUrl());
         return view('home', $data);
     }
@@ -1284,7 +1292,7 @@ class HomeController extends Controller
             return redirect()->route('consents_resource_server');
         }
         $types = [];
-        if ($toggle == 0) {
+        if ($toggle == 0 || $toggle == null) {
             $data['consent_' .$policy] = 1;
             $types[] = $policy;
         } else {
