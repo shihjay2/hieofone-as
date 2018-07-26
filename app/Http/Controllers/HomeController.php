@@ -1204,7 +1204,7 @@ class HomeController extends Controller
                 'info' => 'Any party that has access to a Directory that you participate in can see where this resource is found.'
             ],
             'private_publish_directory' => [
-                'label' => 'Private<br>Directory',
+                'label' => 'Private<br>in Directory',
                 'info' => 'Only previously authorized users that has access to a Directory that you participate in can see where this resource is found.'
             ],
             'any_npi' => [
@@ -1229,6 +1229,50 @@ class HomeController extends Controller
             ],
         ];
         $policy_arr = [];
+        $smart_on_fhir = [];
+        $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
+        if ($pnosh) {
+            $pnosh_url = $pnosh->client_uri;
+            $url = $pnosh->client_uri . '/smart_on_fhir_list';
+            $ch = curl_init();
+            curl_setopt($ch,CURLOPT_URL, $url);
+            curl_setopt($ch,CURLOPT_FAILONERROR,1);
+            curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+            curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+            curl_setopt($ch,CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
+            $smart_result = curl_exec($ch);
+            curl_close ($ch);
+            $smart_on_fhir = json_decode($smart_result, true);
+            // $url1 = $pnosh_url . '/transactions';
+            // $ch1 = curl_init();
+            // curl_setopt($ch1,CURLOPT_URL, $url1);
+            // curl_setopt($ch1,CURLOPT_FAILONERROR,1);
+            // curl_setopt($ch1,CURLOPT_FOLLOWLOCATION,1);
+            // curl_setopt($ch1,CURLOPT_RETURNTRANSFER,1);
+            // curl_setopt($ch1,CURLOPT_TIMEOUT, 60);
+            // curl_setopt($ch1,CURLOPT_CONNECTTIMEOUT ,0);
+            // $blockchain = curl_exec($ch1);
+            // $httpCode = curl_getinfo($ch1, CURLINFO_HTTP_CODE);
+            // curl_close ($ch1);
+            // if ($httpCode !== 404 && $httpCode !== 0) {
+            //     $blockchain_arr = json_decode($blockchain, true);
+            //     $data['blockchain_count'] = $blockchain_arr['count'];
+            //     if ($blockchain_arr['count'] !== 0) {
+            //         $data['blockchain_table'] = '<table class="table table-striped"><thead><tr><th>Date</th><th>Provider</th><th>Transaction Receipt</th></thead><tbody>';
+            //         foreach ($blockchain_arr['transactions'] as $blockchain_row) {
+            //             $data['blockchain_table'] .= '<tr><td>' . date('Y-m-d', $blockchain_row['date']) . '</td><td>' . $blockchain_row['provider'] . '</td><td><a href="https://rinkeby.etherscan.io/tx/' . $blockchain_row['transaction'] . '" target="_blank">' . $blockchain_row['transaction'] . '</a></td></tr>';
+            //         }
+            //         $data['blockchain_table'] .= '</tbody></table>';
+            //         $data['blockchain_table'] .= '<strong>Top 5 Provider Users</strong>';
+            //         $data['blockchain_table'] .= '<table class="table table-striped"><thead><tr><th>Provider</th><th>Number of Transactions</th></thead><tbody>';
+            //         foreach ($blockchain_arr['providers'] as $blockchain_row1) {
+            //             $data['blockchain_table'] .= '<tr><td>' . $blockchain_row1['provider'] . '</td><td>' . $blockchain_row1['count'] . '</td></tr>';
+            //         }
+            //         $data['blockchain_table'] .= '</tbody></table>';
+            //     }
+            // }
+        }
         $data['title'] = 'Consent Table';
         $data['content'] = '<div class="alert alert-success">Click on a <i class="fa fa-check fa-lg" style="color:green;"></i> or <i class="fa fa-times fa-lg" style="color:red;"></i> to change the policy.  Click on a policy name for for information about the policy.</div>';
         $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th>';
@@ -1238,43 +1282,64 @@ class HomeController extends Controller
         }
         // $data['content'] .= '<th><div class="as-info" as-info="Last time when the resource server was accessed by any client."><span>Last Accessed</span></div></th>';
         $data['content'] .= '</tr></thead><tbody><tr>';
-        if ($query) {
-            foreach ($query as $client) {
-                $data['content'] .= '<tr><td><a href="'. route('consent_edit', [$client->client_id]) . '">' . $client->client_name . '</a>';
-                $client_name_arr = explode(' ', $client->client_name);
-                if ($client_name_arr[0] . $client_name_arr[1] == 'PatientNOSH') {
-                    $data['content'] .= '<br><span class="label label-success pnosh_link" nosh-link="' . $client->client_uri . '/uma_auth">Go There</span>';
-                }
-                $data['content'] .= '</td>';
-                foreach ($policy_arr as $default_policy_type) {
-                    $data[$default_policy_type] = '';
-                    $consent = 'consent_' . $default_policy_type;
-                    if (isset($client->{$consent})) {
-                        if ($client->{$consent} == 1) {
-                            $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->{$consent}, $default_policy_type]) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ';
-                            if ($default_policy_type == 'last_activity' && $client->last_access !== null) {
-                                $data['content'] .= date('Y-m-d H:i:s', $client->last_access);
+        if ($query || ! empty($smart_on_fhir)) {
+            if ($query) {
+                foreach ($query as $client) {
+                    $data['content'] .= '<tr><td><a href="'. route('consent_edit', [$client->client_id]) . '">' . $client->client_name . '</a>';
+                    $client_name_arr = explode(' ', $client->client_name);
+                    if ($client_name_arr[0] . $client_name_arr[1] == 'PatientNOSH') {
+                        $data['content'] .= '<br><span class="label label-success pnosh_link" nosh-link="' . $client->client_uri . '/patient">Go There</span>';
+                    }
+                    $data['content'] .= '</td>';
+                    foreach ($policy_arr as $default_policy_type) {
+                        $data[$default_policy_type] = '';
+                        $consent = 'consent_' . $default_policy_type;
+                        if (isset($client->{$consent})) {
+                            if ($client->{$consent} == 1) {
+                                $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->{$consent}, $default_policy_type]) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ';
+                                if ($default_policy_type == 'last_activity' && $client->last_access !== null) {
+                                    $data['content'] .= date('Y-m-d H:i:s', $client->last_access);
+                                }
+                                $data['content'] .= '</a></td>';
+                            } else {
+                                $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->{$consent}, $default_policy_type]) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
                             }
-                            $data['content'] .= '</a></td>';
-                        } else {
-                            $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->{$consent}, $default_policy_type]) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
-                        }
-                    } else  {
-                        if ($default_policy_type == 'patient_user') {
-                            $data['content'] .= '<td><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
-                        } elseif ($default_policy_type == 'root_support') {
-                            $data['content'] .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
-                        } else {
-                            $data['content'] .= '<td></td>';
+                        } else  {
+                            if ($default_policy_type == 'patient_user') {
+                                $data['content'] .= '<td><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
+                            } elseif ($default_policy_type == 'root_support') {
+                                $data['content'] .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
+                            } else {
+                                $data['content'] .= '<td></td>';
+                            }
                         }
                     }
+                    // if ($client->last_access !== null) {
+                    //     $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->consent_last_activity, 'last_activity']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ' . date('Y-m-d H:i:s', $client->last_access) . '</a></td>';
+                    // } else {
+                    //     $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->consent_last_activity, 'last_activity']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
+                    // }
+                    $data['content'] .= '</tr>';
                 }
-                // if ($client->last_access !== null) {
-                //     $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->consent_last_activity, 'last_activity']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ' . date('Y-m-d H:i:s', $client->last_access) . '</a></td>';
-                // } else {
-                //     $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->consent_last_activity, 'last_activity']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
-                // }
-                $data['content'] .= '</tr>';
+            }
+            if (! empty($smart_on_fhir)) {
+                foreach ($smart_on_fhir as $smart_row) {
+                    $copy_link = '<i class="fa fa-cog fa-lg pnosh_copy_set" hie-val="' . $smart_row['endpoint_uri_raw'] . '" title="Settings" style="cursor:pointer;"></i>';
+                    $fhir_db = DB::table('fhir_clients')->where('endpoint_uri', '=', $smart_row['endpoint_uri_raw'])->first();
+                    if ($fhir_db) {
+                        if ($fhir_db->username !== null && $fhir_db->username !== '') {
+                            $copy_link .= '<span style="margin:10px"></span><i class="fa fa-clone fa-lg pnosh_copy" hie-val="' . $fhir_db->username . '" title="Copy username" style="cursor:pointer;"></i><span style="margin:10px"></span><i class="fa fa-key fa-lg pnosh_copy" hie-val="' . decrypt($fhir_db->password) . '" title="Copy password" style="cursor:pointer;"></i>';
+                        }
+                    } else {
+                        $fhir_data = [
+                            'name' => $smart_row['org_name'],
+                            'endpoint_uri' => $smart_row['endpoint_uri_raw'],
+                        ];
+                        DB::table('fhir_clients')->insert($fhir_data);
+                    }
+                    $data['content'] .= '<a href="' . $smart_row['endpoint_uri'] . '" class="list-group-item list-group-item-success container-fluid" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">SMART-on-FHIR Resource (no refresh token): ' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a>';
+                    $data['content'] .= '<tr><td><a href="' . $smart_row['endpoint_uri'] . '" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">SMART-on-FHIR Resource (no refresh token): ' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><<i class="fa fa-times fa-lg no-edit" style="color:red;"></i>/td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td></tr>';
+                }
             }
         }
         $data['content'] .= '<tr><td><a href="' . url('/') . '/nosh/fhir_connect" target="_blank">Connect to your hospital EHR Account</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';

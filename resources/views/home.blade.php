@@ -188,7 +188,7 @@
 		$('.no-edit').click(function(){
 			toastr.error('You cannot change this policy.');
 		});
-		$('.as-info').click(function(){
+		$('.as-info').css('cursor', 'pointer').click(function(){
 			event.preventDefault();
 			var info = $(this).attr('as-info');
 			toastr.info(info);
