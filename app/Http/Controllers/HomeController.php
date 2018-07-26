@@ -1274,7 +1274,7 @@ class HomeController extends Controller
             // }
         }
         $data['title'] = 'Consent Table';
-        $data['content'] = '<div class="alert alert-success">Click on a <i class="fa fa-check fa-lg" style="color:green;"></i> or <i class="fa fa-times fa-lg" style="color:red;"></i> to change the policy.  Click on a policy name for for information about the policy.</div>';
+        $data['content'] = '<div class="alert alert-success">Click on a <i class="fa fa-check fa-lg" style="color:green;"></i> or <i class="fa fa-times fa-lg" style="color:red;"></i> to change the policy.  Click on a <strong>policy name</strong> for for information about the policy.</div>';
         $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th>';
         foreach ($policy_labels as $policy_label_k => $policy_label_v) {
             $data['content'] .= '<th><div class="as-info" as-info="' . $policy_label_v['info'] . '"><span>' . $policy_label_v['label'] . '</span></div></th>';
