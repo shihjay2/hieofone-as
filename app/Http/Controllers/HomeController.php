@@ -43,7 +43,7 @@ class HomeController extends Controller
         //     $data['mdnosh'] = true;
         // }
         $smart_on_fhir = [];
-        $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
+        $pnosh = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
         if (! $pnosh) {
             $url0 = URL::to('/') . '/nosh';
             $ch0 = curl_init();
@@ -1230,7 +1230,7 @@ class HomeController extends Controller
         ];
         $policy_arr = [];
         $smart_on_fhir = [];
-        $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
+        $pnosh = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
         if ($pnosh) {
             $pnosh_url = $pnosh->client_uri;
             $url = $pnosh->client_uri . '/smart_on_fhir_list';
@@ -1274,7 +1274,11 @@ class HomeController extends Controller
             // }
         }
         $data['title'] = 'Consent Table';
-        $data['content'] = '<div class="alert alert-success">Click on a <i class="fa fa-check fa-lg" style="color:green;"></i> or <i class="fa fa-times fa-lg" style="color:red;"></i> to change the policy.  Click on a <strong>policy name</strong> for for information about the policy.</div>';
+        $data['content'] = '<div class="alert alert-success">';
+        $data['content'] .= 'Click on a <i class="fa fa-check fa-lg" style="color:green;"></i> or <i class="fa fa-times fa-lg" style="color:red;"></i> to change the policy.  Click on a <strong>policy name</strong> for for information about the policy.';
+        $data['content'] .= '<br><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"> designates a SMART-on-FHIR resource which has the following limitations:<ul>';
+        $data['content'] .= '<li><strong>No Refresh Tokens</strong></li><li><strong>No Dynamic Client Registration</strong></li><li><strong>and No User-Managed Access - therefore you cannot change access polices for this type of resource</strong></li>,';
+        $data['content'] .= '</div>';
         $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th>';
         foreach ($policy_labels as $policy_label_k => $policy_label_v) {
             $data['content'] .= '<th><div class="as-info" as-info="' . $policy_label_v['info'] . '"><span>' . $policy_label_v['label'] . '</span></div></th>';
@@ -1338,7 +1342,7 @@ class HomeController extends Controller
                         DB::table('fhir_clients')->insert($fhir_data);
                     }
                     $data['content'] .= '<a href="' . $smart_row['endpoint_uri'] . '" class="list-group-item list-group-item-success container-fluid" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">SMART-on-FHIR Resource (no refresh token): ' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a>';
-                    $data['content'] .= '<tr><td><a href="' . $smart_row['endpoint_uri'] . '" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">SMART-on-FHIR Resource (no refresh token):<br>' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td></tr>';
+                    $data['content'] .= '<tr><td><a href="' . $smart_row['endpoint_uri'] . '" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td></tr>';
                 }
             }
         }
