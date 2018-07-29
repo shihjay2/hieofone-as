@@ -1215,18 +1215,18 @@ class HomeController extends Controller
                 'label' => 'Show<br>Last<br>Activity',
                 'info' => 'Timestap of the most recent activity of this resource server, published to the Directory.'
             ],
-            'ask_me' => [
-                'label' => 'Ask<br>Me',
-                'info' => 'Ask Me'
-            ],
-            'root_support' => [
-                'label' => 'Root<br>Support',
-                'info' => 'Support from your Trustee Directory in case you have difficulties with your authorization server.'
-            ],
-            'patient_user' => [
-                'label' => 'Patient',
-                'info' => 'It must be you!'
-            ],
+            // 'ask_me' => [
+            //     'label' => 'Ask<br>Me',
+            //     'info' => 'Ask Me'
+            // ],
+            // 'root_support' => [
+            //     'label' => 'Root<br>Support',
+            //     'info' => 'Support from your Trustee Directory in case you have difficulties with your authorization server.'
+            // ],
+            // 'patient_user' => [
+            //     'label' => 'Patient',
+            //     'info' => 'It must be you!'
+            // ],
         ];
         $policy_arr = [];
         $smart_on_fhir = [];
@@ -1280,9 +1280,11 @@ class HomeController extends Controller
         $data['content'] .= '<li><strong>No Refresh Tokens</strong></li><li><strong>No Dynamic Client Registration</strong></li><li><strong>and No User-Managed Access - therefore you cannot change access polices for this type of resource</strong></li>,';
         $data['content'] .= '</div>';
         $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th>';
+        $column_empty = '';
         foreach ($policy_labels as $policy_label_k => $policy_label_v) {
             $data['content'] .= '<th><div class="as-info" as-info="' . $policy_label_v['info'] . '"><span>' . $policy_label_v['label'] . '</span></div></th>';
             $policy_arr[] = $policy_label_k;
+            $column_empty .= '<td></td>';
         }
         // $data['content'] .= '<th><div class="as-info" as-info="Last time when the resource server was accessed by any client."><span>Last Accessed</span></div></th>';
         $data['content'] .= '</tr></thead><tbody><tr>';
@@ -1301,9 +1303,9 @@ class HomeController extends Controller
                         if (isset($client->{$consent})) {
                             if ($client->{$consent} == 1) {
                                 $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->{$consent}, $default_policy_type]) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ';
-                                if ($default_policy_type == 'last_activity' && $client->last_access !== null) {
-                                    $data['content'] .= date('Y-m-d H:i:s', $client->last_access);
-                                }
+                                // if ($default_policy_type == 'last_activity' && $client->last_access !== null) {
+                                //     $data['content'] .= date('Y-m-d H:i:s', $client->last_access);
+                                // }
                                 $data['content'] .= '</a></td>';
                             } else {
                                 $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->{$consent}, $default_policy_type]) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
@@ -1328,7 +1330,7 @@ class HomeController extends Controller
             }
             if (! empty($smart_on_fhir)) {
                 foreach ($smart_on_fhir as $smart_row) {
-                    $copy_link = '<i class="fa fa-cog fa-lg pnosh_copy_set" hie-val="' . $smart_row['endpoint_uri_raw'] . '" title="Settings" style="cursor:pointer;"></i>';
+                    $copy_link = '<i class="fa fa-key fa-lg pnosh_copy_set" hie-val="' . $smart_row['endpoint_uri_raw'] . '" title="Settings" style="cursor:pointer;"></i>';
                     $fhir_db = DB::table('fhir_clients')->where('endpoint_uri', '=', $smart_row['endpoint_uri_raw'])->first();
                     if ($fhir_db) {
                         if ($fhir_db->username !== null && $fhir_db->username !== '') {
@@ -1345,9 +1347,9 @@ class HomeController extends Controller
                 }
             }
         }
-        $data['content'] .= '<tr><td><a href="' . url('/') . '/nosh/fhir_connect" target="_blank">Connect to your hospital EHR Account</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
-        $data['content'] .= '<tr><td><a href="' . url('/') . '/nosh/cms_bluebutton" target"_blank">Connect to your Medicare Benefits Account</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
-        $data['content'] .= '<tr><td><a href="#" class="as-info" as-info="Coming Soon!">Connect to additional resources</a></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+        $data['content'] .= '<tr><td><a href="' . url('/') . '/nosh/fhir_connect" target="_blank">Connect to your hospital EHR Account</a></td>' . $column_empty . '</tr>';
+        $data['content'] .= '<tr><td><a href="' . url('/') . '/nosh/cms_bluebutton" target"_blank">Connect to your Medicare Benefits Account</a></td>' . $column_empty . '</tr>';
+        $data['content'] .= '<tr><td><a href="#" class="as-info" as-info="Coming Soon!">Connect to additional resources</a></td>' . $column_empty . '</tr>';
         $data['content'] .= '</tbody></table></div>';
         Session::put('back', $request->fullUrl());
         return view('home', $data);
