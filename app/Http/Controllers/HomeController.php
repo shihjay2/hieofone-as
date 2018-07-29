@@ -1281,10 +1281,12 @@ class HomeController extends Controller
         $data['content'] .= '</div>';
         $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th>';
         $column_empty = '';
+        $fhir_column = '';
         foreach ($policy_labels as $policy_label_k => $policy_label_v) {
             $data['content'] .= '<th><div class="as-info" as-info="' . $policy_label_v['info'] . '"><span>' . $policy_label_v['label'] . '</span></div></th>';
             $policy_arr[] = $policy_label_k;
             $column_empty .= '<td></td>';
+            $fhir_column .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
         }
         // $data['content'] .= '<th><div class="as-info" as-info="Last time when the resource server was accessed by any client."><span>Last Accessed</span></div></th>';
         $data['content'] .= '</tr></thead><tbody><tr>';
@@ -1343,7 +1345,7 @@ class HomeController extends Controller
                         ];
                         DB::table('fhir_clients')->insert($fhir_data);
                     }
-                    $data['content'] .= '<tr><td><a href="' . $smart_row['endpoint_uri'] . '" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td></tr>';
+                    $data['content'] .= '<tr><td><a href="' . $smart_row['endpoint_uri'] . '" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a></td>' . $fhir_column . '</tr>';
                 }
             }
         }
