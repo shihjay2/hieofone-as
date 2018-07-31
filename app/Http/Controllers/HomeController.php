@@ -1339,14 +1339,15 @@ class HomeController extends Controller
                     }
                     if ($directories) {
                         foreach ($directories as $directory1) {
+                            $rs_to_directory = DB::table('rs_to_directory')->where('directory_id', '=', $directory1->directory_id)->where('client_id', '=', $client->client_id)->first();
                             foreach ($policy_arr as $default_policy_type) {
                                 if ($client_name_arr[0] . $client_name_arr[1] == 'Directory-') {
                                     $data['content'] .= '<td></td>';
                                 } else {
                                     $data[$default_policy_type] = '';
                                     $consent = 'consent_' . $default_policy_type;
-                                    if (isset($directory1->{$consent})) {
-                                        if ($directory1->{$consent} == 1) {
+                                    if (isset($rs_to_directory->{$consent})) {
+                                        if ($rs_to_directory->{$consent} == 1) {
                                             $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $directory1->{$consent}, $default_policy_type, $directory1->directory_id]) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ';
                                             // if ($default_policy_type == 'last_activity' && $client->last_access !== null) {
                                             //     $data['content'] .= date('Y-m-d H:i:s', $client->last_access);
