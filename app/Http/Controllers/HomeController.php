@@ -1364,9 +1364,9 @@ class HomeController extends Controller
                                             $data['content'] .= '<td></td>';
                                         }
                                     }
+                                    $column_empty .= '<td></td>';
+                                    $fhir_column .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
                                 }
-                                $column_empty .= '<td></td>';
-                                $fhir_column .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
                             }
                         }
                     }
