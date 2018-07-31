@@ -72,6 +72,9 @@
 				<h5 class="modal-title">Patient Portal Settings</h5>
 			</div>
 			<div class="modal-body" style="height:35vh;overflow-y:auto;">
+				<div class="alert alert-success">
+					<p>Security Notice: These credentials are stored in your personal authorization server and not accessible to directory or NOSH users.</p>
+				</div>
 				<form id="fhir_form" class="form-horizontal form" role="form" method="POST">
 					<input type="hidden" name="endpoint_uri" id="endpoint_uri">
 					<div class="form-group" id="until_div">
