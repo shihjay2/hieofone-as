@@ -1217,11 +1217,11 @@ class HomeController extends Controller
         $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
         $policy_labels = [
             'public_publish_directory' => [
-                'label' => 'Public<br>in Directory',
+                'label' => 'Public',
                 'info' => 'Any party that has access to a Directory that you participate in can see where this resource is found.'
             ],
             'last_activity' => [
-                'label' => 'Show<br>Last<br>Activity',
+                'label' => 'Show Last<br>Activity',
                 'info' => 'Timestap of the most recent activity of this resource server, published to the Directory.'
             ],
             // 'private_publish_directory' => [
@@ -1365,6 +1365,8 @@ class HomeController extends Controller
                                         }
                                     }
                                 }
+                                $column_empty .= '<td></td>';
+                                $fhir_column .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
                             }
                         }
                     }
