@@ -83,7 +83,7 @@ Route::get('authorize_user', ['as' => 'authorize_user', 'uses' => 'HomeControlle
 Route::get('authorize_user_action/{id}', ['as' => 'authorize_user_action', 'uses' => 'HomeController@authorize_user_action']);
 Route::get('authorize_user_disable/{id}', ['as' => 'authorize_user_disable', 'uses' => 'HomeController@authorize_user_disable']);
 Route::get('consent_table', ['as' => 'consent_table', 'uses' => 'HomeController@consent_table']);
-Route::get('consent_edit/{id}/{toggle?}/{policy?}', ['as' => 'consent_edit', 'uses' => 'HomeController@consent_edit']);
+Route::get('consent_edit/{id}/{toggle?}/{policy?}/{directory?}', ['as' => 'consent_edit', 'uses' => 'HomeController@consent_edit']);
 Route::get('proxy_add/{sub}', ['as' => 'proxy_add', 'uses' => 'HomeController@proxy_add']);
 Route::get('proxy_remove/{sub}', ['as' => 'proxy_remove', 'uses' => 'HomeController@proxy_remove']);
 Route::any('make_invitation', ['as' => 'make_invitation', 'uses' => 'HomeController@make_invitation']);

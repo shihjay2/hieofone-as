@@ -1090,7 +1090,8 @@ class HomeController extends Controller
                     'name' => $rs_row->client_name,
                     'uri' => $rs_row->client_uri,
                     'public' => $rs_row->consent_public_publish_directory,
-                    'private' => $rs_row->consent_private_publish_directory
+                    'private' => $rs_row->consent_private_publish_directory,
+                    'last_activity' => $rs_row->consent_last_activity
                 ];
             }
         }
@@ -1115,6 +1116,18 @@ class HomeController extends Controller
                     'directory_id' => $request->input('directory_id')
                 ];
                 DB::table('directories')->insert($directory);
+                if ($rs) {
+                    foreach ($rs as $rs_row1) {
+                        $rs_to_directory = [
+                            'directory_id' => $request->input('directory_id'),
+                            'client_id' => $rs_row1->client_id,
+                            'consent_public_publish_directory' => $rs_row1->consent_public_publish_directory,
+                            'consent_private_publish_directory' => $rs_row1->consent_private_publish_directory,
+                            'consent_last_activity' => $rs_row1->consent_last_activity
+                        ];
+                        DB::table('rs_to_directory')->insert($rs_to_directory);
+                    }
+                }
                 Session::forget('directory_uri');
                 if (Session::has('install_redirect')) {
                     return redirect()->route('install');
@@ -1172,6 +1185,10 @@ class HomeController extends Controller
         $response = $this->directory_api($url, $params, 'directory_remove', $directory->directory_id);
         if ($response['arr']['message'] == 'Directory removed') {
             DB::table('directories')->where('id', '=', $id)->delete();
+            $rs_to_directory = DB::table('rs_to_directory')->where('directory_id', '=', $directory->directory_id)->first();
+            if ($rs_to_directory) {
+                DB::table('rs_to_directory')->where('directory_id', '=', $directory->directory_id)->delete();
+            }
         }
         Session::put('message_action', $response['arr']['message']);
         return redirect()->route('directories');
@@ -1203,18 +1220,18 @@ class HomeController extends Controller
                 'label' => 'Public<br>in Directory',
                 'info' => 'Any party that has access to a Directory that you participate in can see where this resource is found.'
             ],
-            'private_publish_directory' => [
-                'label' => 'Private<br>in Directory',
-                'info' => 'Only previously authorized users that has access to a Directory that you participate in can see where this resource is found.'
-            ],
-            'any_npi' => [
-                'label' => 'Verfied<br>Clnicians<br>Only',
-                'info' => 'By setting this as a default, you allow any healthcare provider with a National Provider Identifier (NPI), known or unknown at any given time to access and edit your protected health information.'
-            ],
             'last_activity' => [
                 'label' => 'Show<br>Last<br>Activity',
                 'info' => 'Timestap of the most recent activity of this resource server, published to the Directory.'
             ],
+            // 'private_publish_directory' => [
+            //     'label' => 'Private<br>in Directory',
+            //     'info' => 'Only previously authorized users that has access to a Directory that you participate in can see where this resource is found.'
+            // ],
+            // 'any_npi' => [
+            //     'label' => 'Verfied<br>Clnicians<br>Only',
+            //     'info' => 'By setting this as a default, you allow any healthcare provider with a National Provider Identifier (NPI), known or unknown at any given time to access and edit your protected health information.'
+            // ],
             // 'ask_me' => [
             //     'label' => 'Ask<br>Me',
             //     'info' => 'Ask Me'
@@ -1273,23 +1290,34 @@ class HomeController extends Controller
             //     }
             // }
         }
+        $directories = DB::table('directories')->get();
         $data['title'] = 'Consent Table';
         $data['content'] = '<div class="alert alert-success">';
         $data['content'] .= 'Click on a <i class="fa fa-check fa-lg" style="color:green;"></i> or <i class="fa fa-times fa-lg" style="color:red;"></i> to change the policy.  Click on a <strong>policy name</strong> for for information about the policy.';
         $data['content'] .= '<br><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"> designates a SMART-on-FHIR resource which has the following limitations:<ul>';
         $data['content'] .= '<li><strong>No Refresh Tokens</strong></li><li><strong>No Dynamic Client Registration</strong></li><li><strong>and No User-Managed Access - therefore you cannot change access polices for this type of resource</strong></li>,';
         $data['content'] .= '</div>';
-        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th>';
+        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th><th>UMA</th><th>Dir</th>';
+        if ($directories) {
+            foreach ($directories as $directory) {
+                $data['content'] .= '<th>Directory - ' . $directory->name . '</th>';
+            }
+        }
+        $data['content'] .= '</tr></thead><tbody><tr><td colspan="3"></td>';
         $column_empty = '';
         $fhir_column = '';
-        foreach ($policy_labels as $policy_label_k => $policy_label_v) {
-            $data['content'] .= '<th><div class="as-info" as-info="' . $policy_label_v['info'] . '"><span>' . $policy_label_v['label'] . '</span></div></th>';
-            $policy_arr[] = $policy_label_k;
-            $column_empty .= '<td></td>';
-            $fhir_column .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
+        if ($directories) {
+            foreach ($directories as $directory) {
+                foreach ($policy_labels as $policy_label_k => $policy_label_v) {
+                    $data['content'] .= '<td><div class="as-info" as-info="' . $policy_label_v['info'] . '"><span>' . $policy_label_v['label'] . '</span></div></td>';
+                    $policy_arr[] = $policy_label_k;
+                    $column_empty .= '<td></td>';
+                    $fhir_column .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
+                }
+            }
         }
+        $data['content'] .= '</tr>';
         // $data['content'] .= '<th><div class="as-info" as-info="Last time when the resource server was accessed by any client."><span>Last Accessed</span></div></th>';
-        $data['content'] .= '</tr></thead><tbody><tr>';
         if ($query || ! empty($smart_on_fhir)) {
             if ($query) {
                 foreach ($query as $client) {
@@ -1299,26 +1327,44 @@ class HomeController extends Controller
                         $data['content'] .= '<br><span class="label label-success pnosh_link" nosh-link="' . $client->client_uri . '/patient">Go There</span>';
                     }
                     $data['content'] .= '</td>';
-                    foreach ($policy_arr as $default_policy_type) {
-                        $data[$default_policy_type] = '';
-                        $consent = 'consent_' . $default_policy_type;
-                        if (isset($client->{$consent})) {
-                            if ($client->{$consent} == 1) {
-                                $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->{$consent}, $default_policy_type]) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ';
-                                // if ($default_policy_type == 'last_activity' && $client->last_access !== null) {
-                                //     $data['content'] .= date('Y-m-d H:i:s', $client->last_access);
-                                // }
-                                $data['content'] .= '</a></td>';
-                            } else {
-                                $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->{$consent}, $default_policy_type]) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
-                            }
-                        } else  {
-                            if ($default_policy_type == 'patient_user') {
-                                $data['content'] .= '<td><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
-                            } elseif ($default_policy_type == 'root_support') {
-                                $data['content'] .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
-                            } else {
-                                $data['content'] .= '<td></td>';
+                    if ($client_name_arr[0] . $client_name_arr[1] == 'PatientNOSH' || $client_name_arr[0] . $client_name_arr[1] == 'Directory-') {
+                        $data['content'] .= '<td><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 50px;width: auto;"></img></td>';
+                        if ($client_name_arr[0] . $client_name_arr[1] == 'Directory-') {
+                            $data['content'] .= '<td><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
+                        } else {
+                            $data['content'] .= '<td></td>';
+                        }
+                    } else {
+                        $data['content'] .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td></td>';
+                    }
+                    if ($directories) {
+                        foreach ($directories as $directory1) {
+                            foreach ($policy_arr as $default_policy_type) {
+                                if ($client_name_arr[0] . $client_name_arr[1] == 'Directory-') {
+                                    $data['content'] .= '<td></td>';
+                                } else {
+                                    $data[$default_policy_type] = '';
+                                    $consent = 'consent_' . $default_policy_type;
+                                    if (isset($directory1->{$consent})) {
+                                        if ($directory1->{$consent} == 1) {
+                                            $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $directory1->{$consent}, $default_policy_type, $directory1->directory_id]) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ';
+                                            // if ($default_policy_type == 'last_activity' && $client->last_access !== null) {
+                                            //     $data['content'] .= date('Y-m-d H:i:s', $client->last_access);
+                                            // }
+                                            $data['content'] .= '</a></td>';
+                                        } else {
+                                            $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $directory1->{$consent}, $default_policy_type, $directory1->directory_id]) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
+                                        }
+                                    } else  {
+                                        if ($default_policy_type == 'patient_user') {
+                                            $data['content'] .= '<td><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
+                                        } elseif ($default_policy_type == 'root_support') {
+                                            $data['content'] .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
+                                        } else {
+                                            $data['content'] .= '<td></td>';
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1336,7 +1382,7 @@ class HomeController extends Controller
                     $fhir_db = DB::table('fhir_clients')->where('endpoint_uri', '=', $smart_row['endpoint_uri_raw'])->first();
                     if ($fhir_db) {
                         if ($fhir_db->username !== null && $fhir_db->username !== '') {
-                            $copy_link .= '<span style="margin:10px"></span><i class="fa fa-clone fa-lg pnosh_copy" hie-val="' . $fhir_db->username . '" title="Copy username" style="cursor:pointer;"></i><span style="margin:10px"></span><i class="fa fa-key fa-lg pnosh_copy" hie-val="' . decrypt($fhir_db->password) . '" title="Copy password" style="cursor:pointer;"></i>';
+                            $copy_link .= '<span style="margin:10px"></span><i class="fa fa-clone fa-lg pnosh_copy" hie-val="' . $fhir_db->username . '" title="Copy username" style="cursor:pointer;"></i><span style="margin:10px"></span><i class="fa fa-clone fa-lg pnosh_copy" hie-val="' . decrypt($fhir_db->password) . '" title="Copy password" style="cursor:pointer;"></i>';
                         }
                     } else {
                         $fhir_data = [
@@ -1357,7 +1403,7 @@ class HomeController extends Controller
         return view('home', $data);
     }
 
-    public function consent_edit(Request $request, $id, $toggle='', $policy='')
+    public function consent_edit(Request $request, $id, $toggle='', $policy='', $directory='')
     {
         if ($toggle == '') {
             Session::put('current_client_id', $id);
@@ -1372,6 +1418,10 @@ class HomeController extends Controller
         }
         DB::table('oauth_clients')->where('client_id', '=', $id)->update($data);
         $this->group_policy($id, $types, 'update');
+        if ($directory !== '') {
+            DB::table('rs_to_directory')->where('directory_id', '=', $directory)->where('client_id', '=', $id)->update($data);
+            $this->directory_update_api();
+        }
         return redirect()->route('consent_table');
     }
 
