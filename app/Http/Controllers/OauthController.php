@@ -630,9 +630,9 @@ class OauthController extends Controller
             $parser = new NameParser();
             $name_arr = $parser->parse_name($name);
             if ($request->has('npi')) {
-                $uport_user = DB::table('oauth_users')->where('first_name', '=', $name_arr['fname'])->where('last_name', '=', $name_arr['lname'])->first();
-            } else {
                 $uport_user = DB::table('oauth_users')->where('first_name', '=', $name_arr['fname'])->where('last_name', '=', $name_arr['lname'])->where('npi', '=', $request->input('npi'))->first();
+            } else {
+                $uport_user = DB::table('oauth_users')->where('first_name', '=', $name_arr['fname'])->where('last_name', '=', $name_arr['lname'])->first();
             }
             if ($uport_user) {
                 // Save uport id, keep updating for demo purposes for now
