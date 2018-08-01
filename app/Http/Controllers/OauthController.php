@@ -230,6 +230,7 @@ class OauthController extends Controller
                 $new_user = DB::table('oauth_users')->where('username', '=', $request->input('username'))->first();
                 $this->login_sessions($new_user, $clientId);
                 Auth::loginUsingId($user);
+                $this->activity_log($new_user->email, 'Login');
                 Session::save();
                 // Setup e-mail server with Mailgun
                 $mailgun_secret = '';
@@ -497,6 +498,7 @@ class OauthController extends Controller
                     }
                     $user1 = DB::table('users')->where('name', '=', $request->username)->first();
                     Auth::loginUsingId($user1->id);
+                    $this->activity_log($user1->email, 'Login');
                     Session::save();
                     if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
                         // If generated from rqp_claims endpoint, do this
@@ -648,6 +650,7 @@ class OauthController extends Controller
                 $user = DB::table('users')->where('email', '=', $uport_user->email)->first();
                 $this->login_sessions($uport_user, $client_id);
                 Auth::loginUsingId($user->id);
+                $this->activity_log($uport_user->email, 'Login - uPort');
                 Session::save();
                 $return['message'] = 'OK';
                 if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
@@ -847,6 +850,7 @@ class OauthController extends Controller
         $local_user = DB::table('users')->where('name', '=', $sub)->first();
         $this->login_sessions($user, $client_id);
         Auth::loginUsingId($local_user->id);
+        $this->activity_log($user->email, 'Login - uPort, New User');
         if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
             // If generated from rqp_claims endpoint, do this
             return redirect()->route('rqp_claims');
@@ -1114,6 +1118,7 @@ class OauthController extends Controller
                     Session::put('is_authorized', 'true');
                     $this->login_sessions($google_user, $client_id);
                     Auth::loginUsingId($local_user->id);
+                    $this->activity_log($local_user->email, 'Login - oAuth2, Google');
                     Session::save();
                     return redirect()->route('authorize');
                 } else {
@@ -1121,6 +1126,7 @@ class OauthController extends Controller
                     if ($owner_query->sub == $google_user->sub) {
                         $this->login_sessions($google_user, $client_id);
                         Auth::loginUsingId($local_user->id);
+                        $this->activity_log($local_user->email, 'Login - oAuth2, Google');
                         Session::save();
                         return redirect()->route('authorize_resource_server');
                     } else {
@@ -1130,6 +1136,7 @@ class OauthController extends Controller
             } else {
                 $this->login_sessions($google_user, $client_id);
                 Auth::loginUsingId($local_user->id);
+                $this->activity_log($local_user->email, 'Login - oAuth2, Google');
                 Session::save();
                 return redirect()->route('consent_table');
             }

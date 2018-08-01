@@ -21,6 +21,17 @@ class Controller extends BaseController
 {
 	use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
+	protected function activity_log($username, $action)
+	{
+		$data = [
+			'username' => $username,
+			'action' => $action,
+			'created_at' => date('Y-m-d H:i:s')
+		];
+		DB::table('activity_log')->insert($data);
+		return true;
+	}
+
 	protected function base64url_encode($data)
 	{
 		return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');

@@ -91,6 +91,7 @@
 								@if (Session::get('is_owner') == 'yes')
 									<li><a href="{{ url('/directories') }}"><i class="fa fa-btn fa-sitemap"></i>Directories</a></li>
 									<li><a href="{{ url('/setup_mail') }}"><i class="fa fa-btn fa-envelope"></i>E-mail Service</a></li>
+									<li><a href="{{ url('/activity_logs') }}"><i class="fa fa-btn fa-list-alt"></i>Activity Logs</a></li>
 									<li><a href="{{ url('/update_system') }}"><i class="fa fa-btn fa-download"></i>Update System</a></li>
 								@endif
 								<li><a href="{{ url('/logout') }}"><i class="fa fa-btn fa-sign-out"></i>Logout</a></li>

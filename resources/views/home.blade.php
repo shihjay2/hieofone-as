@@ -108,6 +108,7 @@
 
 @section('view.scripts')
 <script src="{{ asset('assets/js/toastr.min.js') }}"></script>
+<script src="{{ asset('assets/js/bootstrap-list-filter.min.js') }}"></script>
 <script type="text/javascript">
 	$(document).ready(function() {
 		toastr.options = {
@@ -196,6 +197,7 @@
 			var info = $(this).attr('as-info');
 			toastr.info(info);
 		});
+		$('.searchlist').btsListFilter('#searchinput', {initial: false});
 	});
 </script>
 @endsection

@@ -1562,4 +1562,21 @@ class HomeController extends Controller
         Session::put('message_action', $message_action);
         return redirect()->route('consent_table');
     }
+
+    public function activity_logs(Request $request)
+    {
+        $data['name'] = Session::get('owner');
+        $data['title'] = 'Activity Log';
+        $data['content'] = 'No activities yet.';
+        $query = DB::table('activity_log')->orderBy('created_at', 'desc')->get();
+        if ($query) {
+            $data['content'] = '<form role="form"><div class="form-group"><input class="form-control" id="searchinput" type="search" placeholder="Filter Results..." /></div>';
+            $data['content'] .= '<ul class="list-group searchlist">';
+            foreach ($query as $row) {
+                $data['content'] .= '<li class="list-group-item row">' .  date('Y-m-d H:i:s', strtotime($row->created_at)) . ' - ' . $row->username . ' - ' . $row->action . '</li>';
+            }
+            $data['content'] .= '</ul></form>';
+        }
+        return view('home', $data);
+    }
 }
