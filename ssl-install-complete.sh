@@ -36,6 +36,7 @@ read -e -p "Enter email address: " -i "" EMAIL
 read -e -p "Enter the domain name (example.com): " -i "" DOMAIN
 
 USERNAME=$(echo "$EMAIL" | cut -d@ -f1)
+USERNAME=${USERNAME//./}
 if [ -f  $HIE/.email ]; then
 	rm -rf  $HIE/.email
 fi
