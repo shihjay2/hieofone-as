@@ -163,7 +163,7 @@ AS_APACHE_CONF="<VirtualHost _default_:80>
 </IfModule>
 <Directory $HIE/public>
 	Options Indexes FollowSymLinks MultiViews
-	AllowOverride All"
+	AllowOverride None"
 if [ "$APACHE_VER" = "4" ]; then
 	AS_APACHE_CONF="$AS_APACHE_CONF
 	Require all granted"

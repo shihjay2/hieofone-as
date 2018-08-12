@@ -56,7 +56,7 @@ if [[ ! -z $DOMAIN ]]; then
 </IfModule>
 <Directory $HIE/public>
 	Options Indexes FollowSymLinks MultiViews
-	AllowOverride All"
+	AllowOverride None"
 	if [ "$APACHE_VER" = "4" ]; then
 		APACHE_CONF="$APACHE_CONF
 		Require all granted"

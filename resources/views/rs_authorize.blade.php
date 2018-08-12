@@ -29,7 +29,7 @@
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
-									<label><input type="checkbox" name="consent_login_direct" {!! $login_direct !!}> Anyone signed-in directly to this Authorization Server sees Everything</label>
+									<label><input type="checkbox" name="consent_login_direct" {!! $login_direct !!}> Anyone signed-in directly to this Authorization Server sees and controls Everything</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#login_direct_detail" style="margin-left:20px">Details</button>
 								</div>
 								<div id="login_direct_detail" class="collapse">
@@ -40,7 +40,7 @@
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
-									<label><input type="checkbox" name="consent_public_publish_directory" {!! $public_publish_directory !!}> Anyone can see where this resource is located in a Directory</label>
+									<label><input type="checkbox" name="consent_public_publish_directory" {!! $public_publish_directory !!}> Anyone can see and link to your Trustee in a Directory</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#public_publish_directory_detail" style="margin-left:20px">Details</button>
 								</div>
 								<div id="public_publish_directory_detail" class="collapse">
@@ -48,7 +48,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="form-group">
+						<!-- <div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
 									<label><input type="checkbox" name="consent_private_publish_directory" {!! $private_publish_directory !!}> Only previously authorized users can see where this resource is located in a Directory</label>
@@ -58,11 +58,11 @@
 									<p>Only previously authorized users that has access to a Directory that you participate in can see where this resource is found.</p>
 								</div>
 							</div>
-						</div>
+						</div> -->
 						<div class="form-group">
 							<div class="col-sm-offset-2 col-sm-10">
 								<div class="checkbox">
-									<label><input type="checkbox" name="consent_last_activity" {!! $last_activity !!}> Publish the most recent date and time when this Authorization was active to a Directory</label>
+									<label><input type="checkbox" name="consent_last_activity" {!! $last_activity !!}> Publish the most recent date and time when this Trustee was active to a Directory</label>
 									<button type="button" class="btn btn-info" data-toggle="collapse" data-target="#last_activity_detail" style="margin-left:20px">Details</button>
 								</div>
 								<div id="last_activity_detail" class="collapse">

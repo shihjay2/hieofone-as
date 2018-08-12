@@ -739,7 +739,7 @@ class OauthController extends Controller
                         }
                     }
                 } else {
-                    $return['message'] = 'No email address associated with your uPort account.';
+                    $return['message'] = 'Login cannot be completed.  No email address is associated with your uPort account.  Add an e-mail address to your uPort and try again.';
                 }
             }
             if ($uport_notify == true) {
