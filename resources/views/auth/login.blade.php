@@ -133,13 +133,11 @@
 			<div id="modal1_header" class="modal-header">Add NPI credential to uPort?</div>
 			<div id="modal1_body" class="modal-body" style="height:30vh;overflow-y:auto;">
 				<p>This will simulate adding a verified credential to your existing uPort.</p>
-				<p>Clicking proceed with add a simulated NPI number</p>
 				<p>Clicking on Get from Doximity will demonstrate how you can get a verified credential if you have an existing Doximity account</p>
 				<p>After the NPI credential is added, click on Login with uPort</p>
 				<p>This will enable you to write a prescription.</p>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal" onClick="attest()"><i class="fa fa-btn fa-check"></i> Proceed</button>
 				<a href="https://dir.hieofone.org/doximity_start/" target="_blank" class="btn btn-default" id="doximity_modal"><i class="fa fa-btn fa-hand-o-right"></i> Get from Doximity</a>
 				<button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-btn fa-times"></i> Close</button>
 			  </div>
@@ -175,7 +173,7 @@
 
 	const loginBtnClick = () => {
 		connect.requestCredentials({
-	      requested: ['name', 'phone', 'country', 'email', 'description', 'NPI'],
+	      requested: ['name', 'email', 'NPI'],
 	      notifications: true // We want this if we want to recieve credentials
 	    }).then((credentials) => {
 			console.log(credentials);
@@ -241,19 +239,5 @@
 			}
 		);
 	};
-
-	const attest = () => {
-		connect.requestCredentials({
-	      requested: ['name', 'phone', 'country', 'email', 'description'],
-	      notifications: true // We want this if we want to recieve credentials
-	    }).then((credentials) => {
-			console.log(credentials);
-			connect.attestCredentials({
-			  sub: credentials.address,
-			  claim: { "NPI": "1023005410" },
-			  exp: new Date().getTime() + 30 * 24 * 60 * 60 * 1000
-			})
-		});
-	}
 </script>
 @endsection

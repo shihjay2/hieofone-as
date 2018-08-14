@@ -35,6 +35,12 @@ fi
 read -e -p "Enter email address: " -i "" EMAIL
 read -e -p "Enter the domain name (example.com): " -i "" DOMAIN
 
+if ! host $DOMAIN &> /dev/null
+then
+    echo "Domain name not ready or valid.  Aborting." 1>&2
+    exit 1
+fi
+
 USERNAME=$(echo "$EMAIL" | cut -d@ -f1)
 USERNAME=${USERNAME//./}
 if [ -f  $HIE/.email ]; then
