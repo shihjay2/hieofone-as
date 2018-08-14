@@ -1217,7 +1217,7 @@ class HomeController extends Controller
         $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
         $policy_labels = [
             'public_publish_directory' => [
-                'label' => 'Public',
+                'label' => 'UMA-Direct',
                 'info' => 'Any party that has access to a Directory that you participate in can see where this resource is found.'
             ],
             'last_activity' => [
@@ -1297,10 +1297,10 @@ class HomeController extends Controller
         $data['content'] .= '<br><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"> designates a SMART-on-FHIR resource which has the following limitations:<ul>';
         $data['content'] .= '<li><strong>No Refresh Tokens</strong></li><li><strong>No Dynamic Client Registration</strong></li><li><strong>and No User-Managed Access - therefore you cannot change access polices for this type of resource</strong></li>,';
         $data['content'] .= '</div>';
-        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th><th>UMA</th><th>Dir</th>';
+        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th><th style="text-align:center;">UMA</th><th style="text-align:center;">Dir</th>';
         if ($directories) {
             foreach ($directories as $directory) {
-                $data['content'] .= '<th>Directory - ' . $directory->name . '</th>';
+                $data['content'] .= '<th class="rotate">Directory - ' . $directory->name . '</th>';
             }
         }
         $data['content'] .= '</tr></thead><tbody><tr><td colspan="3"></td>';
@@ -1309,10 +1309,10 @@ class HomeController extends Controller
         if ($directories) {
             foreach ($directories as $directory) {
                 foreach ($policy_labels as $policy_label_k => $policy_label_v) {
-                    $data['content'] .= '<td><div class="as-info" as-info="' . $policy_label_v['info'] . '"><span>' . $policy_label_v['label'] . '</span></div></td>';
+                    $data['content'] .= '<td style="text-align:center;"><div class="as-info" as-info="' . $policy_label_v['info'] . '"><span>' . $policy_label_v['label'] . '</span></div></td>';
                     $policy_arr[] = $policy_label_k;
                     $column_empty .= '<td></td>';
-                    $fhir_column .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
+                    $fhir_column .= '<td style="text-align:center;"><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
                 }
             }
         }
@@ -1328,14 +1328,15 @@ class HomeController extends Controller
                     }
                     $data['content'] .= '</td>';
                     if ($client_name_arr[0] . $client_name_arr[1] == 'PatientNOSH' || $client_name_arr[0] . $client_name_arr[1] == 'Directory-') {
-                        $data['content'] .= '<td><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 50px;width: auto;"></img></td>';
+                        $data['content'] .= '<td style="text-align:center;"><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 50px;width: auto;"></img></td>';
                         if ($client_name_arr[0] . $client_name_arr[1] == 'Directory-') {
-                            $data['content'] .= '<td><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
+                            $data['content'] .= '<td style="text-align:center;"><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
                         } else {
                             $data['content'] .= '<td></td>';
                         }
                     } else {
-                        $data['content'] .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td></td>';
+                        $data['content'] .= '<td style="text-align:center;">N/A</td><td></td>';
+                        // $data['content'] .= '<td style="text-align:center;"><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td></td>';
                     }
                     if ($directories) {
                         foreach ($directories as $directory1) {
@@ -1348,13 +1349,13 @@ class HomeController extends Controller
                                     $consent = 'consent_' . $default_policy_type;
                                     if (isset($rs_to_directory->{$consent})) {
                                         if ($rs_to_directory->{$consent} == 1) {
-                                            $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $rs_to_directory->{$consent}, $default_policy_type, $directory1->directory_id]) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ';
+                                            $data['content'] .= '<td style="text-align:center;"><a href="' . route('consent_edit', [$client->client_id, $rs_to_directory->{$consent}, $default_policy_type, $directory1->directory_id]) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ';
                                             // if ($default_policy_type == 'last_activity' && $client->last_access !== null) {
                                             //     $data['content'] .= date('Y-m-d H:i:s', $client->last_access);
                                             // }
                                             $data['content'] .= '</a></td>';
                                         } else {
-                                            $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $rs_to_directory->{$consent}, $default_policy_type, $directory1->directory_id]) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
+                                            $data['content'] .= '<td style="text-align:center;"><a href="' . route('consent_edit', [$client->client_id, $rs_to_directory->{$consent}, $default_policy_type, $directory1->directory_id]) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
                                         }
                                     } else  {
                                         if ($default_policy_type == 'patient_user') {
