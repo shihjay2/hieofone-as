@@ -504,7 +504,7 @@ class Controller extends BaseController
 					<p>By setting this as a default, you allow any healthcare provider, known or unknown at any given time, to access and edit your protected health information.</p>'
 			],
 			// 'login_google',
-			'login_uport',
+			// 'login_uport',
 			'public_publish_directory' => [
 				'label' => 'Anyone can see and link to your Trustee in a Directory',
 				'description' => '<p>Any party that has access to a Directory that you participate in can see where this resource is found.</p>'
@@ -627,6 +627,33 @@ class Controller extends BaseController
 				];
 				DB::table('claim')->insert($data);
 			}
+		}
+		// Build custom polices
+		$policy_query = DB::table('custom_policy')->get();
+		if (!$policy_query->count()) {
+			$arr[] = [
+    			'name' => 'No sensitive',
+    			'type' => 'scope-exclude',
+    			'parameters' => 'sens/*'
+    		];
+    		$arr[] = [
+    			'name' => 'Write Notes',
+    			'type' => 'scope-include',
+    			'parameters' => 'view,edit'
+    		];
+    		$arr[] = [
+    			'name' => 'Everything',
+    			'type' => 'all',
+    			'parameters' => ''
+    		];
+    		$arr[] = [
+    			'name' => 'Consenter',
+    			'type' => 'fhir',
+    			'parameters' => ''
+    		];
+            foreach ($arr as $arr_item) {
+                $custom_policy_id = DB::table('custom_policy')->insertGetId($arr_item);
+            }
 		}
 	}
 
