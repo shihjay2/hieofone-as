@@ -122,15 +122,15 @@ class Controller extends BaseController
 		$resource_set_id_array = [];
 		$policies_array = [];
 		$resource_sets = DB::table('resource_set')->where('client_id', '=', $client_id)->get();
-		if ($resource_sets) {
+		if ($resource_sets->count()) {
 			foreach ($resource_sets as $resource_set) {
 				$resource_set_id_array[] = $resource_set->resource_set_id;
 				$policies = DB::table('policy')->where('resource_set_id', '=', $resource_set->resource_set_id)->get();
-				if ($policies) {
+				if ($policies->count()) {
 					foreach ($policies as $policy) {
 						$policies_array[] = $policy->policy_id;
 						$query1 = DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->get();
-						if ($query1) {
+						if ($query1->count()) {
 							foreach ($query1 as $row1) {
 								$query2 = DB::table('claim')->where('claim_id', '=', $row1->claim_id)->first();
 								if ($query2) {
@@ -163,7 +163,7 @@ class Controller extends BaseController
 					if ($query3) {
 						// Check if there is an existing policy with this resource set and attach all scopes these policies
 						$policies1 = DB::table('policy')->where('resource_set_id', '=', $resource_set_id)->get();
-						if ($policies1) {
+						if ($policies1->count()) {
 							foreach ($policies1 as $policy1) {
 								if (in_array($policy1->policy_id, $default_policies_old_array)) {
 									foreach ($types as $type) {
@@ -175,7 +175,7 @@ class Controller extends BaseController
 										DB::table('claim_to_policy')->insert($data1);
 									}
 									$resource_set_scopes = DB::table('resource_set_scopes')->where('resource_set_id', '=', $resource_set_id)->get();
-									if ($resource_set_scopes) {
+									if ($resource_set_scopes->count()) {
 										foreach ($resource_set_scopes as $resource_set_scope) {
 											$data2 = [
 												'policy_id' => $policy1->policy_id,
@@ -200,7 +200,7 @@ class Controller extends BaseController
 							DB::table('claim_to_policy')->insert($data4);
 						}
 						$resource_set_scopes1 = DB::table('resource_set_scopes')->where('resource_set_id', '=', $resource_set_id)->get();
-						if ($resource_set_scopes1) {
+						if ($resource_set_scopes1->count()) {
 							foreach ($resource_set_scopes1 as $resource_set_scope1) {
 								$data5 = [
 									'policy_id' => $policy_id,
@@ -220,7 +220,7 @@ class Controller extends BaseController
 		$owner_query = DB::table('owner')->first();
 		$proxies = DB::table('owner')->where('sub', '!=', $owner_query->sub)->get();
 		$proxy_arr = [];
-		if ($proxies) {
+		if ($proxies->count()) {
 			foreach ($proxies as $proxy_row) {
 				$proxy_arr[] = $proxy_row->sub;
 			}
@@ -259,6 +259,7 @@ class Controller extends BaseController
 		$this->login_sessions($uport_user, $client_id);
 		Auth::loginUsingId($user->id);
 		$this->activity_log($uport_user->email, 'Login - uPort');
+		$this->notify($uport_user);
 		Session::save();
 		$return['message'] = 'OK';
 		if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
@@ -299,6 +300,20 @@ class Controller extends BaseController
 		return $return;
 	}
 
+	protected function notify($user)
+	{
+		if ($user->notify == 1) {
+			$owner = DB::table('owner')->first();
+			$data['message_data'] = 'This is a notification that ' . $user->first_name . ' ' . $user->last_name . '(' . $user->email . ') just accessed your Trustee Authorization Server.';
+			$title = 'User Notification from your Trustee Authorization Server';
+			$to = $owner->email;
+			$this->send_mail('auth.emails.generic', $data, $title, $to);
+			if ($owner->mobile != '') {
+				$this->textbelt($owner->mobile, $data['message_data']);
+			}
+		}
+	}
+
 	protected function npi_lookup($first, $last='')
 	{
 		$url = 'https://npiregistry.cms.hhs.gov/api/?';
@@ -336,6 +351,83 @@ class Controller extends BaseController
 		$arr = json_decode($json, true);
 		return $arr;
 	}
+
+	protected function oidc_relay($param, $status=false)
+    {
+        $pnosh_url = url('/');
+        $pnosh_url = str_replace(array('http://','https://'), '', $pnosh_url);
+        $root_url = explode('/', $pnosh_url);
+        $root_url1 = explode('.', $root_url[0]);
+        $final_root_url = $root_url1[1] . '.' . $root_url1[2];
+        if ($pnosh_url == 'shihjay.xyz') {
+            $final_root_url = 'hieofone.org';
+        }
+        if ($final_root_url == 'hieofone.org') {
+            $relay_url = 'https://dir.' . $final_root_url . '/oidc_relay';
+            if ($status == false) {
+                $state = md5(uniqid(rand(), TRUE));
+                $relay_url = 'https://dir.' . $final_root_url . '/oidc_relay';
+            } else {
+                $state = '';
+                $relay_url = 'https://dir.' . $final_root_url . '/oidc_relay/' . $param['state'];
+            }
+            $root_param = [
+                'root_uri' => $root_url[0],
+                'state' => $state,
+                'origin_uri' => '',
+                'response_uri' => '',
+                'fhir_url' => '',
+                'fhir_auth_url' => '',
+                'fhir_token_url' => '',
+                'type' => '',
+                'cms_pid' => '',
+                'refresh_token' => ''
+            ];
+            $params = array_merge($root_param, $param);
+            $post_body = json_encode($params);
+            $content_type = 'application/json';
+            $ch = curl_init();
+            curl_setopt($ch,CURLOPT_URL, $relay_url);
+            if ($status == false) {
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    "Content-Type: {$content_type}",
+                    'Content-Length: ' . strlen($post_body)
+                ]);
+            }
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+            curl_setopt($ch,CURLOPT_FAILONERROR,1);
+            curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+            curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+            curl_setopt($ch,CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch,CURLOPT_CONNECTTIMEOUT ,0);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close ($ch);
+            if ($httpCode !== 404 && $httpCode !== 0) {
+                if ($status == false) {
+                    $return['message'] = $response;
+                    $return['url'] = $relay_url . '_start/' . $state;
+                    $return['state'] = $state;
+                } else {
+                    $response1 = json_decode($response, true);
+                    if (isset($response1['error'])) {
+                        $return['message'] = $response1['error'];
+                    } else {
+                        $return['message'] = 'Tokens received';
+                        $return['tokens'] = $response1;
+                    }
+                }
+            } else {
+                $return['message'] = 'Error: unable to connect to the relay.';
+            }
+        } else {
+            $return['message'] = 'Not supported.';
+        }
+        return $return;
+    }
 
 	protected function send_mail($template, $data_message, $subject, $to)
 	{
@@ -378,19 +470,222 @@ class Controller extends BaseController
 		return "E-mail sent.";
 	}
 
-	protected function default_policy_type()
+	protected function default_policy_type($key=true)
 	{
 		$return = [
-			'login_direct',
+			'login_direct' => [
+				'label' => 'Anyone signed-in directly to this Authorization Server sees and controls Everything',
+				'description' => '<p>Any party that you invite directly to be an authorized user to this Authorization Server has access to your Protected Health Information (PHI).  For example, this can be a spouse, partner, family members, guardian, or attorney.</p>'
+			],
 			// 'login_md_nosh',
-			'any_npi',
+			'any_npi' => [
+				'label' => 'Anyone that has a National Provider Identifier (NPI) sees these Resources',
+				'description' => '<p>All individual HIPAA covered healthcare providers have a National Provider Identifier, including:</p>
+					<ul>
+						<li>Physicians</li>
+						<li>Pharmacists</li>
+						<li>Physician assistants</li>
+						<li>Midwives</li>
+						<li>Nurse practitioners</li>
+						<li>Nurse anesthetists</li>
+						<li>Dentsits</li>
+						<li>Denturists</li>
+						<li>Chiropractors</li>
+						<li>Podiatrists</li>
+						<li>Naturopathic physicians</li>
+						<li>Clinical social workers</li>
+						<li>Professional counselors</li>
+						<li>Psychologists</li>
+						<li>Physical therapists</li>
+						<li>Occupational therapists</li>
+						<li>Pharmacy technicians</li>
+						<li>Atheletic trainers</li>
+					</ul>
+					<p>By setting this as a default, you allow any healthcare provider, known or unknown at any given time, to access and edit your protected health information.</p>'
+			],
 			// 'login_google',
 			'login_uport',
-			'public_publish_directory',
-			'private_publish_directory',
-			'last_activity'
+			'public_publish_directory' => [
+				'label' => 'Anyone can see and link to your Trustee in a Directory',
+				'description' => '<p>Any party that has access to a Directory that you participate in can see where this resource is found.</p>'
+			],
+			// 'private_publish_directory' => [
+			// 	'label' => 'Only previously authorized users can see where this resource is located in a Directory',
+			// 	'description' => '<p>Only previously authorized users that has access to a Directory that you participate in can see where this resource is found.</p>'
+			// ],
+			'last_activity' => [
+				'label' => 'Publish the most recent date and time when this Trustee was active to a Directory',
+				'description' => '<p>Activty of an authorization server refers to when a client attempts to view/edit a resource, adding/updating/removing a resource server, or registering new clients.</p>'
+			]
+		];
+		if ($key == true) {
+			return array_keys($return);
+		} else {
+			return $return;
+		}
+	}
+
+	protected function user_policies()
+	{
+		$return = [
+			'all' => [
+				'name' => 'All',
+				'type' => 'all'
+			],
+			'read_only' => [
+				'name' => 'Read Only',
+				'type' => 'scope',
+				'parameter' => 'view'
+			],
+			'allergies_and_medications' => [
+				'name' => 'Allergies and Medications',
+				'type' => 'fhir',
+				'parameter' => 'AllergyIntolerance'
+			],
+			'care_team_list' => [
+				'name' => 'Care Team List',
+				'type' => 'fhir',
+				'parameter' => 'CareTeam'
+			]
 		];
 		return $return;
+	}
+
+	protected function add_user_policies($email, $policies)
+	{
+		$data = [
+            'name' => 'email',
+            'claim_value' => $email
+        ];
+        $claim_id = DB::table('claim')->insertGetId($data);
+		foreach ($policies as $policy) {
+			$query = DB::table('policy')->where('name', '=', $policy)->get();
+	        if ($query->count()) {
+	            foreach ($query as $row) {
+	                $data1 = [
+	                    'claim_id' => $claim_id,
+	                    'policy_id' => $row->policy_id
+	                ];
+	                DB::table('claim_to_policy')->insert($data1);
+	            }
+	        }
+		}
+		return true;
+	}
+
+	protected function default_user_policies_create()
+	{
+		// Scan all resources
+		$resources = DB::table('resource_set')->get();
+		if ($resources->count()) {
+			foreach ($resources as $resource) {
+				$resource_data['resource_set_id'] = $resource->resource_set_id;
+				$user_policies = $this->user_policies();
+				$resource_scopes = DB::table('resource_set_scopes')->where('resource_set_id', '=', $resource->resource_set_id)->get();
+				foreach ($user_policies as $user_policy_k => $user_policy_v) {
+					if ($user_policy_v['type'] !== 'all') {
+						$policy = DB::table('policy')->where('name', '=', $user_policy_v['name'])->where('resource_set_id', '=', $resource->resource_set_id)->first();
+						if (!$policy) {
+							$policy_id = DB::table('policy')->insertGetId(['resource_set_id' => $resource->resource_set_id, 'name' => $user_policy_v['name']]);
+							// Scan all resource scopes for the resource set and place appropriate polices
+							if ($resource_scopes) {
+								foreach ($resource_scopes as $resource_scope) {
+									$scope_arr = explode('/', $resource_scope->scope);
+									$policy_scope_data = [
+										'policy_id' => $policy_id,
+										'scope' => $resource_scope->scope
+									];
+									// All default user polices check for Patient
+									if (in_array('Patient', $scope_arr)) {
+										DB::table('policy_scopes')->insert($policy_scope_data);
+									}
+									if ($user_policy_v['type'] == 'scope') {
+										if ($user_policy_v['parameter'] == $resource_scope->scope) {
+											DB::table('policy_scopes')->insert($policy_scope_data);
+										}
+									}
+									if ($user_policy_v['type'] == 'fhir') {
+										if (in_array($user_policy_v['parameter'], $scope_arr)) {
+											DB::table('policy_scopes')->insert($policy_scope_data);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		// Build exisitng user claims
+		$users = DB::table('oauth_users')->where('password', '!=', 'Pending')->get();
+		foreach ($users as $user) {
+			$data = [
+				'name' => 'email',
+				'claim_value' => $user->email
+			];
+			DB::table('claim')->insert($data);
+		}
+	}
+
+	protected function custom_policies_edit($name, $type, $parameters=[], $action='')
+	{
+		$policies = DB::table('policy')->where('name', '=', $name)->get();
+		$policy_id_arr = [];
+		if ($polices->count()) {
+			foreach ($polices as $policy) {
+				// Clear all scopes if they exist
+				DB::table('policy_scopes')->where('policy_id', '=', $policy->policy_id)->delete();
+				$policy_id_arr[] = [
+					'policy_id' => $policy->policy_id,
+					'resource_set_id' => $policy->resource_set_id
+				];
+			}
+		} else {
+			$resources = DB::table('resource_set')->get();
+			if ($resources->count()) {
+				foreach ($resources as $resource) {
+					$policy_id1 = DB::table('policy')->insertGetId(['resource_set_id' => $resource->resource_set_id, 'name' => $name]);
+					$policy_id_arr[] = [
+						'policy_id' => $policy_id1,
+						'resource_set_id' => $resource->resource_set_id
+					];
+				}
+			}
+		}
+		if ($action == 'delete') {
+			DB::table('policy')->where('name', '=', $name)->delete();
+		} else {
+			foreach ($policy_id_arr as $policy_id_k => $policy_id_v) {
+				foreach ($parameters as $parameter) {
+					$resource_scopes = DB::table('resource_set_scopes')->where('resource_set_id', '=', $policy_id_v['resource_set_id'])->get();
+					foreach ($resource_scopes as $resource_scope) {
+						$scope_arr = explode('/', $resource_scope->scope);
+						$policy_scope_data = [
+							'policy_id' => $policy_id_v['policy_id'],
+							'scope' => $resource_scope->scope
+						];
+						if ($type == 'scope-include') {
+							if ($parameter == $resource_scope->scope) {
+								DB::table('policy_scopes')->insert($policy_scope_data);
+							}
+						}
+						if ($type == 'scope-exclude') {
+							if ($parameter !== $resource_scope->scope) {
+								DB::table('policy_scopes')->insert($policy_scope_data);
+							}
+						}
+						if ($type == 'all') {
+							DB::table('policy_scopes')->insert($policy_scope_data);
+						}
+						if ($type == 'fhir') {
+							if (in_array($parameter, $scope_arr)) {
+								DB::table('policy_scopes')->insert($policy_scope_data);
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	protected function directory_api($pre_url, $params, $action='directory_registration', $id='1')
@@ -450,7 +745,7 @@ class Controller extends BaseController
 		$user = DB::table('oauth_users')->where('sub', '=', $owner->sub)->first();
 		$query = DB::table('directories')->get();
         $rs = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
-		if ($query) {
+		if ($query->count()) {
 			foreach ($query as $directory) {
 		        $rs_arr = [];
 		        if ($rs) {
@@ -500,6 +795,249 @@ class Controller extends BaseController
 			}
 		}
         return $response1;
+    }
+
+	protected function policy_build($set=false)
+	{
+		$arr = $this->default_policy_type(false);
+		$return = '';
+		if ($set == false) {
+			$query = DB::table('owner')->first();
+		} else {
+			$query = DB::table('oauth_clients')->where('client_id', '=', Session::get('current_client_id'))->first();
+		}
+		foreach ($arr as $row_k => $row_v) {
+			$return .= '<div class="form-group"><div class="col-sm-offset-2 col-sm-10"><div class="checkbox"><label>';
+			$return .= '<input type="checkbox" name="consent_' . $row_k . '"';
+			if ($set == false) {
+				$val = $query->{$row_k};
+			} else {
+				$consent = 'consent_' . $row_k;
+				$val = $query->{$consent};
+			}
+			if ($val == 1) {
+				$return .= ' checked';
+			}
+			$return .= '>' . $row_v['label'] . '</label><button type="button" class="btn btn-info" data-toggle="collapse" data-target="#' . $row_k . '_detail" style="margin-left:20px">Details</button></div>';
+			$return .= '<div id="' . $row_k . '_detail" class="collapse">' . $row_v['description'] . '</div>';
+			$return .= '</div></div>';
+		}
+		return $return;
+	}
+
+	protected function roles()
+	{
+		$arr = [
+			'',
+			'Admin',
+			'Clinician',
+			'Directory',
+			'Family',
+			'Custom'
+		];
+		return $arr;
+	}
+
+	protected function roles_build($value='Clinician')
+	{
+		$arr = $this->roles();
+		$return = '';
+		foreach ($arr as $row) {
+			$return .= '<option value="' . $row . '"';
+			if ($value == $row) {
+				$return .= ' selected="selected"';
+			}
+			$return .= '>' . $row . '</option>';
+		}
+		return $return;
+	}
+
+	protected function certifier_roles()
+	{
+		$arr = [
+			'Read Only',
+			'Clinician',
+			'Family',
+			'Custom Role'
+		];
+		return $arr;
+	}
+
+	protected function certifier_default()
+	{
+		$arr = [
+			'Doximity' => [
+				'roles' => ['Clinician'],
+				'badges' => ['uPort', 'OIDC']
+			],
+			'Google' => [
+				'roles' => ['Read Only', 'Family'],
+				'badges' => ['OIDC']
+			],
+			'Emory Healthcare' => [
+				'roles' => ['Clinician'],
+				'badges' => ['OIDC']
+			],
+			'Homeless Service' => [
+				'roles' => ['Custom Role'],
+				'custom_role' => 'Navigator',
+				'badges' => ['uPort']
+			]
+		];
+		return $arr;
+	}
+
+	protected function query_custom_polices()
+	{
+		$arr = [];
+		$query = DB::table('custom_policy')->get();
+		if ($query->count()) {
+			foreach ($query as $row) {
+				$arr[] = [
+					'name' => $row->name,
+					'type' => $row->type,
+					'parameter' => $row->parameters
+				];
+			}
+		}
+		// $arr[] = [
+		// 	'name' => 'No sensitive',
+		// 	'type' => 'scope-exclude',
+		// 	'parameter' => 'sens/*'
+		// ];
+		// $arr[] = [
+		// 	'name' => 'Write Notes',
+		// 	'type' => 'scope-include',
+		// 	'parameter' => 'view,edit'
+		// ];
+		// $arr[] = [
+		// 	'name' => 'Everything',
+		// 	'type' => 'all',
+		// 	'parameter' => ''
+		// ];
+		// $arr[] = [
+		// 	'name' => 'Consenter',
+		// 	'type' => 'fhir',
+		// 	'parameter' => ''
+		// ];
+		return $arr;
+	}
+
+	protected function custom_policy_build($value='')
+	{
+		$arr = $this->query_custom_polices();
+		$return = '';
+		foreach ($arr as $row) {
+			$return .= '<option value="' . $row['name'] . '"';
+			if ($value == $row['name']) {
+				$return .= ' selected="selected"';
+			}
+			$return .= '>' . $row['name'] . '</option>';
+		}
+		return $return;
+	}
+
+	protected function fhir_resources()
+    {
+        $return = [
+            'Condition' => [
+                'icon' => 'fa-bars',
+                'name' => 'Conditions',
+                'table' => 'issues',
+                'order' => 'issue'
+            ],
+            'MedicationStatement' => [
+                'icon' => 'fa-eyedropper',
+                'name' => 'Medications',
+                'table' => 'rx_list',
+                'order' => 'rxl_medication'
+            ],
+            'AllergyIntolerance' => [
+                'icon' => 'fa-exclamation-triangle',
+                'name' => 'Allergies',
+                'table' => 'allergies',
+                'order' => 'allergies_med'
+            ],
+            'Immunization' => [
+                'icon' => 'fa-magic',
+                'name' => 'Immunizations',
+                'table' => 'immunizations',
+                'order' => 'imm_immunization'
+            ],
+            'Patient' => [
+                'icon' => 'fa-user',
+                'name' => 'Patient Information',
+                'table' => 'demographics',
+                'order' => 'pid'
+            ],
+            'Encounter' => [
+                'icon' => 'fa-stethoscope',
+                'name' => 'Encounters',
+                'table' => 'encounters',
+                'order' => 'encounter_cc'
+            ],
+            'FamilyHistory' => [
+                'icon' => 'fa-sitemap',
+                'name' => 'Family History',
+                'table' => 'other_history',
+                'order' => 'oh_fh'
+            ],
+            'Binary' => [
+                'icon' => 'fa-file-text',
+                'name' => 'Documents',
+                'table' => 'documents',
+                'order' => 'documents_desc'
+            ],
+            'Observation' => [
+                'icon' => 'fa-flask',
+                'name' => 'Observations',
+                'table' => 'tests',
+                'order' => 'test_name'
+            ]
+        ];
+        return $return;
+    }
+
+	protected function fhir_scopes_confidentiality()
+    {
+        $arr = [
+            'conf/N' => 'Normal confidentiality',
+            'conf/R' => 'Restricted confidentiality',
+            'conf/V' => 'Very Restricted confidentiality'
+        ];
+        return $arr;
+    }
+
+    protected function fhir_scopes_sensitivities()
+    {
+        $arr = [
+            'sens/ETH' => 'Substance abuse',
+            'sens/PSY' => 'Psychiatry',
+            'sens/GDIS' => 'Genetic disease',
+            'sens/HIV' => 'HIV/AIDS',
+            'sens/SCA' => 'Sickle cell anemia',
+            'sens/SOC' => 'Social services',
+            'sens/SDV' => 'Sexual assault, abuse, or domestic violence',
+            'sens/SEX' => 'Sexuality and reproductive health',
+            'sens/STD' => 'Sexually transmitted disease',
+            'sens/DEMO' => 'All demographic information',
+            'sens/DOB' => 'Date of birth',
+            'sens/GENDER' => 'Gender and sexual orientation',
+            'sens/LIVARG' => 'Living arrangement',
+            'sens/MARST' => 'Marital status',
+            'sens/RACE' => 'Race',
+            'sens/REL' => 'Religion',
+            'sens/B' => 'Business information',
+            'sens/EMPL' => 'Employer',
+            'sens/LOCIS' => 'Location',
+            'sens/SSP' => 'Sensitive service provider',
+            'sens/ADOL' => 'Adolescent',
+            'sens/CEL' => 'Celebrity',
+            'sens/DIAG' => 'Diagnosis',
+            'sens/DRGIS' => 'Drug information',
+            'sens/EMP' => 'Employee'
+        ];
+        return $arr;
     }
 
 	/**

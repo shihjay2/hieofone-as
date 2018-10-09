@@ -110,9 +110,9 @@ class HomeController extends Controller
         $data['message_action'] = Session::get('message_action');
         Session::forget('message_action');
         $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
-        if ($query || ! empty($smart_on_fhir)) {
+        if ($query->count() || ! empty($smart_on_fhir)) {
             $data['content'] = '<div class="list-group">';
-            if ($query) {
+            if ($query->count()) {
                 foreach ($query as $client) {
                     $link = '';
                     if ($pnosh) {
@@ -163,7 +163,7 @@ class HomeController extends Controller
         $default_policy_types = $this->default_policy_type();
         $data['back'] = '<a href="' . URL::to('home') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resource Services</a>';
         $query = DB::table('resource_set')->where('client_id', '=', $id)->get();
-        if ($query) {
+        if ($query->count()) {
             $count1 = 0;
             foreach ($default_policy_types as $default_policy_type) {
                 $consent = 'consent_' . $default_policy_type;
@@ -224,7 +224,7 @@ class HomeController extends Controller
         $data['content'] = 'No policies registered for this resource.';
         $data['back'] = '<a href="' . URL::to('resources') . '/' . Session::get('current_client_id') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resources</a>';
         $query1 = DB::table("policy")->where('resource_set_id', '=', $id)->get();
-        if ($query1) {
+        if ($query1->count()) {
             $data['content'] = '<table class="table table-striped"><thead><tr><th>User</th><th>Permissions</th><th></th></thead><tbody>';
             foreach ($query1 as $policy) {
                 // Get claim
@@ -350,7 +350,7 @@ class HomeController extends Controller
             'uma_protection' => 'Register Resources'
         ];
         $query = DB::table('oauth_clients')->where('authorized', '=', 1)->get();
-        if ($query) {
+        if ($query->count()) {
             $data['content'] = '<p>Clients are outside apps that work on behalf of users to access your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Client Name</th><th>Permissions</th><th></th></thead><tbody>';
             foreach ($query as $client) {
                 $data['content'] .= '<tr><td>' . $client->client_name . '</td><td>';
@@ -394,14 +394,7 @@ class HomeController extends Controller
         $data['content'] .= '<p>By clicking Allow, you consent to sharing your information on ' . $query->client_name . ' according to the policies selected below. You can revoke consent or change your policies for ' . $query->client_name . ' at any time using the My Resources page.  Parties requesting access to your information will be listed on the My Clients page where their access can also be revoked or changed.   Your sharing defaults can be changed on the My Policies page.</p>';
         $data['content'] .= '<input type="hidden" name="client_id" value="' . $query->client_id . '"/>';
         $data['client'] = $query->client_name;
-        $default_policy_types = $this->default_policy_type();
-        foreach ($default_policy_types as $default_policy_type) {
-            $data[$default_policy_type] = '';
-            $consent = 'consent_' . $default_policy_type;
-            if ($query->{$consent} == 1) {
-                $data[$default_policy_type] = 'checked';
-            }
-        }
+        $data['policies'] = $this->policy_build(true);
         $data['set'] = 'true';
         return view('rs_authorize', $data);
     }
@@ -468,14 +461,7 @@ class HomeController extends Controller
             $data['content'] .= '<p>By clicking Allow, you consent to sharing your information on ' . $query->client_name . ' according to the policies selected below. You can revoke consent or change your policies for ' . $query->client_name . ' at any time using the My Resources page.  Parties requesting access to your information will be listed on the My Clients page where their access can also be revoked or changed.   Your sharing defaults can be changed on the My Policies page.</p>';
             $data['content'] .= '<input type="hidden" name="client_id" value="' . $query->client_id . '"/>';
             $data['client'] = $query->client_name;
-            $query1 = DB::table('owner')->first();
-            $default_policy_types = $this->default_policy_type();
-            foreach ($default_policy_types as $default_policy_type) {
-                $data[$default_policy_type] = '';
-                if ($query1->{$default_policy_type} == 1) {
-                    $data[$default_policy_type] = 'checked';
-                }
-            }
+            $data['policies'] = $this->policy_build();
             return view('rs_authorize', $data);
         } else {
             return redirect()->route('home');
@@ -557,7 +543,7 @@ class HomeController extends Controller
             'uma_protection' => 'Register Resources'
         ];
         $query = DB::table('oauth_clients')->where('authorized', '=', 0)->get();
-        if ($query) {
+        if ($query->count()) {
             $data['content'] = '<p>Clients are outside apps that work on behalf of users to access your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Client Name</th><th>Permissions Requested</th><th></th></thead><tbody>';
             foreach ($query as $client) {
                 $data['content'] .= '<tr><td>' . $client->client_name . '</td><td>';
@@ -618,7 +604,7 @@ class HomeController extends Controller
                 $proxy_arr[] = $proxy_row->sub;
             }
         }
-        if ($query) {
+        if ($query->count()) {
             $data['content'] = '<p>Users have access to your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Name</th><th>Email</th><th>NPI</th><th></th><th></th></thead><tbody>';
             foreach ($query as $user) {
                 $data['content'] .= '<tr><td>' . $user->first_name . ' ' . $user->last_name . '</td><td>' . $user->email . '</td><td>';
@@ -659,7 +645,7 @@ class HomeController extends Controller
             'uma_protection' => 'Register Resources'
         ];
         $query = DB::table('oauth_users')->where('password', '=', 'Pending')->get();
-        if ($query) {
+        if ($query->count()) {
             $data['content'] = '<p>Users have access to your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Name</th><th>Email</th><th>NPI</th><th></th></thead><tbody>';
             foreach ($query as $user) {
                 $data['content'] .= '<tr><td>' . $user->first_name . ' ' . $user->last_name . '</td><td>';
@@ -736,7 +722,8 @@ class HomeController extends Controller
             $this->validate($request, [
                 'email' => 'required|unique:users,email',
                 'first_name' => 'required',
-                'last_name' => 'required'
+                'last_name' => 'required',
+                'role' => 'required'
             ]);
             // Check if
             $access_lifetime = App::make('oauth2')->getConfig('access_lifetime');
@@ -746,10 +733,15 @@ class HomeController extends Controller
                 'expires' => date('Y-m-d H:i:s', time() + $access_lifetime),
                 'code' => $code,
                 'first_name' => $request->input('first_name'),
-                'last_name' => $request->input('last_name')
+                'last_name' => $request->input('last_name'),
+                'role' => $request->input('role'),
+                'custom_policy' => $request->input('custom_policy')
             ];
             if ($request->has('client_id')) {
                 $data1['client_ids'] = implode(',', $request->input('client_id'));
+            }
+            if ($request->has('policies')) {
+                $data1['policies'] = json_encode($request->input('policies'));
             }
             DB::table('invitation')->insert($data1);
             // Send email to invitee
@@ -770,16 +762,69 @@ class HomeController extends Controller
         } else {
             if ($owner->login_direct == 0) {
                 $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
-                if ($query) {
+                if ($query->count()) {
                     $data['rs'] = '<ul class="list-group checked-list-box">';
                     $data['rs'] .= '<li class="list-group-item"><input type="checkbox" id="all_resources" style="margin:10px;"/>All Resources</li>';
                     foreach ($query as $client) {
-                        $data['rs'] .= '<li class="list-group-item"><input type="checkbox" name="client_id[]" class="client_ids" value="' . $client->client_id . '" style="margin:10px;"/><img src="' . $client->logo_uri . '" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $client->client_name . '</span></li>';
+                        $data['rs'] .= '<li class="list-group-item"><input type="checkbox" name="client_id[]" class="client_ids" value="' . $client->client_id . '" style="margin:10px;"/><img src="' . $client->logo_uri . '" style="max-height: 30px;width: auto;"></img><span style="margin:10px">' . $client->client_name . '</span></li>';
                     }
                     $data['rs'] .= '</ul>';
                 }
             }
+            $user_policies = $this->user_policies();
+            $data['user_policies'] = '<ul class="list-group checked-list-box">';
+            foreach ($user_policies as $user_policy) {
+                $data['user_policies'] .= '<li class="list-group-item"><input type="checkbox" name="policies[]" value="' . $user_policy['name'] . '" style="margin:10px;"/><span style="margin:10px">' . $user_policy['name'] . '</span></li>';
+            }
+            $data['user_policies'] .= '</ul>';
+            $data['roles'] = $this->roles_build();
+            $custom_policies = DB::table('custom_policy')->get();
+            $data['custom_policy'] = '<option value="">None</option>';
+            if ($custom_policies->count()) {
+                foreach ($custom_policies as $custom_policy) {
+        			$data['custom_policy'] .= '<option value="' . $custom_policy->id . '"';
+        			$data['custom_policy'] .= '>' . $custom_policy->name . '</option>';
+        		}
+            }
             return view('invite', $data);
+        }
+    }
+
+    public function resend_invitation(Request $request, $id)
+    {
+        $owner = DB::table('owner')->first();
+        $invite = DB::table('invitation')->where('id', '=', $id)->first();
+        $url = URL::to('accept_invitation') . '/' . $invite->code;
+        $access_lifetime = App::make('oauth2')->getConfig('access_lifetime');
+        $data['expires'] = date('Y-m-d H:i:s', time() + $access_lifetime);
+        DB::table('invitation')->where('id', '=', $id)->update($data);
+        $data2['message_data'] = 'You are invited to the Trustee Authorization Server for ' . $owner->firstname . ' ' . $owner->lastname . '.<br>';
+        $data2['message_data'] .= 'Go to ' . $url . ' to get registered.';
+        $title = 'Invitation to ' . $owner->firstname . ' ' . $owner->lastname  . "'s Authorization Server";
+        $to = $request->input('email');
+        $this->send_mail('auth.emails.generic', $data2, $title, $to);
+        Session::put('message_action', 'Invitation email resent');
+        return redirect()->route('consent_table');
+    }
+
+    public function invite_cancel(Request $request, $code, $redirect=false)
+    {
+        $owner = DB::table('owner')->first();
+        $query = DB::table('invitation')->where('code', '=', $code)->first();
+        if ($query) {
+            DB::table('invitation')->where('code', '=', $code)->delete();
+        }
+        if ($redirect == true) {
+            Session::put('message_action', 'Invitation for ' . $query->email . ' has been canceled.');
+            return redirect()->route('consent_table');
+        } else {
+            // $new_data = [
+            //     'name' => $owner->org_name,
+            //     'text' => '',
+            //     'create' => 'yes',
+            //     'complete' => 'Your request for a patient container has been canceled.<br>Thank you!'
+            // ];
+            // return view('patients', $new_data);
         }
     }
 
@@ -1045,7 +1090,7 @@ class HomeController extends Controller
         $root_domain_registered = false;
         $data['content'] = '<p>Directories are servers that share the location of your authorization server. Users such as authorized physicians can use a directory service to easily access your authorization server and patient health record.  Directories can also associate your authorization server to communities of other patients with similar goals or attributes.  Directories do not gather or share your health information in any way.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Directory Name</th><th>Permissions</th><th></th></thead><tbody>';
         $query = DB::table('directories')->get();
-        if ($query) {
+        if ($query->count()) {
             foreach ($query as $directory) {
                 $data['content'] .= '<tr><td>' . $directory->name . '</td>';
                 $data['content'] .= '<td><a href="' . route('directory_remove', [$directory->id]) . '" class="btn btn-primary" role="button">Unauthorize</a></td></tr>';
@@ -1084,7 +1129,7 @@ class HomeController extends Controller
         $user = DB::table('oauth_users')->where('sub', '=', $owner->sub)->first();
         $rs = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
         $rs_arr = [];
-        if ($rs) {
+        if ($rs->count()) {
             foreach ($rs as $rs_row) {
                 $rs_arr[] = [
                     'name' => $rs_row->client_name,
@@ -1294,90 +1339,133 @@ class HomeController extends Controller
         $data['title'] = 'Consent Table';
         $data['content'] = '<div class="alert alert-success">';
         $data['content'] .= 'Click on a <i class="fa fa-check fa-lg" style="color:green;"></i> or <i class="fa fa-times fa-lg" style="color:red;"></i> to change the policy.  Click on a <strong>policy name</strong> for for information about the policy.';
-        $data['content'] .= '<br><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"> designates a SMART-on-FHIR resource which has the following limitations:<ul>';
-        $data['content'] .= '<li><strong>No Refresh Tokens</strong></li><li><strong>No Dynamic Client Registration</strong></li><li><strong>and No User-Managed Access - therefore you cannot change access polices for this type of resource</strong></li>,';
+        // $data['content'] .= '<br><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"> designates a SMART-on-FHIR resource which has the following limitations:<ul>';
+        // $data['content'] .= '<li><strong>No Refresh Tokens</strong></li><li><strong>No Dynamic Client Registration</strong></li><li><strong>and No User-Managed Access - therefore you cannot change access polices for this type of resource</strong></li>,';
         $data['content'] .= '</div>';
-        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th><th style="text-align:center;">UMA</th><th style="text-align:center;">Dir</th>';
+        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th><th style="text-align:center;"><strong>Ping<br>Me</strong></th><th style="text-align:center;"><strong>Role</strong></th><th style="text-align:center;" colspan="4"><strong>Polices</strong></th>';
         if ($directories) {
             foreach ($directories as $directory) {
-                $data['content'] .= '<th class="rotate">Directory - ' . $directory->name . '</th>';
+                $data['content'] .= '<th>Directory - ' . $directory->name . '</th>';
             }
         }
-        $data['content'] .= '</tr></thead><tbody><tr><td colspan="3"></td>';
+        $data['content'] .= '</tr></thead><tbody>';
+        $data['content'] .= '<tr><th><strong>Health Record <a href="' . url('/') . '/nosh/fhir_connect" target="_blank" class="btn btn-success btn-xs" style="margin-left:10px;">Connect to Hospital</a> <a href="' . url('/') . '/nosh/cms_bluebutton" target"_blank" class="btn btn-success btn-xs">Connect to Medicare</a></th><th></th><th></th>';
         $column_empty = '';
+        $header_empty = '';
+        $hr_column = '';
+        $hr_column_header = '';
         $fhir_column = '';
+        $fhir_column_header = '';
+        $invited_column = '';
+        $invited_column_header = '';
+        $certifier_column = '';
+        $certifier_column_header = '';
+        $user_policies = $this->user_policies();
+        $certifier_roles = $this->certifier_roles();
+        $custom_polices = $this->query_custom_polices();
+        $counts_arr = [
+            'hr' => 0,
+            'invited' => count($user_policies),
+            'certifier' => count($certifier_roles)
+        ];
         if ($directories) {
             foreach ($directories as $directory) {
                 foreach ($policy_labels as $policy_label_k => $policy_label_v) {
-                    $data['content'] .= '<td style="text-align:center;"><div class="as-info" as-info="' . $policy_label_v['info'] . '"><span>' . $policy_label_v['label'] . '</span></div></td>';
+                    $data['content'] .= '<th style="text-align:center;"><div class="as-info" as-info="' . $policy_label_v['info'] . '"><span>' . $policy_label_v['label'] . '</span></div></th>';
                     $policy_arr[] = $policy_label_k;
-                    $column_empty .= '<td></td>';
-                    $fhir_column .= '<td style="text-align:center;"><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
+                    $fhir_column .= '<td style="text-align:center;">N/A</td>';
+                    $counts_arr['hr']++;
                 }
             }
         }
-        $data['content'] .= '</tr>';
+        // Build empty columns
+        arsort($counts_arr);
+        $max_count_arr = max($counts_arr);
+        for ($i=0; $i <= $max_count_arr; $i++) {
+            $column_empty .= '<td></td>';
+            $header_empty .= '<th></th>';
+        }
+        foreach ($counts_arr as $counts_row_k => $counts_row_v) {
+            $diff = $max_count_arr - $counts_row_v;
+            if ($diff !== 0) {
+                for ($x = 0; $x <= $diff; $x++) {
+                    ${$counts_row_k . '_column'} .= '<td></td>';
+                    ${$counts_row_k . '_column_header'} .= '<th></th>';
+                }
+            }
+        }
+        $data['content'] .= $hr_column_header . '</tr>';
         // $data['content'] .= '<th><div class="as-info" as-info="Last time when the resource server was accessed by any client."><span>Last Accessed</span></div></th>';
-        if ($query || ! empty($smart_on_fhir)) {
-            if ($query) {
+        if ($query->count() || ! empty($smart_on_fhir)) {
+            if ($query->count()) {
                 foreach ($query as $client) {
-                    $data['content'] .= '<tr><td><a href="'. route('consent_edit', [$client->client_id]) . '">' . $client->client_name . '</a>';
                     $client_name_arr = explode(' ', $client->client_name);
-                    if ($client_name_arr[0] . $client_name_arr[1] == 'PatientNOSH') {
-                        $data['content'] .= '<br><span class="label label-success pnosh_link" nosh-link="' . $client->client_uri . '/patient">Go There</span>';
-                    }
-                    $data['content'] .= '</td>';
-                    if ($client_name_arr[0] . $client_name_arr[1] == 'PatientNOSH' || $client_name_arr[0] . $client_name_arr[1] == 'Directory-') {
-                        $data['content'] .= '<td style="text-align:center;"><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 50px;width: auto;"></img></td>';
-                        if ($client_name_arr[0] . $client_name_arr[1] == 'Directory-') {
-                            $data['content'] .= '<td style="text-align:center;"><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
+                    if ($client_name_arr[0] . $client_name_arr[1] !== 'Directory-') {
+                        $data['content'] .= '<tr><td><div class="row"><div class="col-xs-10" style="display:inline-block;float:none;"><a href="'. route('consent_edit', [$client->client_id]) . '">' . $client->client_name . '</a>';
+                        if ($client_name_arr[0] . $client_name_arr[1] == 'PatientNOSH') {
+                            $data['content'] .= '<br><span class="label label-success pnosh_link" nosh-link="' . $client->client_uri . '/patient">Go There</span></div>';
                         } else {
-                            $data['content'] .= '<td></td>';
+                            $data['content'] .= '</div>';
                         }
-                    } else {
-                        $data['content'] .= '<td style="text-align:center;">N/A</td><td></td>';
-                        // $data['content'] .= '<td style="text-align:center;"><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td></td>';
-                    }
-                    if ($directories) {
-                        foreach ($directories as $directory1) {
-                            $rs_to_directory = DB::table('rs_to_directory')->where('directory_id', '=', $directory1->directory_id)->where('client_id', '=', $client->client_id)->first();
-                            foreach ($policy_arr as $default_policy_type) {
-                                if ($client_name_arr[0] . $client_name_arr[1] == 'Directory-') {
-                                    $data['content'] .= '<td></td>';
-                                } else {
-                                    $data[$default_policy_type] = '';
-                                    $consent = 'consent_' . $default_policy_type;
-                                    if (isset($rs_to_directory->{$consent})) {
-                                        if ($rs_to_directory->{$consent} == 1) {
-                                            $data['content'] .= '<td style="text-align:center;"><a href="' . route('consent_edit', [$client->client_id, $rs_to_directory->{$consent}, $default_policy_type, $directory1->directory_id]) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ';
-                                            // if ($default_policy_type == 'last_activity' && $client->last_access !== null) {
-                                            //     $data['content'] .= date('Y-m-d H:i:s', $client->last_access);
-                                            // }
-                                            $data['content'] .= '</a></td>';
-                                        } else {
-                                            $data['content'] .= '<td style="text-align:center;"><a href="' . route('consent_edit', [$client->client_id, $rs_to_directory->{$consent}, $default_policy_type, $directory1->directory_id]) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
+                        if ($client_name_arr[0] . $client_name_arr[1] == 'PatientNOSH') {
+                            $data['content'] .=  '<div class="col-xs-2" style="display:inline-block;float:none;"><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 40px;width: auto;"></img></div>';
+                        }
+                        $data['content'] .= '</div></td>';
+                        $data['content'] .= '<td style="text-align:center;">N/A</td>'; // Ping Me column
+                        $data['content'] .= '<td style="text-align:center;">Health Record</td>'; // Roles column
+                        // if ($client_name_arr[0] . $client_name_arr[1] == 'PatientNOSH' || $client_name_arr[0] . $client_name_arr[1] == 'Directory-') {
+                        //     $data['content'] .= '<td style="text-align:center;"><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 50px;width: auto;"></img></td>';
+                        //     if ($client_name_arr[0] . $client_name_arr[1] == 'Directory-') {
+                        //         $data['content'] .= '<td style="text-align:center;"><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
+                        //     } else {
+                        //         $data['content'] .= '<td></td>';
+                        //     }
+                        // } else {
+                        //     $data['content'] .= '<td style="text-align:center;">N/A</td><td></td>';
+                        //     // $data['content'] .= '<td style="text-align:center;"><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td><td></td>';
+                        // }
+                        if ($directories) {
+                            foreach ($directories as $directory1) {
+                                $rs_to_directory = DB::table('rs_to_directory')->where('directory_id', '=', $directory1->directory_id)->where('client_id', '=', $client->client_id)->first();
+                                foreach ($policy_arr as $default_policy_type) {
+                                    if ($client_name_arr[0] . $client_name_arr[1] == 'Directory-') {
+                                        $data['content'] .= '<td></td>';
+                                    } else {
+                                        $data[$default_policy_type] = '';
+                                        $consent = 'consent_' . $default_policy_type;
+                                        if (isset($rs_to_directory->{$consent})) {
+                                            if ($rs_to_directory->{$consent} == 1) {
+                                                $data['content'] .= '<td style="text-align:center;"><a href="' . route('consent_edit', [$client->client_id, $rs_to_directory->{$consent}, $default_policy_type, $directory1->directory_id]) . '"><i class="fa fa-check fa-lg" style="color:green;"></i>';
+                                                // if ($default_policy_type == 'last_activity' && $client->last_access !== null) {
+                                                //     $data['content'] .= date('Y-m-d H:i:s', $client->last_access);
+                                                // }
+                                                $data['content'] .= '</a></td>';
+                                            } else {
+                                                $data['content'] .= '<td style="text-align:center;"><a href="' . route('consent_edit', [$client->client_id, $rs_to_directory->{$consent}, $default_policy_type, $directory1->directory_id]) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
+                                            }
+                                        } else  {
+                                            if ($default_policy_type == 'patient_user') {
+                                                $data['content'] .= '<td><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
+                                            } elseif ($default_policy_type == 'root_support') {
+                                                $data['content'] .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
+                                            } else {
+                                                $data['content'] .= '<td></td>';
+                                            }
                                         }
-                                    } else  {
-                                        if ($default_policy_type == 'patient_user') {
-                                            $data['content'] .= '<td><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
-                                        } elseif ($default_policy_type == 'root_support') {
-                                            $data['content'] .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
-                                        } else {
-                                            $data['content'] .= '<td></td>';
-                                        }
+                                        $column_empty .= '<td></td>';
+                                        $fhir_column .= '<td style="text-align:center;>N/A</td>';
                                     }
-                                    $column_empty .= '<td></td>';
-                                    $fhir_column .= '<td><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
                                 }
                             }
                         }
+                        // if ($client->last_access !== null) {
+                        //     $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->consent_last_activity, 'last_activity']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ' . date('Y-m-d H:i:s', $client->last_access) . '</a></td>';
+                        // } else {
+                        //     $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->consent_last_activity, 'last_activity']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
+                        // }
+                        $data['content'] .= $column_empty;
+                        $data['content'] .= '</tr>';
                     }
-                    // if ($client->last_access !== null) {
-                    //     $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->consent_last_activity, 'last_activity']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i> ' . date('Y-m-d H:i:s', $client->last_access) . '</a></td>';
-                    // } else {
-                    //     $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->consent_last_activity, 'last_activity']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
-                    // }
-                    $data['content'] .= '</tr>';
                 }
             }
             if (! empty($smart_on_fhir)) {
@@ -1395,13 +1483,175 @@ class HomeController extends Controller
                         ];
                         DB::table('fhir_clients')->insert($fhir_data);
                     }
-                    $data['content'] .= '<tr><td><a href="' . $smart_row['endpoint_uri'] . '" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a></td>' . $fhir_column . '</tr>';
+                    $data['content'] .= '<tr><td><a href="' . $smart_row['endpoint_uri'] . '" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a></td><td style="text-align:center;>N/A</td><td style="text-align:center;>Health Record</td>' . $fhir_column . '</tr>';
                 }
             }
         }
-        $data['content'] .= '<tr><td><a href="' . url('/') . '/nosh/fhir_connect" target="_blank">Connect to your hospital EHR Account</a></td>' . $column_empty . '</tr>';
-        $data['content'] .= '<tr><td><a href="' . url('/') . '/nosh/cms_bluebutton" target"_blank">Connect to your Medicare Benefits Account</a></td>' . $column_empty . '</tr>';
-        $data['content'] .= '<tr><td><a href="#" class="as-info" as-info="Coming Soon!">Connect to additional resources</a></td>' . $column_empty . '</tr>';
+        // $data['content'] .= '<tr><td><a href="' . url('/') . '/nosh/fhir_connect" target="_blank">Connect to your hospital EHR Account</a></td><td></td><td></td>' . $column_empty . '</tr>';
+        // $data['content'] .= '<tr><td><a href="' . url('/') . '/nosh/cms_bluebutton" target"_blank">Connect to your Medicare Benefits Account</a></td><td></td><td></td>' . $column_empty . '</tr>';
+        // $data['content'] .= '<tr><td><a href="#" class="as-info" as-info="Coming Soon!">Connect to additional resources</a></td><td></td><td></td>' . $column_empty . '</tr>';
+
+        // Invited row
+        $data['content'] .= '<tr><th><strong>Invited</strong> <a href="' . route('make_invitation') . '" class="btn btn-success btn-xs" style="margin-left:10px;">Invite Someone</a></th><th></th><th></th>';
+        foreach ($user_policies as $user_policy) {
+            $user_policy_text = str_replace(' ', '<br>', $user_policy['name']);
+            $data['content'] .= '<th style="text-align:center;"><strong>' . $user_policy_text . '</strong></th>';
+        }
+        $data['content'] .= '<th style="text-align:center;"><strong>Custom<br>Policy</strong></th>' . $invited_column_header . '</tr>';
+        // $data['content'] .= '<th style="text-align:center;"><strong>Read<br>Only</strong></th><th style="text-align:center;"><strong>Allergies<br>and<br>Medications</strong></th><th style="text-align:center;"><strong>Care<br>Team<br>List</strong></th><th style="text-align:center;"><strong>Custom<br>Policy</strong></th></tr>';
+        $authorized_users = DB::table('oauth_users')->where('password', '!=', 'Pending')->get();
+        $owner = DB::table('owner')->first();
+        $proxies = DB::table('owner')->where('sub', '!=', $owner->sub)->get();
+        $proxy_arr = [];
+        if ($proxies) {
+            foreach ($proxies as $proxy_row) {
+                $proxy_arr[] = $proxy_row->sub;
+            }
+        }
+        if ($authorized_users->count()) {
+            foreach ($authorized_users as $authorized_user) {
+                $role = $authorized_user->role;
+                if ($authorized_user->role === null) {
+                    if ($owner->sub == $authorized_user->sub || in_array($authorized_user->sub, $proxy_arr)) {
+                        $role_data['role'] = 'Admin';
+                        DB::table('oauth_users')->where('username', '=', $authorized_user->username)->update($role_data);
+                        $role = 'Admin';
+                    }
+                }
+                if ($authorized_user->notify === null) {
+                    if ($owner->sub == $authorized_user->sub) {
+                        $notify = 'N/A';
+                        $notify_data['notify'] = 0;
+                    } else {
+                        $notify = $notify = '<a href="' . route('change_notify', [$authorized_user->username, 0, 'authorized']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a>';
+                        $notify_data['notify'] = 1;
+                    }
+                    DB::table('oauth_users')->where('username', '=', $authorized_user->username)->update($notify_data);
+                } else {
+                    if ($authorized_user->notify == 0) {
+                        $notify = '<a href="' . route('change_notify', [$authorized_user->username, 1, 'authorized']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a>';
+                    } else {
+                        $notify = '<a href="' . route('change_notify', [$authorized_user->username, 0, 'authorized']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a>';
+                    }
+                }
+                if ($owner->sub !== $authorized_user->sub) {
+                    $data['content'] .= '<tr><td>' . $authorized_user->first_name . ' ' . $authorized_user->last_name . ' (' . $authorized_user->email . ')</td>';
+                    $data['content'] .= '<td style="text-align:center;">' . $notify . '</td>';
+                    $data['content'] .= '<td><select id="' . $authorized_user->username . '" class="form-control input-sm hie_user_role" hie_type="authorized">' . $this->roles_build($role) . '</select></td>';
+                    $claim_id = DB::table('claim')->where('claim_value', '=', $authorized_user->email)->first();
+                    $claim_policy_query = DB::table('claim_to_policy')->where('claim_id', '=', $claim_id->claim_id)->get();
+                    foreach ($user_policies as $user_policy_row) {
+                        $user_policy_status = false;
+                        if ($claim_policy_query->count()) {
+                            foreach ($claim_policy_query as $claim_policy_row) {
+                                $policy_query = DB::table('policy')->where('policy_id', '=', $claim_policy_row->policy_id)->first();
+                                if ($policy_query->name == $user_policy_row['name']) {
+                                    $user_policy_status = true;
+                                }
+                            }
+                        }
+                        if ($user_policy_status == true) {
+                            $data['content'] .= '<td style="text-align:center;"><a href="' . route('change_user_policy', [$user_policy_row['name'], $claim_id->claim_id, false, 'authorized']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a></td>';
+                        } else {
+                            $data['content'] .= '<td style="text-align:center;"><a href="' . route('change_user_policy', [$user_policy_row['name'], $claim_id->claim_id, true, 'authorized']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
+                        }
+                    }
+                    // Custom policies
+                    $custom_policy = '';
+                    foreach ($custom_polices as $custom_policy_row) {
+                        if ($claim_policy_query) {
+                            foreach ($claim_policy_query as $claim_policy_row1) {
+                                $policy_query1 = DB::table('policy')->where('policy_id', '=', $claim_policy_row1->policy_id)->first();
+                                if ($policy_query1->name == $custom_policy_row['name']) {
+                                    $custom_policy = $custom_policy_row['name'];
+                                }
+                            }
+                        }
+                    }
+                    $data['content'] .= '<td><select id="' . $authorized_user->username . '_custom_policy" class="form-control input-sm hie_custom_policy" hie_type="authorized" hie_claim_id="' . $claim_id->claim_id . '">' . $this->custom_policy_build($custom_policy) . '</select></td>';
+                }
+            }
+        }
+        $invited_users = DB::table('invitation')->get();
+        if ($invited_users->count()) {
+            foreach ($invited_users as $invited_user) {
+                $invite_link = '<a href="' . route('invite_cancel', [$invited_user->code, true]) . '" data-toggle="tooltip" title="Cancel Invite"><i class="fa fa-btn fa-2x fa-times"></i></a><a href="' . route('resend_invitation', [$invited_user->id]) . '" data-toggle="tooltip" title="Resend E-mail Notification"><i class="fa fa-btn fa-2x fa-retweet"></i></a>';
+                if ($invited_user->notify === null) {
+                    $notify1 = '<a href="' . route('change_notify', [$invited_user->id, 0, 'invite']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a>';
+                    $notify_data1['notify'] = 1;
+                    DB::table('invitation')->where('id', '=', $invited_user->id)->update($notify_data1);
+                } else {
+                    if ($invited_user->notify == 0) {
+                        $notify1 = '<a href="' . route('change_notify', [$invited_user->id, 1, 'invite']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a>';
+                    } else {
+                        $notify1 = '<a href="' . route('change_notify', [$invited_user->id, 0, 'invite']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a>';
+                    }
+                }
+                $data['content'] .= '<tr><td><span>' . $invited_user->first_name . ' ' . $invited_user->last_name . ' (' . $invited_user->email . ')</span> <span class="label label-success">Pending</span><span class="pull-right">' . $invite_link . '</span></td>';
+                $data['content'] .= '<td style="text-align:center;">' . $notify1 . '</td>';
+                $data['content'] .= '<td><select id="' . $invited_user->id . '" class="form-control input-sm hie_user_role" hie_type="invite">' . $this->roles_build($invited_user->role) . '</select></td>';
+                $invited_polices_arr = json_decode($invited_user->policies, true);
+                foreach ($user_policies as $user_policy_row1) {
+                    $invited_policies_content = '<td style="text-align:center;"><a href="' . route('change_user_policy', [$user_policy_row1['name'], $invited_user->id, true, 'invite']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
+                    if (!empty($invited_polices_arr)) {
+                        if (in_array($user_policy_row1['name'], $invited_polices_arr)) {
+                            $invited_policies_content = '<td style="text-align:center;"><a href="' . route('change_user_policy', [$user_policy_row1['name'], $invited_user->id, false, 'invite']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a></td>';
+                        }
+                    }
+                    $data['content'] .= $invited_policies_content;
+                }
+                $invited_custom_policy = '';
+                if ($invited_user->custom_policies !== null) {
+                    $invited_custom_policy = $invited_user->custom_policies;
+                }
+                $data['content'] .= '<td><select id="' . $invited_user->id . '_custom_policy" class="form-control input-sm hie_custom_policy" hie_type="invited" hie_claim_id="' . $invited_user->id . '">' . $this->custom_policy_build($invited_custom_policy) . '</select></td>';
+            }
+        }
+
+        // Certfier row
+        $data['content'] .= '<tr><th><strong>Certifier</strong> <a href="' . route('certifier_add') . '" class="btn btn-success btn-xs" style="margin-left:10px;">Add Trusted Certifier</a></th><th></th><th></th>';
+        foreach ($certifier_roles as $certifier_role) {
+            $certifier_role_text = str_replace(' ', '<br>', $certifier_role);
+            $data['content'] .= '<th style="text-align:center;"><strong>' . $certifier_role_text . '</strong></th>';
+        }
+        $data['content'] .= $certifier_column_header . '</tr>';
+        $certifiers = $this->certifier_default();
+        foreach ($certifiers as $certifier_k => $certifier_v) {
+            $data['content'] .= '<tr><td><div class="row"><div class="col-xs-9" style="display:inline-block;float:none;">' . $certifier_k . '</div><div class="col-xs-3" style="display:inline-block;float:none;">';
+            if (in_array('uPort', $certifier_v['badges'])) {
+                $data['content'] .= '<div style="background-color:#000000;height:30px;width:30px;display:inline-block;float:none;"><img src="' . asset('assets/uport-logo-white.svg') . '" height="30" width="30" style="margin-right:5px"></img></div>';
+            }
+            if (in_array('OIDC', $certifier_v['badges'])) {
+                $data['content'] .= '<div style="display:inline-block;float:none;"><i class="fa fa-fw fa-lg fa-openid" style="height:30px;width:30px;color#000000;"></i></div>';
+            }
+            $data['content'] .= '</div></td>';
+            $data['content'] .= '<td>N/A</td><td>Certifier</td>';
+            foreach ($certifier_roles as $certifier_role1) {
+                if ($certifier_role1 !== 'Custom Role') {
+                    if (in_array($certifier_role1, $certifier_v['roles'])) {
+                        $data['content'] .= '<td style="text-align:center;"><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
+                    } else {
+                        $data['content'] .= '<td style="text-align:center;"><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
+                    }
+                } else {
+                    if (in_array($certifier_role1, $certifier_v['roles'])) {
+                        $data['content'] .= '<td style="text-align;center;">' . $certifier_v['custom_role'] . '</td>';
+                    } else {
+                        $data['content'] .= '<td></td>';
+                    }
+                }
+            }
+            // Custom certifier policy
+            $data['content'] .= '<td></td>';
+        }
+
+        // Directory row
+        $data['content'] .= '<tr><th><strong>Directory</strong> <a href="' . route('directory_add') . '" class="btn btn-success btn-xs" style="margin-left:10px;">Connect to a Directory</a></th><th></th><th></th>' . $header_empty . '</tr>';
+        if ($directories) {
+            foreach ($directories as $directory1) {
+                $data['content'] .= '<tr><td><div class="row"><div class="col-xs-10" style="display:inline-block;float:none;">' . $directory->name . '</div><div class="col-xs-2" style="display:inline-block;float:none;"><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 50px;width: auto;"></img></div></div></td><td></td><td>Directory</td>' . $column_empty . '</tr>';
+            }
+        }
         $data['content'] .= '</tbody></table></div>';
         Session::put('back', $request->fullUrl());
         return view('home', $data);
@@ -1427,6 +1677,297 @@ class HomeController extends Controller
             $this->directory_update_api();
         }
         return redirect()->route('consent_table');
+    }
+
+    public function change_role(Request $request)
+    {
+        $data['role'] = $request->input('role');
+        if ($request->input('type') == 'authorized') {
+            DB::table('oauth_users')->where('username', '=', $request->input('id'))->update($data);
+        } else {
+            DB::table('invitation')->where('id', '=', $request->input('id'))->update($data);
+        }
+        return 'Role changed to ' . $request->input('role');
+    }
+
+    public function change_notify(Request $request, $id, $value, $type)
+    {
+        $data['notify'] = (int)$value;
+        $status = 'No';
+        if ($value == 1) {
+            $status = 'Yes';
+        }
+        if ($type == 'authorized') {
+            $query = DB::table('oauth_users')->where('username', '=', $id)->first();
+            DB::table('oauth_users')->where('username', '=', $id)->update($data);
+        } else {
+            $query = DB::table('invitation')->where('id', '=', $id)->first();
+            DB::table('invitation')->where('id', '=', $id)->update($data);
+        }
+        Session::put('message_action', 'Ping Me for ' . $query->first_name . ' '. $query->last_name . ' changed to ' . $status);
+        return redirect()->route('consent_table');
+    }
+
+    public function change_user_policy(Request $request, $name, $claim_id, $setting, $type)
+    {
+        $status = 'deny.';
+        if ($type == 'authorized') {
+            $query = DB::table('policy')->where('name', '=', $name)->get();
+            $claim = DB::table('claim')->where('claim_id', '=', $claim_id)->first();
+            $for = $claim->claim_value;
+            if ($setting == true) {
+                $status = 'allow.';
+    	        if ($query->count()) {
+    	            foreach ($query as $row) {
+    	                $data = [
+    	                    'claim_id' => $claim_id,
+    	                    'policy_id' => $row->policy_id
+    	                ];
+    	                DB::table('claim_to_policy')->insert($data);
+    	            }
+    	        }
+            } else {
+                if ($query->count()) {
+                    foreach ($query as $row) {
+                        DB::table('claim_to_policy')->where('claim_id', '=', $claim_id)->where('policy_id', '=', $row->policy_id)->delete();
+                    }
+                }
+            }
+        } else {
+            $query1 = DB::table('invitation')->where('id', '=', $claim_id)->first();
+            $for = $query1->email;
+            $policies_arr = json_decode($query1->policies, true);
+            if ($setting == true) {
+                $status = 'allow.';
+                $policies_arr[] = $name;
+            } else {
+                unset($polices_arr[$name]);
+            }
+            $data2['policies'] = json_encode($polices_arr);
+            DB::table('invitation')->where('id', '=', $claim_id)->update($data2);
+        }
+        Session::put('message_action', 'Policy for ' . $name . ' for '. $for . ' changed to ' . $status);
+        return redirect()->route('consent_table');
+    }
+
+    public function ajax_change_user_policy(Request $request)
+    {
+        $name = $request->input('name');
+        $claim_id = $request->input('claim_id');
+        $setting = $request->input('setting');
+        $type = $request->input('type');
+        if ($type == 'authorized') {
+            $query = DB::table('policy')->where('name', '=', $name)->get();
+            $claim = DB::table('claim')->where('claim_id', '=', $claim_id)->first();
+            $for = $claim->claim_value;
+            if ($setting == true) {
+    	        if ($query) {
+    	            foreach ($query as $row) {
+    	                $data = [
+    	                    'claim_id' => $claim_id,
+    	                    'policy_id' => $row->policy_id
+    	                ];
+    	                DB::table('claim_to_policy')->insert($data);
+    	            }
+    	        }
+            } else {
+                if ($query->count()) {
+                    foreach ($query as $row) {
+                        DB::table('claim_to_policy')->where('claim_id', '=', $claim_id)->where('policy_id', '=', $row->policy_id)->delete();
+                    }
+                }
+            }
+        } else {
+            $query1 = DB::table('invitation')->where('id', '=', $claim_id)->first();
+            $for = $query1->email;
+            $policies_arr = json_decode($query1->policies, true);
+            if ($setting == true) {
+                $policies_arr[] = $name;
+            } else {
+                unset($polices_arr[$name]);
+            }
+            $data2['policies'] = json_encode($polices_arr);
+            DB::table('invitation')->where('id', '=', $claim_id)->update($data2);
+        }
+        $message = 'Policy for ' . $name . ' set as a custom policy for '. $for;
+        return $message;
+    }
+
+    public function custom_policies(Request $request)
+    {
+        $data['name'] = Session::get('owner');
+        $data['title'] = 'My Custom Policies';
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
+        $default_policy_types = $this->default_policy_type();
+        $data['back'] = '<a href="' . URL::to('home') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-chevron-left"></i> My Resource Services</a>';
+        $query = DB::table('custom_policy')->get();
+        $data['content'] = '<div class="list-group">';
+        if ($query->count()) {
+            foreach ($query as $custom_policy) {
+                $data['content'] .= '<a href="' . route('custom_policy_edit', [$custom_policy->id]) .'" class="list-group-item">' . $custom_policy->name . '</a>';
+            }
+        } else {
+            // Add default policies
+            $data['content'] .= '<div class="list-group">';
+            $arr[] = [
+    			'name' => 'No sensitive',
+    			'type' => 'scope-exclude',
+    			'parameters' => 'sens/*'
+    		];
+    		$arr[] = [
+    			'name' => 'Write Notes',
+    			'type' => 'scope-include',
+    			'parameters' => 'view,edit'
+    		];
+    		$arr[] = [
+    			'name' => 'Everything',
+    			'type' => 'all',
+    			'parameters' => ''
+    		];
+    		$arr[] = [
+    			'name' => 'Consenter',
+    			'type' => 'fhir',
+    			'parameters' => ''
+    		];
+            foreach ($arr as $arr_item) {
+                $custom_policy_id = DB::table('custom_policy')->insertGetId($arr_item);
+                $data['content'] .= '<a href="' . route('custom_policy_edit', [$custom_policy_id]) .'" class="list-group-item">' . $arr_item['name'] . '</a>';
+            }
+        }
+        $data['content'] .= '</div>';
+        return view('home', $data);
+    }
+
+    public function custom_policy_edit(Request $request, $id='0')
+    {
+        if ($request->isMethod('post')) {
+            if ($request->input('submit') == 'save') {
+                $message_action = 'Custom policy updated';
+                $parameter_arr = $request->input('parameter', []);
+                $fhir_scope_arr = $request->input('fhir_scope', []);
+                $parameters = array_merge($parameter_arr, $fhir_scope_arr);
+                $data = [
+                    'name' => $request->input('name'),
+                    'type' => $request->input('type'),
+                    'parameters' => implode(',', $parameters)
+                ];
+                if ($id == '0') {
+                    DB::table('custom_policy')->insert($data);
+                    $message_action = 'Custom policy added';
+                } else {
+                    DB::table('custom_policy')->where('id', '=', $id)->update($data);
+                }
+                $this->custom_policies_edit($data['name'], $data['type'], $parameters);
+            } elseif ($request->input('submit') == 'delete') {
+                $policy_query = DB::table('custom_policy')->where('id', '=', $id)->first();
+                DB::table('custom_policy')->where('id', '=', $id)->delete();
+                $this->custom_policies_edit($policy_query->name, $policy_query->type, [], 'delete');
+                $message_action = 'Custom policy removed';
+            }
+            Session::put('message_action', $message_action);
+            return redirect()->route('custom_policies');
+        } else {
+            $data['name'] = Session::get('owner');
+            $data['title'] = 'Edit Custom Policy';
+            if ($id == '0') {
+                $data['title'] = 'Add Custom Policy';
+                $type = '';
+                $parameter = '';
+                $data['name_value'] = '';
+            } else {
+                $query = DB::table('custom_policy')->where('id', '=', $id)->first();
+                $type = $query->type;
+                $parameters = $query->parameters;
+                $parameter_array = explode(',', $parameters);
+                $data['edit'] = 'yes';
+                $data['name_value'] = $query->name;
+            }
+            $type_arr[] = [
+                'type' => 'all',
+                'desc' => 'Everything'
+            ];
+            $type_arr[] = [
+                'type' => 'fhir',
+                'desc' => 'FHIR Resource'
+            ];
+            $type_arr[] = [
+                'type' => 'scope-include',
+                'desc' => 'Include the Following Scopes'
+            ];
+            $type_arr[] = [
+                'type' => 'scope-exclude',
+                'desc' => 'Exclude the Following Scopes'
+            ];
+            $data['type'] = '';
+            foreach ($type_arr as $type_row) {
+    			$data['type'] .= '<option value="' . $type_row['type'] . '"';
+    			if ($type == $type_row['type']) {
+    				$data['type'] .= ' selected="selected"';
+    			}
+    			$data['type'] .= '>' . $type_row['desc'] . '</option>';
+    		}
+            $parameter_arr[] = [
+                'parameter' => 'view',
+                'desc' => 'View'
+            ];
+            $parameter_arr[] = [
+                'parameter' => 'edit',
+                'desc' => 'Edit'
+            ];
+            $parameter_arr[] = [
+                'parameter' => 'sens/*',
+                'desc' => 'All Sensitive'
+            ];
+            $parameter_arr[] = [
+                'parameter' => 'conf/*',
+                'desc' => 'All Confidential'
+            ];
+            $conf_arr = $this->fhir_scopes_confidentiality();
+            $sens_arr = $this->fhir_scopes_sensitivities();
+            foreach ($conf_arr as $conf_row_k => $conf_row_v) {
+                $parameter_arr[] = [
+                    'parameter' => $conf_row_k,
+                    'desc' => $conf_row_v
+                ];
+            }
+            foreach ($sens_arr as $sens_row_k => $sens_row_v) {
+                $parameter_arr[] = [
+                    'parameter' => $sens_row_k,
+                    'desc' => $sens_row_v
+                ];
+            }
+            $data['parameter'] = '';
+            foreach ($parameter_arr as $parameter_row) {
+    			$data['parameter'] .= '<option value="' . $parameter_row['parameter'] . '"';
+    			if (in_array($parameter_row['parameter'], $parameter_array)) {
+    				$data['parameter'] .= ' selected="selected"';
+    			}
+    			$data['parameter'] .= '>' . $parameter_row['desc'] . '</option>';
+    		}
+            $fhir_array = $this->fhir_resources();
+            foreach ($fhir_array as $fhir_row_k => $fhir_row_v) {
+                $fhir_arr[] = [
+                    'parameter' => $fhir_row_k,
+                    'desc' => $fhir_row_v['name']
+                ];
+            }
+            $data['fhir'] = '';
+            foreach ($fhir_arr as $fhir_row) {
+    			$data['fhir'] .= '<option value="' . $fhir_row['parameter'] . '"';
+    			if (in_array($fhir_row['parameter'], $parameter_array)) {
+    				$data['fhir'] .= ' selected="selected"';
+    			}
+    			$data['fhir'] .= '>' . $fhir_row['desc'] . '</option>';
+    		}
+            $data['action'] = route('custom_policy_edit', [$id]);
+            return view('custom_policy', $data);
+        }
+    }
+
+    public function certifier_add(Request $request)
+    {
+
     }
 
     public function setup_mail(Request $request)
@@ -1570,7 +2111,7 @@ class HomeController extends Controller
         $data['title'] = 'Activity Log';
         $data['content'] = 'No activities yet.';
         $query = DB::table('activity_log')->orderBy('created_at', 'desc')->get();
-        if ($query) {
+        if ($query->count()) {
             $data['content'] = '<form role="form"><div class="form-group"><input class="form-control" id="searchinput" type="search" placeholder="Filter Results..." /></div>';
             $data['content'] .= '<ul class="list-group searchlist">';
             foreach ($query as $row) {

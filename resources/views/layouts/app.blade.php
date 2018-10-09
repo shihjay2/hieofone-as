@@ -52,7 +52,8 @@
 						@if (Session::get('is_owner') == 'yes')
 							<li><a href="{{ url('/consent_table') }}">Consent Table</a></li>
 							<li><a href="{{ url('/home') }}">My Resources</a></li>
-							<li><a href="{{ url('/default_policies') }}">My Policies</a></li>
+							<li><a href="{{ url('/default_policies') }}">Default Policies</a></li>
+							<li><a href="{{ url('/custom_policies') }}">Custom Policies</a></li>
 							<li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">My Clients <span class="caret"></span></a>
 								<ul class="dropdown-menu" role="menu">
 									<li><a href="{{ url('/clients') }}">Authorized</a></li>

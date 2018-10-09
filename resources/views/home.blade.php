@@ -10,7 +10,7 @@
 @section('content')
 <div class="container">
 	<div class="row">
-		<div class="col-md-10 col-md-offset-1">
+		<div class="col-xs-12">
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<div class="container-fluid panel-container">
@@ -162,6 +162,37 @@
 			$('#fhir_username').val(username);
 			$('#fhir_password').val(password);
 			$('#fhirModal').modal('show');
+		});
+		$(".hie_user_role").change(function(){
+			var id = $(this).attr('id');
+			var role = $(this).val();
+			var type = $(this).attr('hie_type');
+			$.ajax({
+				type: "POST",
+				url: "{{ route('change_role') }}",
+				data: 'id=' + id + '&role=' + role + '&type=' + type,
+				beforeSend: function(request) {
+					return request.setRequestHeader("X-CSRF-Token", $("meta[name='csrf-token']").attr('content'));
+				}
+			}).done(function(response) {
+				toastr.success(response);
+            });
+		});
+		$(".hie_custom_policy").change(function(){
+			var id = $(this).attr('id');
+			var name = $(this).val();
+			var type = $(this).attr('hie_type');
+			var claim_id = $(this).attr('hie_claim_id');
+			$.ajax({
+				type: "POST",
+				url: "{{ route('ajax_change_user_policy') }}",
+				data: 'name=' + name + '&type=' + type + '&claim_id=' + claim_id + '&setting=true',
+				beforeSend: function(request) {
+					return request.setRequestHeader("X-CSRF-Token", $("meta[name='csrf-token']").attr('content'));
+				}
+			}).done(function(response) {
+				toastr.success(response);
+            });
 		});
 		$(document).on('submit', '#fhir_form', function(event) {
             event.preventDefault();

@@ -23,12 +23,12 @@ class PolicyController extends Controller
         $query = DB::table('policy')->where('resource_set_id', '=', $resource_set_id)->get();
         $return = [];
         $i = 0;
-        if ($query) {
+        if ($query->count()) {
             foreach ($query as $row) {
                 $return[$i] = [];
                 $query1 = DB::table('claim_to_policy')->where('policy_id', '=', $row->policy_id)->get();
                 $return[$i]['policy_id'] = $row->policy_id;
-                if ($query1) {
+                if ($query1->count()) {
                     foreach ($query1 as $row1) {
                         $query2 = DB::table('claim')->where('claim_id', '=', $row1->claim_id)->first();
                         if ($query2) {

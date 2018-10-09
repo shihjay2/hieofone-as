@@ -282,7 +282,7 @@ class OauthController extends Controller
                     $owner = DB::table('owner')->first();
                     $rs = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
                     $rs_arr = [];
-                    if ($rs) {
+                    if ($rs->count()) {
                         foreach ($rs as $rs_row) {
                             $rs_arr[] = [
                                 'name' => $rs_row->client_name,
@@ -433,7 +433,7 @@ class OauthController extends Controller
             $owner_query = DB::table('owner')->first();
             $proxies = DB::table('owner')->where('sub', '!=', $owner_query->sub)->get();
             $proxy_arr = [];
-            if ($proxies) {
+            if ($proxies->count()) {
                 foreach ($proxies as $proxy_row) {
                     $proxy_arr[] = $proxy_row->sub;
                 }
@@ -499,6 +499,7 @@ class OauthController extends Controller
                     $user1 = DB::table('users')->where('name', '=', $request->username)->first();
                     Auth::loginUsingId($user1->id);
                     $this->activity_log($user1->email, 'Login');
+                    $this->notify($oauth_user);
                     Session::save();
                     if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
                         // If generated from rqp_claims endpoint, do this
@@ -617,7 +618,7 @@ class OauthController extends Controller
         $owner_query = DB::table('owner')->first();
         $proxies = DB::table('owner')->where('sub', '!=', $owner_query->sub)->get();
         $proxy_arr = [];
-        if ($proxies) {
+        if ($proxies->count()) {
             foreach ($proxies as $proxy_row) {
                 $proxy_arr[] = $proxy_row->sub;
             }
@@ -812,6 +813,7 @@ class OauthController extends Controller
             'email' => $email
         ];
         DB::table('users')->insert($user_data1);
+        $this->add_user_policies($email, ['All']);
         $user = DB::table('oauth_users')->where('username', '=', $sub)->first();
         $local_user = DB::table('users')->where('name', '=', $sub)->first();
         $this->login_sessions($user, $client_id);
@@ -1048,13 +1050,13 @@ class OauthController extends Controller
         return Socialite::driver('google')->redirect();
     }
 
-    public function google(Request $request)
+    public function google_old(Request $request)
     {
         $query0 = DB::table('oauth_rp')->where('type', '=', 'google')->first();
         $owner_query = DB::table('owner')->first();
         $proxies = DB::table('owner')->where('sub', '!=', $owner->sub)->get();
         $proxy_arr = [];
-        if ($proxies) {
+        if ($proxies->count()) {
             foreach ($proxies as $proxy_row) {
                 $proxy_arr[] = $proxy_row->sub;
             }
@@ -1120,6 +1122,121 @@ class OauthController extends Controller
                 }
             } else {
                 return redirect()->route('login')->withErrors(['tryagain' => 'Not a registered user.  Any NPI or Any Google not set.  Please contact the owner of this authorization server for assistance.']);
+            }
+        }
+    }
+
+    public function google(Request $request)
+    {
+        if (! Session::has('oidc_relay')) {
+            $param = [
+                'origin_uri' => route('google'),
+                'response_uri' => route('google'),
+                'fhir_url' => '',
+                'fhir_auth_url' => '',
+                'fhir_token_url' => '',
+                'type' => 'google',
+                'cms_pid' => '',
+                'refresh_token' => ''
+            ];
+            // $param = [
+            //     'origin_uri' => route('cms_bluebutton'),
+            //     'response_uri' => route('cms_bluebutton'),
+            //     'fhir_url' => '',
+            //     'fhir_auth_url' => '',
+            //     'fhir_token_url' => '',
+            //     'type' => 'cms_bluebutton',
+            //     'cms_pid' => '',
+            //     'refresh_token' => ''
+            // ];
+            $oidc_response = $this->oidc_relay($param);
+            if ($oidc_response['message'] == 'OK') {
+                Session::put('oidc_relay', $oidc_response['state']);
+                return redirect($oidc_response['url']);
+            } else {
+                Session::put('message_action', $oidc_response['message']);
+                return redirect(Session::get('last_page'));
+            }
+        } else {
+            $owner_query = DB::table('owner')->first();
+            $proxies = DB::table('owner')->where('sub', '!=', $owner->sub)->get();
+            $proxy_arr = [];
+            if ($proxies->count()) {
+                foreach ($proxies as $proxy_row) {
+                    $proxy_arr[] = $proxy_row->sub;
+                }
+            }
+            $param1['state'] = Session::get('oidc_relay');
+            Session::forget('oidc_relay');
+            $oidc_response1 = $this->oidc_relay($param1, true);
+            if ($oidc_response1['message'] == 'Tokens received') {
+                if ($oidc_response1['tokens']['access_token'] == '') {
+                    return redirect()->route('google');
+                }
+                $access_token = $oidc_response1['tokens']['access_token'];
+                $user = Socialite::driver('google')->userFromToken($access_token);
+                $google_user = DB::table('oauth_users')->where('email', '=', $user->getEmail())->first();
+                // Get client if from OIDC call
+                if (Session::get('oauth_response_type') == 'code') {
+                    $client_id = Session::get('oauth_client_id');
+                } else {
+                    $client = DB::table('owner')->first();
+                    $client_id = $client->client_id;
+                }
+                $authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
+                if ($google_user) {
+                    // Google email matches
+                    Session::put('login_origin', 'login_google');
+                    $local_user = DB::table('users')->where('email', '=', $google_user->email)->first();
+                    if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
+                        // If generated from rqp_claims endpoint, do this
+                        return redirect()->route('rqp_claims');
+                    } elseif (Session::get('oauth_response_type') == 'code') {
+                        if ($authorized) {
+                            Session::put('is_authorized', 'true');
+                            $this->login_sessions($google_user, $client_id);
+                            Auth::loginUsingId($local_user->id);
+                            $this->activity_log($local_user->email, 'Login - oAuth2, Google');
+                            Session::save();
+                            return redirect()->route('authorize');
+                        } else {
+                            // Get owner permission if owner is logging in from new client/registration server
+                            if ($owner_query->sub == $google_user->sub) {
+                                $this->login_sessions($google_user, $client_id);
+                                Auth::loginUsingId($local_user->id);
+                                $this->activity_log($local_user->email, 'Login - oAuth2, Google');
+                                Session::save();
+                                return redirect()->route('authorize_resource_server');
+                            } else {
+                                return redirect()->route('login')->withErrors(['tryagain' => 'Unauthorized client.  Please contact the owner of this authorization server for assistance.']);
+                            }
+                        }
+                    } else {
+                        $this->login_sessions($google_user, $client_id);
+                        Auth::loginUsingId($local_user->id);
+                        $this->activity_log($local_user->email, 'Login - oAuth2, Google');
+                        Session::save();
+                        return redirect()->route('consent_table');
+                    }
+                } else {
+                    if ($owner_query->any_npi == 1 || $owner_query->login_google == 1) {
+                        if ($authorized) {
+                            // Add new user
+                            Session::put('google_sub' ,$user->getId());
+                            Session::put('google_name', $user->getName());
+                            Session::put('google_email', $user->getEmail());
+                            return redirect()->route('google_md1');
+                            // return redirect()->route('google_md');
+                        } else {
+                            return redirect()->route('login')->withErrors(['tryagain' => 'Unauthorized client.  Please contact the owner of this authorization server for assistance.']);
+                        }
+                    } else {
+                        return redirect()->route('login')->withErrors(['tryagain' => 'Not a registered user.  Any NPI or Any Google not set.  Please contact the owner of this authorization server for assistance.']);
+                    }
+                }
+            } else {
+                Session::put('message_action', $oidc_response1['message']);
+                return redirect()->route('login');
             }
         }
     }
@@ -1453,7 +1570,22 @@ class OauthController extends Controller
         if ($query) {
             $expires = strtotime($query->expires);
             if ($expires > time()) {
+                $permission = DB::table('permission')->where('permission_id', '=', $query->permission_id)->first();
+                $resource_scopes = [];
+                $permission_scopes = DB::table('permission_scopes')->where('permission_id', '=', $query->permission_id)->get();
+                foreach ($permission_scopes as $permission_scope) {
+                    $resource_scopes[] = $permission_scope->scope;
+                }
+                $permissions_arr = [];
                 $return['active'] = true;
+                $return['token_type'] = 'access_token';
+                $return['exp'] = $query->expires;
+                $return['iss'] = URL::to('/');
+                $return['permissions'][] = [
+                    'resource_id' => $permission_ticket->resource_set_id,
+                    'resource_scopes' => $resource_scopes,
+                    'exp' => $query->expires
+                ];
             }
         }
         return $return;
@@ -1533,7 +1665,8 @@ class OauthController extends Controller
                         'last_name' => $query->last_name,
                         'password' => $password,
                         'email' => $query->email,
-                        'sub' => $sub
+                        'sub' => $sub,
+                        'role' => $query->role
                     ];
                     DB::table('oauth_users')->insert($data);
                     $data1 = [
@@ -1541,40 +1674,11 @@ class OauthController extends Controller
                         'name' => $username
                     ];
                     DB::table('users')->insert($data1);
-                    // if ($query->client_ids !== null) {
-                    //     // Add policies to individual client resources
-                    //     $client_ids = explode(',', $query->client_ids);
-                    //     foreach ($client_ids as $client_id) {
-                    //         $resource_sets = DB::table('resource_set')->where('client_id', '=', $client_id)->get();
-                    //         foreach ($resource_sets as $resource_set) {
-                    //             $data2['resource_set_id'] = $resource_set->resource_set_id;
-                    //             $policy_id = DB::table('policy')->insertGetId($data2);
-                    //             $query1 = DB::table('claim')->where('claim_value', '=', $query->email)->first();
-                    //             if ($query1) {
-                    //                 $claim_id = $query1->claim_id;
-                    //             } else {
-                    //                 $data3 = [
-                    //                     'name' => $query->first_name . ' ' . $query->last_name,
-                    //                     'claim_value' => $query->email
-                    //                 ];
-                    //                 $claim_id = DB::table('claim')->insertGetId($data3);
-                    //             }
-                    //             $data4 = [
-                    //                 'claim_id' => $claim_id,
-                    //                 'policy_id' => $policy_id
-                    //             ];
-                    //             DB::table('claim_to_policy')->insert($data4);
-                    //             $scopes = DB::table('resource_set_scopes')->where('resource_set_id', '=', $resource_set->resource_set_id)->get();
-                    //             foreach ($scopes as $scope) {
-                    //                 $data5 = [
-                    //                     'policy_id' => $policy_id,
-                    //                     'scope' => $scope->scope
-                    //                 ];
-                    //                 DB::table('policy_scopes')->insert($data5);
-                    //             }
-                    //         }
-                    //     }
-                    // }
+                    $policies = ['All'];
+                    if ($query->policies !== null) {
+                        $policies = explode(',', $query->policies);
+                    }
+                    $this->add_user_policies($query->email, $policies);
                     DB::table('invitation')->where('code', '=', $id)->delete();
                     return redirect()->route('consent_table');
                 } else {
@@ -1695,7 +1799,7 @@ class OauthController extends Controller
         $query = DB::table('oauth_access_tokens')->where('access_token', '=', substr($token, 0, 255))->first();
         $authorized = DB::table('oauth_clients')->where('client_id', '!=', $query->client_id)->where('authorized', '=', 1)->get();
         $return = [];
-        if ($authorized) {
+        if ($authorized->count()) {
             foreach ($authorized as $row) {
                 if (preg_match('/\bmdNOSH\b/',$row->client_name)) {
                     $user_array = explode(' ', $row->user_id);

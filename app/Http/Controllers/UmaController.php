@@ -228,12 +228,19 @@ class UmaController extends Controller
                             if ($expires > time()) {
                                 // Valid ticket and gather claims
                                 $resource_set = DB::table('permission')->where('permission_id', '=', $query1->permission_id)->first();
+                                $permission_scopes_arr = [];
+                                $permission_scopes = DB::table('permission_scopes')->where('permission_id', '=', $query1->permission_id)->get();
+                                if ($permission_scopes->count()) {
+                                    foreach ($permission_scopes as $permission_scope) {
+                                        $permission_scopes_arr[] = $permission_scope->scope;
+                                    }
+                                }
                                 $policies = DB::table('policy')->where('resource_set_id', '=', $resource_set->resource_set_id)->get();
-                                if ($policies) {
+                                if ($policies->count()) {
                                     $valid_claims_array = [];
                                     foreach ($policies as $policy) {
                                         $claims = DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->get();
-                                        if ($claims) {
+                                        if ($claims->count()) {
                                             foreach ($claims as $claim) {
                                                 $claim_item = DB::table('claim')->where('claim_id', '=', $claim->claim_id)->first();
                                                 $valid_claims_array[] = $claim_item->claim_value;

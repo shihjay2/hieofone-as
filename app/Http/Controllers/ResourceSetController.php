@@ -26,7 +26,7 @@ class ResourceSetController extends Controller
             $return = [];
             $query1 = DB::table('resource_set')->get();
             $i = 0;
-            if ($query1) {
+            if ($query1->count()) {
                 foreach ($query1 as $row) {
                     $return[$i] = $row->resource_set_id;
                     // $return[$i]['resource_set_id'] = $row->resource_set_id;

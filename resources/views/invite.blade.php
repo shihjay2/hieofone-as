@@ -1,5 +1,7 @@
 @extends('layouts.app')
-
+@section('view.stylesheet')
+	<link rel="stylesheet" href="{{ asset('assets/css/bootstrap-select.min.css') }}">
+@endsection
 @section('content')
 <div class="container">
 	<div class="row">
@@ -56,6 +58,42 @@
 							</div>
 						</div>
 
+						<div class="form-group{{ $errors->has('role') ? ' has-error' : '' }}">
+							<label for="role" class="col-md-4 control-label">Role</label>
+
+							<div class="col-md-6">
+								<select class="form-control" id="role" name="role" value="{{ old('role') }}">
+									{!! $roles !!}
+								</select>
+
+								@if ($errors->has('role'))
+									<span class="help-block">
+										<strong>{{ $errors->first('role') }}</strong>
+									</span>
+								@endif
+							</div>
+						</div>
+
+						<div class="form-group{{ $errors->has('custom_policy') ? ' has-error' : '' }}">
+							<label for="custom_policies" class="col-md-4 control-label">Custom Policy</label>
+
+							<div class="col-md-6">
+								<select class="form-control" id="custom_policy" name="custom_policy" value="{{ old('custom_policy') }}">
+									{!! $custom_policy !!}
+								</select>
+
+								@if ($errors->has('custom_policy'))
+									<span class="help-block">
+										<strong>{{ $errors->first('custom_policy') }}</strong>
+									</span>
+								@endif
+							</div>
+						</div>
+
+						@if (isset($user_policies))
+							{!! $user_policies !!}
+						@endif
+
 						@if (isset($rs))
 							{!! $rs !!}
 						@endif
@@ -76,6 +114,7 @@
 @endsection
 
 @section('view.scripts')
+<script src="{{ asset('assets/js/bootstrap-select.min.js') }}"></script>
 <script type="text/javascript">
 	$(document).ready(function() {
 		$("#email").focus();

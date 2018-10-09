@@ -84,9 +84,18 @@ Route::get('authorize_user_action/{id}', ['as' => 'authorize_user_action', 'uses
 Route::get('authorize_user_disable/{id}', ['as' => 'authorize_user_disable', 'uses' => 'HomeController@authorize_user_disable']);
 Route::get('consent_table', ['as' => 'consent_table', 'uses' => 'HomeController@consent_table']);
 Route::get('consent_edit/{id}/{toggle?}/{policy?}/{directory?}', ['as' => 'consent_edit', 'uses' => 'HomeController@consent_edit']);
+Route::post('change_role', ['as' => 'change_role', 'middleware' => 'csrf', 'uses' => 'HomeController@change_role']);
+Route::get('change_notify/{id}/{value}/{type}', ['as' => 'change_notify', 'uses' => 'HomeController@change_notify']);
+Route::get('change_user_policy/{name}/{claim_id}/{setting}/{type}', ['as' => 'change_user_policy', 'uses' => 'HomeController@change_user_policy']);
+Route::post('ajax_change_user_policy', ['as' => 'ajax_change_user_policy', 'middleware' => 'csrf', 'uses' => 'HomeController@ajax_change_user_policy']);
+Route::get('custom_policies', ['as' => 'custom_policies', 'uses' => 'HomeController@custom_policies']);
+Route::any('custom_policy_edit/{id?}', ['as' => 'custom_policy_edit', 'uses' => 'HomeController@custom_policy_edit']);
+Route::any('certifier_add', ['as' => 'certifier_add', 'uses' => 'HomeController@certifier_add']);
 Route::get('proxy_add/{sub}', ['as' => 'proxy_add', 'uses' => 'HomeController@proxy_add']);
 Route::get('proxy_remove/{sub}', ['as' => 'proxy_remove', 'uses' => 'HomeController@proxy_remove']);
 Route::any('make_invitation', ['as' => 'make_invitation', 'uses' => 'HomeController@make_invitation']);
+Route::get('resend_invitation/{id}', ['as' => 'resend_invitation', 'uses' => 'HomeController@resend_invitation']);
+Route::get('invite_cancel/{code}/{redirect?}', ['as' => 'invite_cancel', 'uses' => 'HomeController@invite_cancel']);
 Route::any('process_invitation', ['as' => 'process_invitation', 'uses' => 'HomeController@process_invitation']);
 Route::any('change_password', ['as' => 'change_password', 'uses' => 'HomeController@change_password']);
 Route::get('my_info', ['as' => 'my_info', 'uses' => 'HomeController@my_info']);
