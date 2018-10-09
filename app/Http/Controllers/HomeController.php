@@ -1478,7 +1478,7 @@ class HomeController extends Controller
                         ];
                         DB::table('fhir_clients')->insert($fhir_data);
                     }
-                    $data['content'] .= '<tr><td><a href="' . $smart_row['endpoint_uri'] . '" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a></td><td style="text-align:center;">N/A</td><td style="text-align:center;>Health Record</td>' . $hr_column . '</tr>';
+                    $data['content'] .= '<tr><td><a href="' . $smart_row['endpoint_uri'] . '" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a></td><td style="text-align:center;">N/A</td><td style="text-align:center;">Health Record</td>' . $hr_column . '</tr>';
                 }
             }
         }
