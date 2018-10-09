@@ -1031,13 +1031,14 @@ class HomeController extends Controller
         Session::forget('message_action');
         $data['name'] = Session::get('owner');
         $query = DB::table('owner')->first();
-        $default_policy_types = $this->default_policy_type();
-        foreach ($default_policy_types as $default_policy_type) {
-            $data[$default_policy_type] = '';
-            if ($query->{$default_policy_type} == 1) {
-                $data[$default_policy_type] = 'checked';
-            }
-        }
+        // $default_policy_types = $this->default_policy_type();
+        // foreach ($default_policy_types as $default_policy_type) {
+        //     $data[$default_policy_type] = '';
+        //     if ($query->{$default_policy_type} == 1) {
+        //         $data[$default_policy_type] = 'checked';
+        //     }
+        // }
+        $data['policies'] = $this->policy_build();
         $data['content'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
         $data['content'] .= '<h3>Resource Registration Consent Default Policies</h3>';
         $data['content'] .= '<p>You can set default policies (who gets access to your resources) whenever you have a new resource server registered to this authorization server.</p>';
