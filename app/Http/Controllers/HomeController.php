@@ -1337,7 +1337,7 @@ class HomeController extends Controller
         // $data['content'] .= '<br><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"> designates a SMART-on-FHIR resource which has the following limitations:<ul>';
         // $data['content'] .= '<li><strong>No Refresh Tokens</strong></li><li><strong>No Dynamic Client Registration</strong></li><li><strong>and No User-Managed Access - therefore you cannot change access polices for this type of resource</strong></li>,';
         $data['content'] .= '</div>';
-        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th><th style="text-align:center;"><strong>Ping<br>Me</strong></th><th style="text-align:center;"><strong>Role</strong></th><th style="text-align:center;" colspan="main_header_colspan"><strong>Polices</strong></th></tr></thead><tbody><tr><th></th><th></th><th></th>';
+        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th><strong>Resource</strong></th><th style="text-align:center;"><strong>Ping<br>Me</strong></th><th style="text-align:center;"><strong>Role</strong></th><th style="text-align:center;" colspan="main_header_colspan"><strong>Polices</strong></th></tr></thead><tbody><tr><th></th><th></th><th></th>';
         if ($directories) {
             foreach ($directories as $directory) {
                 $data['content'] .= '<th colspan="2">Directory - ' . $directory->name . '</th>';
