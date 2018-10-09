@@ -1031,13 +1031,6 @@ class HomeController extends Controller
         Session::forget('message_action');
         $data['name'] = Session::get('owner');
         $query = DB::table('owner')->first();
-        // $default_policy_types = $this->default_policy_type();
-        // foreach ($default_policy_types as $default_policy_type) {
-        //     $data[$default_policy_type] = '';
-        //     if ($query->{$default_policy_type} == 1) {
-        //         $data[$default_policy_type] = 'checked';
-        //     }
-        // }
         $data['policies'] = $this->policy_build();
         $data['content'] = '<div><i class="fa fa-child fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i></div>';
         $data['content'] .= '<h3>Resource Registration Consent Default Policies</h3>';
@@ -1344,13 +1337,13 @@ class HomeController extends Controller
         // $data['content'] .= '<br><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"> designates a SMART-on-FHIR resource which has the following limitations:<ul>';
         // $data['content'] .= '<li><strong>No Refresh Tokens</strong></li><li><strong>No Dynamic Client Registration</strong></li><li><strong>and No User-Managed Access - therefore you cannot change access polices for this type of resource</strong></li>,';
         $data['content'] .= '</div>';
-        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th><th style="text-align:center;"><strong>Ping<br>Me</strong></th><th style="text-align:center;"><strong>Role</strong></th><th style="text-align:center;" colspan="4"><strong>Polices</strong></th>';
+        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th><th style="text-align:center;"><strong>Ping<br>Me</strong></th><th style="text-align:center;"><strong>Role</strong></th><th style="text-align:center;" colspan="4"><strong>Polices</strong></th></tr></thead><tbody><tr><th></th><th></th><th></th>';
         if ($directories) {
             foreach ($directories as $directory) {
                 $data['content'] .= '<th>Directory - ' . $directory->name . '</th>';
             }
         }
-        $data['content'] .= '</tr></thead><tbody>';
+        $data['content'] .= '</tr>';
         $data['content'] .= '<tr><th><strong>Health Record <a href="' . url('/') . '/nosh/fhir_connect" target="_blank" class="btn btn-success btn-xs" style="margin-left:10px;">Connect to Hospital</a> <a href="' . url('/') . '/nosh/cms_bluebutton" target"_blank" class="btn btn-success btn-xs">Connect to Medicare</a></th><th></th><th></th>';
         $column_empty = '';
         $header_empty = '';
