@@ -1343,7 +1343,7 @@ class HomeController extends Controller
                 $data['content'] .= '<th colspan="2">Directory - ' . $directory->name . '</th>';
             }
         }
-        $data['content'] .= '</tr>';
+        $data['content'] .= '<th colspan="directory_header_colspan"></th></tr>';
         $data['content'] .= '<tr><th><strong>Health Record <a href="' . url('/') . '/nosh/fhir_connect" target="_blank" class="btn btn-success btn-xs" style="margin-left:10px;">Connect to Hospital</a> <a href="' . url('/') . '/nosh/cms_bluebutton" target"_blank" class="btn btn-success btn-xs">Connect to Medicare</a></th><th></th><th></th>';
         $column_empty = '';
         $header_empty = '';
@@ -1392,6 +1392,8 @@ class HomeController extends Controller
         $data['content'] .= $hr_column_header . '</tr>';
         $main_header_colspan = $max_count_arr + 1;
         $data['content'] = str_replace('main_header_colspan', $main_header_colspan, $data['content']);
+        $directory_header_colspan = $max_count_arr - $counts_arr['hr'] + 1;
+        $data['content'] = str_replace('directory_header_colspan', $directory_header_colspan, $data['content']);
         // $data['content'] .= '<th><div class="as-info" as-info="Last time when the resource server was accessed by any client."><span>Last Accessed</span></div></th>';
         if ($query->count() || ! empty($smart_on_fhir)) {
             if ($query->count()) {
