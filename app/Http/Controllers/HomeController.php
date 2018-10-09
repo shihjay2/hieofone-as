@@ -1390,7 +1390,8 @@ class HomeController extends Controller
             }
         }
         $data['content'] .= $hr_column_header . '</tr>';
-        $data['content'] = str_replace('main_header_colspan', $counts_arr['hr'], $data['content']);
+        $main_header_colspan = $max_count_arr + 1;
+        $data['content'] = str_replace('main_header_colspan', $main_header_colspan, $data['content']);
         // $data['content'] .= '<th><div class="as-info" as-info="Last time when the resource server was accessed by any client."><span>Last Accessed</span></div></th>';
         if ($query->count() || ! empty($smart_on_fhir)) {
             if ($query->count()) {
