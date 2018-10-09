@@ -1570,7 +1570,7 @@ class HomeController extends Controller
         $invited_users = DB::table('invitation')->get();
         if ($invited_users->count()) {
             foreach ($invited_users as $invited_user) {
-                $invite_link = '<a href="' . route('invite_cancel', [$invited_user->code, true]) . '" data-toggle="tooltip" title="Cancel Invite"><i class="fa fa-btn fa-2x fa-times"></i></a><a href="' . route('resend_invitation', [$invited_user->id]) . '" data-toggle="tooltip" title="Resend E-mail Notification"><i class="fa fa-btn fa-2x fa-retweet"></i></a>';
+                $invite_link = '<a href="' . route('invite_cancel', [$invited_user->code, true]) . '" data-toggle="tooltip" title="Cancel Invite"><i class="fa fa-btn fa-lg fa-times"></i></a><a href="' . route('resend_invitation', [$invited_user->id]) . '" data-toggle="tooltip" title="Resend E-mail Notification"><i class="fa fa-btn fa-lg fa-retweet"></i></a>';
                 if ($invited_user->notify === null) {
                     $notify1 = '<a href="' . route('change_notify', [$invited_user->id, 0, 'invite']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a>';
                     $notify_data1['notify'] = 1;
