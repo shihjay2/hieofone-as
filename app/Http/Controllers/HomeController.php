@@ -1447,8 +1447,8 @@ class HomeController extends Controller
                                                 $data['content'] .= '<td></td>';
                                             }
                                         }
-                                        $column_empty .= '<td></td>';
-                                        $fhir_column .= '<td style="text-align:center;>N/A</td>';
+                                        // $column_empty .= '<td></td>';
+                                        // $fhir_column .= '<td style="text-align:center;>N/A</td>';
                                     }
                                 }
                             }
@@ -1458,7 +1458,7 @@ class HomeController extends Controller
                         // } else {
                         //     $data['content'] .= '<td><a href="' . route('consent_edit', [$client->client_id, $client->consent_last_activity, 'last_activity']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
                         // }
-                        $data['content'] .= $column_empty;
+                        $data['content'] .= $hr_column;
                         $data['content'] .= '</tr>';
                     }
                 }
@@ -1478,7 +1478,7 @@ class HomeController extends Controller
                         ];
                         DB::table('fhir_clients')->insert($fhir_data);
                     }
-                    $data['content'] .= '<tr><td><a href="' . $smart_row['endpoint_uri'] . '" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a></td><td style="text-align:center;>N/A</td><td style="text-align:center;>Health Record</td>' . $fhir_column . '</tr>';
+                    $data['content'] .= '<tr><td><a href="' . $smart_row['endpoint_uri'] . '" target="_blank"><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"><span style="margin:10px">' . $smart_row['org_name'] . '</span><span class="pull-right">' . $copy_link . '</span></a></td><td style="text-align:center;>N/A</td><td style="text-align:center;>Health Record</td>' . $hr_column . '</tr>';
                 }
             }
         }
@@ -1609,7 +1609,7 @@ class HomeController extends Controller
             $certifier_role_text = str_replace(' ', '<br>', $certifier_role);
             $data['content'] .= '<th style="text-align:center;"><strong>' . $certifier_role_text . '</strong></th>';
         }
-        $data['content'] .= $certifier_column_header . '</tr>';
+        $data['content'] .= $certifier_column_header . '<th></th></tr>';
         $certifiers = $this->certifier_default();
         foreach ($certifiers as $certifier_k => $certifier_v) {
             $data['content'] .= '<tr><td><div class="row"><div class="col-xs-9" style="display:inline-block;float:none;">' . $certifier_k . '</div><div class="col-xs-3" style="display:inline-block;float:none;">';
