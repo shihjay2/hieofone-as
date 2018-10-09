@@ -1340,7 +1340,7 @@ class HomeController extends Controller
         $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Resource</th><th style="text-align:center;"><strong>Ping<br>Me</strong></th><th style="text-align:center;"><strong>Role</strong></th><th style="text-align:center;" colspan="4"><strong>Polices</strong></th></tr></thead><tbody><tr><th></th><th></th><th></th>';
         if ($directories) {
             foreach ($directories as $directory) {
-                $data['content'] .= '<th>Directory - ' . $directory->name . '</th>';
+                $data['content'] .= '<th colspan="2">Directory - ' . $directory->name . '</th>';
             }
         }
         $data['content'] .= '</tr>';
