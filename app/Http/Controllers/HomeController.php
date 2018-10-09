@@ -1259,6 +1259,7 @@ class HomeController extends Controller
             return redirect()->route('welcome');
         }
         $data['message_action'] = Session::get('message_action');
+        $this->default_user_policies_create();
         $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
         $policy_labels = [
             'public_publish_directory' => [

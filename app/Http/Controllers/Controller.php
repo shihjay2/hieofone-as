@@ -588,7 +588,7 @@ class Controller extends BaseController
 						if (!$policy) {
 							$policy_id = DB::table('policy')->insertGetId(['resource_set_id' => $resource->resource_set_id, 'name' => $user_policy_v['name']]);
 							// Scan all resource scopes for the resource set and place appropriate polices
-							if ($resource_scopes) {
+							if ($resource_scopes->count()) {
 								foreach ($resource_scopes as $resource_scope) {
 									$scope_arr = explode('/', $resource_scope->scope);
 									$policy_scope_data = [
@@ -619,11 +619,14 @@ class Controller extends BaseController
 		// Build exisitng user claims
 		$users = DB::table('oauth_users')->where('password', '!=', 'Pending')->get();
 		foreach ($users as $user) {
-			$data = [
-				'name' => 'email',
-				'claim_value' => $user->email
-			];
-			DB::table('claim')->insert($data);
+			$user_query = DB::table('claim')->where('claim_value', '=', $user->email)->first();
+			if (!$user_query) {
+				$data = [
+					'name' => 'email',
+					'claim_value' => $user->email
+				];
+				DB::table('claim')->insert($data);
+			}
 		}
 	}
 
