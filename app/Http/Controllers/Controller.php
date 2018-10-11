@@ -479,7 +479,7 @@ class Controller extends BaseController
 			],
 			// 'login_md_nosh',
 			'any_npi' => [
-				'label' => 'Anyone that has a National Provider Identifier (NPI) sees these Resources',
+				'label' => 'Anyone that has a Doximity-verfied National Provider Identifier (NPI) sees these Resources',
 				'description' => '<p>All individual HIPAA covered healthcare providers have a National Provider Identifier, including:</p>
 					<ul>
 						<li>Physicians</li>
@@ -530,22 +530,26 @@ class Controller extends BaseController
 		$return = [
 			'all' => [
 				'name' => 'All',
-				'type' => 'all'
+				'type' => 'all',
+				'description' => 'Any authorized user to this Authorization Server given this policy has read and write access to your Protected Health Information (PHI).'
 			],
 			'read_only' => [
 				'name' => 'Read Only',
 				'type' => 'scope',
-				'parameter' => 'view'
+				'parameter' => 'view',
+				'description' => 'Any authorized user to this Authorization Server given this policy has read-only access to your Protected Health Information (PHI).'
 			],
 			'allergies_and_medications' => [
 				'name' => 'Allergies and Medications',
 				'type' => 'fhir',
-				'parameter' => 'AllergyIntolerance'
+				'parameter' => 'AllergyIntolerance',
+				'description' => 'Any authorized user to this Authorization Server given this policy can only view Allergies and Medications in your health record.'
 			],
 			'care_team_list' => [
 				'name' => 'Care Team List',
 				'type' => 'fhir',
-				'parameter' => 'CareTeam'
+				'parameter' => 'CareTeam',
+				'description' => 'Any authorized user to this Authorization Server given this policy belongs on your clinical care team'
 			]
 		];
 		return $return;
@@ -885,10 +889,18 @@ class Controller extends BaseController
 	protected function certifier_roles()
 	{
 		$arr = [
-			'Read Only',
-			'Clinician',
-			'Family',
-			'Custom Role'
+			'Read Only' => [
+				'description' => 'This Certifier verfies the authenticity of an individual, and is only able to read data about that individual.'
+			],
+			'Clinician' => [
+				'description' => 'This Certifier verfies the authenticity of the clinician.'
+			],
+			'Family' => [
+				'description' => 'This Certifier verifies the authenticity of the individual who is a family member.'
+			],
+			'Custom Role' => [
+				'description' => 'This Certifier has a specific, custom role as indicated in the table.'
+			]
 		];
 		return $arr;
 	}

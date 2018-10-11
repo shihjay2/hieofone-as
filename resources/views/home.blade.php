@@ -28,6 +28,7 @@
 				<div class="panel-body">
 					@if (isset($message_action))
 						<div class="alert alert-success">
+							<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
 							<strong>{!! $message_action !!}</strong>
 						</div>
 					@endif

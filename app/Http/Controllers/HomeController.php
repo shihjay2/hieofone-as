@@ -351,7 +351,7 @@ class HomeController extends Controller
         ];
         $query = DB::table('oauth_clients')->where('authorized', '=', 1)->get();
         if ($query->count()) {
-            $data['content'] = '<p>Clients are outside apps that work on behalf of users to access your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Client Name</th><th>Permissions</th><th></th></thead><tbody>';
+            $data['content'] = '<p>Clients are outside apps that work on behalf of users to access your resources.  You can authorize or unauthorize them at any time.</p><table class="table table-striped"><thead><tr><th>Client Name</th><th>Permissions<i class="fa fa-lg fa-info-circle as-info" style="margin-left:10px;" as-info="This specifies what information is available and how they are accessible to the authorized client."></i></th><th></th></thead><tbody>';
             foreach ($query as $client) {
                 $data['content'] .= '<tr><td>' . $client->client_name . '</td><td>';
                 $scope_array = explode(' ', $client->scope);
@@ -544,7 +544,7 @@ class HomeController extends Controller
         ];
         $query = DB::table('oauth_clients')->where('authorized', '=', 0)->get();
         if ($query->count()) {
-            $data['content'] = '<p>Clients are outside apps that work on behalf of users to access your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Client Name</th><th>Permissions Requested</th><th></th></thead><tbody>';
+            $data['content'] = '<p>Clients are outside apps that work on behalf of users to access your resources.  You can authorize or unauthorize them at any time.</p><table class="table table-striped"><thead><tr><th>Client Name</th><th>Permissions Requested</th><th></th></thead><tbody>';
             foreach ($query as $client) {
                 $data['content'] .= '<tr><td>' . $client->client_name . '</td><td>';
                 $scope_array = explode(' ', $client->scope);
@@ -646,7 +646,7 @@ class HomeController extends Controller
         ];
         $query = DB::table('oauth_users')->where('password', '=', 'Pending')->get();
         if ($query->count()) {
-            $data['content'] = '<p>Users have access to your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Name</th><th>Email</th><th>NPI</th><th></th></thead><tbody>';
+            $data['content'] = '<p>Users have access to your resources.  You can authorize or unauthorize them at any time.</p><table class="table table-striped"><thead><tr><th>Name</th><th>Email</th><th>NPI</th><th></th></thead><tbody>';
             foreach ($query as $user) {
                 $data['content'] .= '<tr><td>' . $user->first_name . ' ' . $user->last_name . '</td><td>';
                 if ($user->email !== null && $user->email !== '') {
@@ -660,6 +660,19 @@ class HomeController extends Controller
                 $data['content'] .= '</td><td><a href="' . route('authorize_user_action', [$user->username]) . '" class="btn btn-primary" role="button">Authorize</a>';
                 $data['content'] .= ' <a href="' . route('authorize_user_disable', [$user->username]) . '" class="btn btn-primary" role="button">Deny</a></td></tr>';
             }
+        }
+        $invited_users = DB::table('invitation')->get();
+        if ($invited_users->count()) {
+            if (!$query->count()) {
+                $data['content'] = '<p>Users have access to your resources.  You can authorize or unauthorize them at any time.</p><table class="table table-striped"><thead><tr><th>Name</th><th>Email</th><th>NPI</th><th></th></thead><tbody>';
+            }
+            foreach ($invited_users as $invited_user) {
+                $data['content'] .= '<tr><td>' . $invited_user->first_name . ' ' . $invited_user->last_name . '</td><td>' . $invited_user->email . '</td><td></td>';
+                $data['content'] .= '<td></td><td><a href="' . route('invite_cancel', [$invited_user->code, true]) . '" data-toggle="tooltip" title="Cancel Invite" class="btn btn-primary" role="button">Cancel Invite</a> <a href="' . route('resend_invitation', [$invited_user->id]) . '" data-toggle="tooltip" title="Resend E-mail Notification" class="btn btn-primary" role="button">Resend E-mail Notification</a>';
+                $data['content'] .= '</tr>';
+            }
+        }
+        if ($data['content'] !== 'No users pending authorization.') {
             $data['content'] .= '</tbody></table>';
         }
         return view('home', $data);
@@ -735,7 +748,7 @@ class HomeController extends Controller
                 'first_name' => $request->input('first_name'),
                 'last_name' => $request->input('last_name'),
                 'role' => $request->input('role'),
-                'custom_policy' => $request->input('custom_policy')
+                'custom_policies' => $request->input('custom_policy')
             ];
             if ($request->has('client_id')) {
                 $data1['client_ids'] = implode(',', $request->input('client_id'));
@@ -1208,7 +1221,7 @@ class HomeController extends Controller
         }
     }
 
-    public function directory_remove(Request $request, $id)
+    public function directory_remove(Request $request, $id, $consent=false)
     {
         $directory = DB::table('directories')->where('id', '=', $id)->first();
         $owner = DB::table('owner')->first();
@@ -1230,7 +1243,11 @@ class HomeController extends Controller
             }
         }
         Session::put('message_action', $response['arr']['message']);
-        return redirect()->route('directories');
+        if ($consent == false) {
+            return redirect()->route('directories');
+        } else {
+            return redirect()->route('consent_table');
+        }
     }
 
     public function directory_update(Request $request)
@@ -1253,6 +1270,7 @@ class HomeController extends Controller
             return redirect()->route('welcome');
         }
         $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
         $this->default_user_policies_create();
         $query = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->get();
         $policy_labels = [
@@ -1332,19 +1350,19 @@ class HomeController extends Controller
         }
         $directories = DB::table('directories')->get();
         $data['title'] = 'Consent Table';
-        $data['content'] = '<div class="alert alert-success">';
+        $data['content'] = '<div class="alert alert-success alert-dismissible"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>';
         $data['content'] .= 'Click on a <i class="fa fa-check fa-lg" style="color:green;"></i> or <i class="fa fa-times fa-lg" style="color:red;"></i> to change the policy.  Click on a <strong>policy name</strong> for for information about the policy.';
         // $data['content'] .= '<br><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"> designates a SMART-on-FHIR resource which has the following limitations:<ul>';
         // $data['content'] .= '<li><strong>No Refresh Tokens</strong></li><li><strong>No Dynamic Client Registration</strong></li><li><strong>and No User-Managed Access - therefore you cannot change access polices for this type of resource</strong></li>,';
         $data['content'] .= '</div>';
-        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th><strong>Resource</strong></th><th style="text-align:center;"><strong>Ping<br>Me</strong></th><th style="text-align:center;"><strong>Role</strong></th><th style="text-align:center;" colspan="main_header_colspan"><strong>Polices</strong></th></tr></thead><tbody><tr><th></th><th></th><th></th>';
+        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th style="color:blue;"><strong>Consent Category</strong></th><th style="text-align:center;" class="as-info" as-info="Setting this will notify of any access by an authorized user of this resource"><strong>Ping<br>Me</strong></th><th style="text-align:center;"><strong>Role</strong></th><th style="text-align:center;" colspan="main_header_colspan"><strong>Policies</strong></th></tr></thead><tbody><tr><th></th><th></th><th></th>';
         if ($directories) {
             foreach ($directories as $directory) {
                 $data['content'] .= '<th colspan="2">Directory - ' . $directory->name . '</th>';
             }
         }
         $data['content'] .= '<th colspan="directory_header_colspan"></th></tr>';
-        $data['content'] .= '<tr><th><strong>Health Record <a href="' . url('/') . '/nosh/fhir_connect" target="_blank" class="btn btn-success btn-xs" style="margin-left:10px;">Connect to Hospital</a> <a href="' . url('/') . '/nosh/cms_bluebutton" target"_blank" class="btn btn-success btn-xs">Connect to Medicare</a></th><th></th><th></th>';
+        $data['content'] .= '<tr><th style="color:blue;"><strong>Health Record <a href="' . url('/') . '/nosh/fhir_connect" target="_blank" class="btn btn-success btn-xs" style="margin-left:10px;">Connect to Hospital</a> <a href="' . url('/') . '/nosh/cms_bluebutton" target"_blank" class="btn btn-success btn-xs">Connect to Medicare</a></th><th></th><th></th>';
         $column_empty = '';
         $header_empty = '';
         $hr_column = '';
@@ -1491,10 +1509,10 @@ class HomeController extends Controller
         // $data['content'] .= '<tr><td><a href="#" class="as-info" as-info="Coming Soon!">Connect to additional resources</a></td><td></td><td></td>' . $column_empty . '</tr>';
 
         // Invited row
-        $data['content'] .= '<tr><th><strong>Invited</strong> <a href="' . route('make_invitation') . '" class="btn btn-success btn-xs" style="margin-left:10px;">Invite Someone</a></th><th></th><th></th>';
+        $data['content'] .= '<tr><th style="color:blue;"><strong>Invited Users</strong> <a href="' . route('make_invitation') . '" class="btn btn-success btn-xs" style="margin-left:10px;">Invite Someone</a></th><th></th><th></th>';
         foreach ($user_policies as $user_policy) {
             $user_policy_text = str_replace(' ', '<br>', $user_policy['name']);
-            $data['content'] .= '<th style="text-align:center;"><strong>' . $user_policy_text . '</strong></th>';
+            $data['content'] .= '<th style="text-align:center;" class="as-info" as-info="' . $user_policy['description'] . '"><strong>' . $user_policy_text . '</strong></th>';
         }
         $data['content'] .= '<th style="text-align:center;"><strong>Custom<br>Policy</strong></th>' . $invited_column_header . '</tr>';
         // $data['content'] .= '<th style="text-align:center;"><strong>Read<br>Only</strong></th><th style="text-align:center;"><strong>Allergies<br>and<br>Medications</strong></th><th style="text-align:center;"><strong>Care<br>Team<br>List</strong></th><th style="text-align:center;"><strong>Custom<br>Policy</strong></th></tr>';
@@ -1534,7 +1552,7 @@ class HomeController extends Controller
                     }
                 }
                 if ($owner->sub !== $authorized_user->sub) {
-                    $data['content'] .= '<tr><td>' . $authorized_user->first_name . ' ' . $authorized_user->last_name . ' (' . $authorized_user->email . ')</td>';
+                    $data['content'] .= '<tr><td><a href="' . route('users') .'">' . $authorized_user->first_name . ' ' . $authorized_user->last_name . ' (' . $authorized_user->email . ')</a></td>';
                     $data['content'] .= '<td style="text-align:center;">' . $notify . '</td>';
                     $data['content'] .= '<td><select id="' . $authorized_user->username . '" class="form-control input-sm hie_user_role" hie_type="authorized">' . $this->roles_build($role) . '</select></td>';
                     $claim_id = DB::table('claim')->where('claim_value', '=', $authorized_user->email)->first();
@@ -1608,10 +1626,10 @@ class HomeController extends Controller
         }
 
         // Certfier row
-        $data['content'] .= '<tr><th><strong>Certifier</strong> <a href="' . route('certifier_add') . '" class="btn btn-success btn-xs" style="margin-left:10px;">Add Trusted Certifier</a></th><th></th><th></th>';
-        foreach ($certifier_roles as $certifier_role) {
-            $certifier_role_text = str_replace(' ', '<br>', $certifier_role);
-            $data['content'] .= '<th style="text-align:center;"><strong>' . $certifier_role_text . '</strong></th>';
+        $data['content'] .= '<tr><th style="color:blue;"><strong>Certifier</strong> <a href="' . route('certifier_add') . '" class="btn btn-success btn-xs" style="margin-left:10px;">Add Trusted Certifier</a></th><th></th><th></th>';
+        foreach ($certifier_roles as $certifier_role_k => $certifier_role_v) {
+            $certifier_role_text = str_replace(' ', '<br>', $certifier_role_k);
+            $data['content'] .= '<th style="text-align:center;" class="as-info" as-info="' . $certifier_role_v['description'] . '"><strong>' . $certifier_role_text . '</strong></th>';
         }
         $data['content'] .= $certifier_column_header . '<th></th></tr>';
         $certifiers = $this->certifier_default();
@@ -1645,10 +1663,10 @@ class HomeController extends Controller
         }
 
         // Directory row
-        $data['content'] .= '<tr><th><strong>Directory</strong> <a href="' . route('directory_add') . '" class="btn btn-success btn-xs" style="margin-left:10px;">Connect to a Directory</a></th><th></th><th></th>' . $header_empty . '</tr>';
+        $data['content'] .= '<tr><th style="color:blue;"><strong>Directory</strong> <a href="' . route('directory_add') . '" class="btn btn-success btn-xs" style="margin-left:10px;">Connect to a Directory</a></th><th></th><th></th>' . $header_empty . '</tr>';
         if ($directories) {
             foreach ($directories as $directory1) {
-                $data['content'] .= '<tr><td><div class="row"><div class="col-xs-10" style="display:inline-block;float:none;">' . $directory->name . '</div><div class="col-xs-2" style="display:inline-block;float:none;"><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 50px;width: auto;"></img></div></div></td><td></td><td>Directory</td>' . $column_empty . '</tr>';
+                $data['content'] .= '<tr><td><div class="row"><div class="col-xs-9" style="display:inline-block;float:none;">' . $directory->name . '</div><div class="col-xs-3" style="display:inline-block;float:none;"><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 50px;width: auto;"></img><a href="' . route('directory_remove', [$directory->id, true]) . '" data-toggle="tooltip" title="Remove from Directory"><i class="fa fa-btn fa-lg fa-times" style="margin:10px;"></i></a></div></div></td><td></td><td>Directory</td>' . $column_empty . '</tr>';
             }
         }
         $data['content'] .= '</tbody></table></div>';
@@ -1966,7 +1984,8 @@ class HomeController extends Controller
 
     public function certifier_add(Request $request)
     {
-
+        Session::put('message_action', 'Pending feature!');
+        return redirect()->route('consent_table');
     }
 
     public function setup_mail(Request $request)

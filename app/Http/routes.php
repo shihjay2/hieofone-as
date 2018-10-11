@@ -104,7 +104,7 @@ Route::any('setup_mail', ['as' => 'setup_mail', 'uses' => 'HomeController@setup_
 Route::get('setup_mail_test', ['as' => 'setup_mail_test', 'uses' => 'HomeController@setup_mail_test']);
 Route::get('directories', ['as' => 'directories', 'uses' => 'HomeController@directories']);
 Route::any('directory_add/{type?}', ['as' => 'directory_add', 'uses' => 'HomeController@directory_add']);
-Route::get('directory_remove/{id}', ['as' => 'directory_remove', 'uses' => 'HomeController@directory_remove']);
+Route::get('directory_remove/{id}/{consent?}', ['as' => 'directory_remove', 'uses' => 'HomeController@directory_remove']);
 Route::get('default_policies', ['as' => 'default_policies', 'uses' => 'HomeController@default_policies']);
 Route::post('change_policy', ['as' => 'change_policy', 'uses' => 'HomeController@change_policy']);
 Route::post('fhir_edit', ['as' => 'fhir_edit', 'middleware' => 'csrf', 'uses' => 'HomeController@fhir_edit']);

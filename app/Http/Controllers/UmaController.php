@@ -312,6 +312,7 @@ class UmaController extends Controller
                                             // Set last access for resource servers
                                             $rs_data['last_access'] = time();
                                             DB::table('oauth_clients')->where('client_id', '=', $rs_query2->client_id)->update($rs_data);
+                                            $this->directory_update_api();
                                             $params['authorization_state'] = 'claims_submitted';
                                         } else {
                                             // No matching claim, not authorized$params['authorization_state'] = 'not_authorized';
