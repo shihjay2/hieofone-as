@@ -629,6 +629,8 @@ class HomeController extends Controller
             }
             $data['content'] .= '</tbody></table>';
         }
+        $data['content'] .= '<div class="alert alert-success alert-dismissible"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>';
+        $data['content'] .= 'You can designate a proxy who is an authorized user that controls your Trustee on your behalf.</div>';
         return view('home', $data);
     }
 
@@ -718,6 +720,7 @@ class HomeController extends Controller
     public function proxy_remove(Request $request, $sub)
     {
         $owner = DB::table('owner')->first();
+        $query = DB::table('oauth_users')->where('sub', '=', $sub)->first();
         if ($sub !== $owner->sub) {
             DB::table('owner')->where('sub', '=', $sub)->delete();
             Session::put('message_action', 'You just removed ' . $query->first_name . ' ' . $query->last_name . ' as a proxy for you');
@@ -1231,7 +1234,7 @@ class HomeController extends Controller
         if ($client) {
             $params['client_id'] = $client->client_id;
             $params['name'] = $user->username;
-            DB::table('oauth_clients')->where('client_id', '=', $client_id)->delete();
+            DB::table('oauth_clients')->where('client_id', '=', $client->client_id)->delete();
         }
         $url = rtrim($directory->uri, '/');
         $response = $this->directory_api($url, $params, 'directory_remove', $directory->directory_id);
@@ -1355,14 +1358,17 @@ class HomeController extends Controller
         // $data['content'] .= '<br><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"> designates a SMART-on-FHIR resource which has the following limitations:<ul>';
         // $data['content'] .= '<li><strong>No Refresh Tokens</strong></li><li><strong>No Dynamic Client Registration</strong></li><li><strong>and No User-Managed Access - therefore you cannot change access polices for this type of resource</strong></li>,';
         $data['content'] .= '</div>';
-        $data['content'] .= '<div class="table-responsive"><table class="table table-striped"><thead><tr><th style="color:blue;"><strong>Consent Category</strong></th><th style="text-align:center;" class="as-info" as-info="Setting this will notify of any access by an authorized user of this resource"><strong>Ping<br>Me</strong></th><th style="text-align:center;"><strong>Role</strong></th><th style="text-align:center;" colspan="main_header_colspan"><strong>Policies</strong></th></tr></thead><tbody><tr><th></th><th></th><th></th>';
+        $data['content'] .= '<div class="table-responsive"><table class="table table-striped table-fixed">';
+        $main_header_html = '<thead style="background-color: #eaeaea;"><tr><th style="color:blue;"><strong>Consent Category</strong></th><th style="text-align:center;" class="as-info" as-info="Setting this will notify of any access by an authorized user of this resource"><strong>Ping<br>Me</strong></th><th style="text-align:center;"><strong>Role</strong></th><th style="text-align:center;" colspan="main_header_colspan"><strong>Policies</strong></th></tr></thead>';
+        $data['content'] .= $main_header_html;
+        $data['content'] .= '<tbody><tr><th></th><th></th><th></th>';
         if ($directories) {
             foreach ($directories as $directory) {
                 $data['content'] .= '<th colspan="2">Directory - ' . $directory->name . '</th>';
             }
         }
         $data['content'] .= '<th colspan="directory_header_colspan"></th></tr>';
-        $data['content'] .= '<tr><th style="color:blue;"><strong>Health Record <a href="' . url('/') . '/nosh/fhir_connect" target="_blank" class="btn btn-success btn-xs" style="margin-left:10px;">Connect to Hospital</a> <a href="' . url('/') . '/nosh/cms_bluebutton" target"_blank" class="btn btn-success btn-xs">Connect to Medicare</a></th><th></th><th></th>';
+        $data['content'] .= '<tr><th style="color:blue;"><strong>Health Record <a href="' . url('/') . '/nosh/fhir_connect/list/as" target="_blank" class="btn btn-success btn-xs" style="margin-left:10px;">Connect to Hospital</a> <a href="' . url('/') . '/nosh/cms_bluebutton/as" target"_blank" class="btn btn-success btn-xs">Connect to Medicare</a></th><th></th><th></th>';
         $column_empty = '';
         $header_empty = '';
         $hr_column = '';
@@ -1409,6 +1415,7 @@ class HomeController extends Controller
         }
         $data['content'] .= $hr_column_header . '</tr>';
         $main_header_colspan = $max_count_arr + 1;
+        $main_header_html = str_replace('main_header_colspan', $main_header_colspan, $main_header_html);
         $data['content'] = str_replace('main_header_colspan', $main_header_colspan, $data['content']);
         $directory_header_colspan = $max_count_arr - $counts_arr['hr'] + 1;
         $data['content'] = str_replace('directory_header_colspan', $directory_header_colspan, $data['content']);
@@ -1604,7 +1611,7 @@ class HomeController extends Controller
                         $notify1 = '<a href="' . route('change_notify', [$invited_user->id, 0, 'invite']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a>';
                     }
                 }
-                $data['content'] .= '<tr><td><span>' . $invited_user->first_name . ' ' . $invited_user->last_name . ' (' . $invited_user->email . ')</span> <span class="label label-success">Pending</span><span class="pull-right">' . $invite_link . '</span></td>';
+                $data['content'] .= '<tr><td><span><a href="' . route('authorize_user') .'">' . $invited_user->first_name . ' ' . $invited_user->last_name . ' (' . $invited_user->email . ')</a></span> <span class="label label-success">Pending</span><span class="pull-right">' . $invite_link . '</span></td>';
                 $data['content'] .= '<td style="text-align:center;">' . $notify1 . '</td>';
                 $data['content'] .= '<td><select id="' . $invited_user->id . '" class="form-control input-sm hie_user_role" hie_type="invite">' . $this->roles_build($invited_user->role) . '</select></td>';
                 $invited_polices_arr = json_decode($invited_user->policies, true);
@@ -1643,15 +1650,15 @@ class HomeController extends Controller
             }
             $data['content'] .= '</div></td>';
             $data['content'] .= '<td>N/A</td><td>Certifier</td>';
-            foreach ($certifier_roles as $certifier_role1) {
-                if ($certifier_role1 !== 'Custom Role') {
-                    if (in_array($certifier_role1, $certifier_v['roles'])) {
+            foreach ($certifier_roles as $certifier_role1_k => $certifier_roles1_v) {
+                if ($certifier_role1_k !== 'Custom Role') {
+                    if (in_array($certifier_role1_k, $certifier_v['roles'])) {
                         $data['content'] .= '<td style="text-align:center;"><i class="fa fa-check fa-lg no-edit" style="color:green;"></i></td>';
                     } else {
                         $data['content'] .= '<td style="text-align:center;"><i class="fa fa-times fa-lg no-edit" style="color:red;"></i></td>';
                     }
                 } else {
-                    if (in_array($certifier_role1, $certifier_v['roles'])) {
+                    if (in_array($certifier_role1_k, $certifier_v['roles'])) {
                         $data['content'] .= '<td style="text-align;center;">' . $certifier_v['custom_role'] . '</td>';
                     } else {
                         $data['content'] .= '<td></td>';
@@ -1670,6 +1677,16 @@ class HomeController extends Controller
             }
         }
         $data['content'] .= '</tbody></table></div>';
+
+        // Legend
+        $data['content'] .= '<div class="alert alert-success alert-dismissible"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>';
+        $data['content'] .= '<strong>Legend</strong>';
+        $data['content'] .= '<br><br><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 40px;width: auto;"></img> designates a resource that uses the User-Managed Access 2.0 protocol for protecting your health data.  Trustee is a User-Managed Access 2.0 authorization server.';
+        // $data['content'] .= '<br><br><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"> designates a SMART-on-FHIR resource which has the following limitations:<ul>';
+        // $data['content'] .= '<li><strong>No Refresh Tokens</strong></li><li><strong>No Dynamic Client Registration</strong></li><li><strong>and No User-Managed Access - therefore you cannot change access polices for this type of resource</strong></li></ul>';
+        $data['content'] .= '<br><br><div style="background-color:#000000;height:30px;width:30px;display:inline-block;float:none;"><img src="' . asset('assets/uport-logo-white.svg') . '" height="30" width="30" style="margin-right:5px"></img></div> designates that the certifier uses uPort, an open identity system that features a self-sovereign wallet and verified credentials';
+        $data['content'] .= '<br><br><div style="display:inline-block;float:none;"><i class="fa fa-fw fa-lg fa-openid" style="height:30px;width:30px;color#000000;"></i></div> designates that the certifier uses OpenIDConnect, an identity layer on top of the Oauth 2.0 protocol, which allows clients to verify the identity of the end user.';
+        $data['content'] .= '</div>';
         Session::put('back', $request->fullUrl());
         return view('home', $data);
     }

@@ -14,7 +14,7 @@
 						{{ csrf_field() }}
 						<div style="text-align: center;">
 							<h4>You can leave the username and password blank if you plan to use</h4>
-								<h4><i class="fa fa-btn fa-google"></i> Google or <i class="fa fa-btn fa-twitter"></i> Twitter to login.</h4>
+								<h4><i class="fa fa-btn fa-google"></i> Google to login.</h4>
 						</div>
 						<br>
 						<div class="form-group{{ $errors->has('username') ? ' has-error' : '' }}">

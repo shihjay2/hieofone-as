@@ -1680,6 +1680,11 @@ class OauthController extends Controller
                     }
                     $this->add_user_policies($query->email, $policies);
                     DB::table('invitation')->where('code', '=', $id)->delete();
+                    // Find pNOSH and go there
+                    $pnosh = DB::table('oauth_clients')->where('authorized', '=', 1)->where('scope', 'LIKE', "%uma_protection%")->where('client_name', 'LIKE', "%Patient NOSH%")->first();
+                    if ($pnosh) {
+                        return redirect($pnosh->client_uri);
+                    }
                     return redirect()->route('consent_table');
                 } else {
                     $data['noheader'] = true;
