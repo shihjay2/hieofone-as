@@ -1792,9 +1792,9 @@ class HomeController extends Controller
                 $status = 'allow.';
                 $policies_arr[] = $name;
             } else {
-                unset($polices_arr[$name]);
+                unset($policies_arr[$name]);
             }
-            $data2['policies'] = json_encode($polices_arr);
+            $data2['policies'] = json_encode($policies_arr);
             DB::table('invitation')->where('id', '=', $claim_id)->update($data2);
         }
         Session::put('message_action', 'Policy for ' . $name . ' for '. $for . ' changed to ' . $status);
