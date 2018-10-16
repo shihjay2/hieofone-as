@@ -560,8 +560,9 @@ class OauthController extends Controller
                         Session::forget('oauth_scope');
                         Session::forget('is_authorized');
                     }
-                    $data['google'] = DB::table('oauth_rp')->where('type', '=', 'google')->first();
-                    $data['twitter'] = DB::table('oauth_rp')->where('type', '=', 'twitter')->first();
+                    $data['google'] = 'yes';
+                    // $data['google'] = DB::table('oauth_rp')->where('type', '=', 'google')->first();
+                    // $data['twitter'] = DB::table('oauth_rp')->where('type', '=', 'twitter')->first();
                     if (file_exists(base_path() . '/.version')) {
                         $data['version'] = file_get_contents(base_path() . '/.version');
                     } else {

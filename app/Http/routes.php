@@ -154,7 +154,7 @@ Route::group(['middleware' => 'token'], function () {
 });
 
 // OpenID Connect relying party routes
-Route::get('google', ['as' => 'google', 'uses' => 'OauthController@google_redirect']);
+Route::get('google', ['as' => 'google', 'uses' => 'OauthController@google']);
 Route::any('google_md/{npi?}', ['as' => 'google_md', 'uses' => 'OauthController@google_md']);
 Route::any('google_md1', ['as' => 'google_md1', 'uses' => 'OauthController@google_md1']);
 Route::get('account/google', ['as' => 'account/google', 'uses' => 'OauthController@google']);

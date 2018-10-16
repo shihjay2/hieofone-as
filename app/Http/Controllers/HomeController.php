@@ -607,11 +607,23 @@ class HomeController extends Controller
         if ($query->count()) {
             $data['content'] = '<p>Users have access to your resources.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Name</th><th>Email</th><th>NPI</th><th></th><th></th></thead><tbody>';
             foreach ($query as $user) {
-                $data['content'] .= '<tr><td>' . $user->first_name . ' ' . $user->last_name . '</td><td>' . $user->email . '</td><td>';
+                $data['content'] .= '<tr><td>' . $user->first_name . ' ' . $user->last_name;
+                if (in_array($user->sub, $proxy_arr)) {
+                    $data['content'] .= '<span class="label label-success" style="margin:10px;">PROXY</span>';
+                }
+                if ($user->sub == $owner->sub) {
+                    $data['content'] .= '<span class="label label-danger" style="margin:10px;">TRUSTEE OWNER</span>';
+                }
+                $data['content'] .= '</td><td>' . $user->email;
+                $data['content'] .= '</td><td>';
                 if ($user->npi !== null && $user->npi !== '') {
                     $data['content'] .= $user->npi;
                 }
-                $data['content'] .= '</td><td><a href="' . route('authorize_user_disable', [$user->username]) . '" class="btn btn-primary" role="button">Unauthorize</a></td>';
+                if ($user->sub !== $owner->sub) {
+                    $data['content'] .= '</td><td><a href="' . route('authorize_user_disable', [$user->username]) . '" class="btn btn-primary" role="button">Unauthorize</a></td>';
+                } else {
+                    $data['content'] .= '</td><td></td>';
+                }
                 if ($user->sub == $owner->sub) {
                     $data['content'] .= '<td></td>';
                 } else {
@@ -798,7 +810,7 @@ class HomeController extends Controller
             $data['custom_policy'] = '<option value="">None</option>';
             if ($custom_policies->count()) {
                 foreach ($custom_policies as $custom_policy) {
-        			$data['custom_policy'] .= '<option value="' . $custom_policy->id . '"';
+        			$data['custom_policy'] .= '<option value="' . $custom_policy->name . '"';
         			$data['custom_policy'] .= '>' . $custom_policy->name . '</option>';
         		}
             }
@@ -1098,7 +1110,7 @@ class HomeController extends Controller
             $root_domain = 'https://dir.' . $root_url1[0];
         }
         $root_domain_registered = false;
-        $data['content'] = '<p>Directories are servers that share the location of your authorization server. Users such as authorized physicians can use a directory service to easily access your authorization server and patient health record.  Directories can also associate your authorization server to communities of other patients with similar goals or attributes.  Directories do not gather or share your health information in any way.  You can authorize or unauthorized them at any time.</p><table class="table table-striped"><thead><tr><th>Directory Name</th><th>Permissions</th><th></th></thead><tbody>';
+        $data['content'] = '<p>Directories are servers that share the location of your authorization server. Users such as authorized physicians can use a directory service to easily access your authorization server and patient health record.  Directories can also associate your authorization server to communities of other patients with similar goals or attributes.  You can authorize or unauthorize them at any time.</p><table class="table table-striped"><thead><tr><th>Directory Name</th><th>Permissions</th><th></th></thead><tbody>';
         $query = DB::table('directories')->get();
         if ($query->count()) {
             foreach ($query as $directory) {
@@ -1212,6 +1224,11 @@ class HomeController extends Controller
                 'uri' => 'required|unique:directories,uri'
             ]);
             $pre_url = rtrim($request->input('uri'), '/');
+            if ($ret = parse_url($pre_url)) {
+                if (!isset($ret['scheme'])) {
+                    $pre_url = 'https://' . $pre_url;
+                }
+            }
             $response = $this->directory_api($pre_url, $params);
             if ($response['status'] == 'error') {
                 return redirect()->back()->withErrors(['uri' => 'The URL provided is not valid.']);
@@ -1575,9 +1592,9 @@ class HomeController extends Controller
                             }
                         }
                         if ($user_policy_status == true) {
-                            $data['content'] .= '<td style="text-align:center;"><a href="' . route('change_user_policy', [$user_policy_row['name'], $claim_id->claim_id, false, 'authorized']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a></td>';
+                            $data['content'] .= '<td style="text-align:center;"><a href="' . route('change_user_policy', [$user_policy_row['name'], $claim_id->claim_id, 'false', 'authorized']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a></td>';
                         } else {
-                            $data['content'] .= '<td style="text-align:center;"><a href="' . route('change_user_policy', [$user_policy_row['name'], $claim_id->claim_id, true, 'authorized']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
+                            $data['content'] .= '<td style="text-align:center;"><a href="' . route('change_user_policy', [$user_policy_row['name'], $claim_id->claim_id, 'true', 'authorized']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
                         }
                     }
                     // Custom policies
@@ -1616,10 +1633,10 @@ class HomeController extends Controller
                 $data['content'] .= '<td><select id="' . $invited_user->id . '" class="form-control input-sm hie_user_role" hie_type="invite">' . $this->roles_build($invited_user->role) . '</select></td>';
                 $invited_polices_arr = json_decode($invited_user->policies, true);
                 foreach ($user_policies as $user_policy_row1) {
-                    $invited_policies_content = '<td style="text-align:center;"><a href="' . route('change_user_policy', [$user_policy_row1['name'], $invited_user->id, true, 'invite']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
+                    $invited_policies_content = '<td style="text-align:center;"><a href="' . route('change_user_policy', [$user_policy_row1['name'], $invited_user->id, 'true', 'invite']) . '"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>';
                     if (!empty($invited_polices_arr)) {
                         if (in_array($user_policy_row1['name'], $invited_polices_arr)) {
-                            $invited_policies_content = '<td style="text-align:center;"><a href="' . route('change_user_policy', [$user_policy_row1['name'], $invited_user->id, false, 'invite']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a></td>';
+                            $invited_policies_content = '<td style="text-align:center;"><a href="' . route('change_user_policy', [$user_policy_row1['name'], $invited_user->id, 'false', 'invite']) . '"><i class="fa fa-check fa-lg" style="color:green;"></i></a></td>';
                         }
                     }
                     $data['content'] .= $invited_policies_content;
@@ -1673,7 +1690,7 @@ class HomeController extends Controller
         $data['content'] .= '<tr><th style="color:blue;"><strong>Directory</strong> <a href="' . route('directory_add') . '" class="btn btn-success btn-xs" style="margin-left:10px;">Connect to a Directory</a></th><th></th><th></th>' . $header_empty . '</tr>';
         if ($directories) {
             foreach ($directories as $directory1) {
-                $data['content'] .= '<tr><td><div class="row"><div class="col-xs-9" style="display:inline-block;float:none;">' . $directory->name . '</div><div class="col-xs-3" style="display:inline-block;float:none;"><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 50px;width: auto;"></img><a href="' . route('directory_remove', [$directory->id, true]) . '" data-toggle="tooltip" title="Remove from Directory"><i class="fa fa-btn fa-lg fa-times" style="margin:10px;"></i></a></div></div></td><td></td><td>Directory</td>' . $column_empty . '</tr>';
+                $data['content'] .= '<tr><td><div class="row"><div class="col-xs-9" style="display:inline-block;float:none;">' . $directory->name . '</div><div class="col-xs-3" style="display:inline-block;float:none;"><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 50px;width: auto;"></img><div style="display:inline-block;float:none;"><a href="' . route('directory_remove', [$directory->id, true]) . '" data-toggle="tooltip" title="Remove from Directory"><i class="fa fa-btn fa-lg fa-times" style="margin:10px;"></i></a></div></div></div></td><td></td><td>Directory</td>' . $column_empty . '</tr>';
             }
         }
         $data['content'] .= '</tbody></table></div>';
@@ -1749,7 +1766,7 @@ class HomeController extends Controller
             $query = DB::table('policy')->where('name', '=', $name)->get();
             $claim = DB::table('claim')->where('claim_id', '=', $claim_id)->first();
             $for = $claim->claim_value;
-            if ($setting == true) {
+            if ($setting == 'true') {
                 $status = 'allow.';
     	        if ($query->count()) {
     	            foreach ($query as $row) {
@@ -1771,7 +1788,7 @@ class HomeController extends Controller
             $query1 = DB::table('invitation')->where('id', '=', $claim_id)->first();
             $for = $query1->email;
             $policies_arr = json_decode($query1->policies, true);
-            if ($setting == true) {
+            if ($setting == 'true') {
                 $status = 'allow.';
                 $policies_arr[] = $name;
             } else {
