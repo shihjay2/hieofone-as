@@ -1160,7 +1160,7 @@ class OauthController extends Controller
             }
         } else {
             $owner_query = DB::table('owner')->first();
-            $proxies = DB::table('owner')->where('sub', '!=', $owner->sub)->get();
+            $proxies = DB::table('owner')->where('sub', '!=', $owner_query->sub)->get();
             $proxy_arr = [];
             if ($proxies->count()) {
                 foreach ($proxies as $proxy_row) {
