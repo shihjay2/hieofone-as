@@ -853,6 +853,7 @@ class HomeController extends Controller
             //     'complete' => 'Your request for a patient container has been canceled.<br>Thank you!'
             // ];
             // return view('patients', $new_data);
+            return redirect()->route('authorize_user');
         }
     }
 
