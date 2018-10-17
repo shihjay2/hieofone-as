@@ -682,7 +682,7 @@ class HomeController extends Controller
             }
             foreach ($invited_users as $invited_user) {
                 $data['content'] .= '<tr><td>' . $invited_user->first_name . ' ' . $invited_user->last_name . '</td><td>' . $invited_user->email . '</td><td></td>';
-                $data['content'] .= '<td></td><td><a href="' . route('invite_cancel', [$invited_user->code, true]) . '" data-toggle="tooltip" title="Cancel Invite" class="btn btn-primary" role="button">Cancel Invite</a> <a href="' . route('resend_invitation', [$invited_user->id]) . '" data-toggle="tooltip" title="Resend E-mail Notification" class="btn btn-primary" role="button">Resend E-mail Notification</a>';
+                $data['content'] .= '<td></td><td><a href="' . route('invite_cancel', [$invited_user->code, false]) . '" data-toggle="tooltip" title="Cancel Invite" class="btn btn-primary" role="button">Cancel Invite</a> <a href="' . route('resend_invitation', [$invited_user->id]) . '" data-toggle="tooltip" title="Resend E-mail Notification" class="btn btn-primary" role="button">Resend E-mail Notification</a>';
                 $data['content'] .= '</tr>';
             }
         }
