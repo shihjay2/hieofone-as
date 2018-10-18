@@ -1196,7 +1196,7 @@ class HomeController extends Controller
                         if (Session::has('directory_policies')) {
                             $directory_policies = Session::get('directory_policies');
                             foreach ($directory_policies as $directory_policy_k => $directory_policy_v) {
-                                if ($directory_policy_k !== 'login_direct') {
+                                if ($directory_policy_k == 'public_publish_directory' || $directory_policy_k == 'private_publish_directory' || $directory_policy_k == 'last_activity') {
                                     $rs_to_directory['consent_' . $directory_policy_k] = $directory_policy_v;
                                 }
                             }
@@ -1276,6 +1276,9 @@ class HomeController extends Controller
             $rs_to_directory = DB::table('rs_to_directory')->where('directory_id', '=', $directory->directory_id)->first();
             if ($rs_to_directory) {
                 DB::table('rs_to_directory')->where('directory_id', '=', $directory->directory_id)->delete();
+            }
+            if ($response['arr']['message'] == 'Error: Authorization Server not registered') {
+                $response['arr']['message'] .= ', so Directory now removed from Authorization Server';
             }
         }
         Session::put('message_action', $response['arr']['message']);
