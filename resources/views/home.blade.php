@@ -140,6 +140,7 @@
 		$(".pnosh_copy").css('cursor', 'pointer').on('click', function(e){
 			var copy = $(this).attr('hie-val');
 			var $temp = $("<input>");
+			var title = $(this).attr('title');
 			$("body").append($temp);
 			$temp.val(copy).select();
 			document.execCommand("copy");
@@ -148,7 +149,11 @@
 				if ($(this).hasClass('my_info')) {
 					toastr.success('Item copied');
 				} else {
-					toastr.success('Username copied');
+					if (title == 'Copy Username') {
+						toastr.success('Username copied');
+					} else {
+						toastr.success('Password copied');
+					}
 				}
 			} else {
 				toastr.success('Password copied');

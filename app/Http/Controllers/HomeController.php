@@ -609,7 +609,7 @@ class HomeController extends Controller
             foreach ($query as $user) {
                 $data['content'] .= '<tr><td>' . $user->first_name . ' ' . $user->last_name;
                 if (in_array($user->sub, $proxy_arr)) {
-                    $data['content'] .= '<span class="label label-success" style="margin:10px;">PROXY</span>';
+                    $data['content'] .= '<span class="label label-info" style="margin:10px;">PROXY</span>';
                 }
                 if ($user->sub == $owner->sub) {
                     $data['content'] .= '<span class="label label-danger" style="margin:10px;">TRUSTEE OWNER</span>';
@@ -1577,7 +1577,11 @@ class HomeController extends Controller
                     }
                 }
                 if ($owner->sub !== $authorized_user->sub) {
-                    $data['content'] .= '<tr><td><a href="' . route('users') .'">' . $authorized_user->first_name . ' ' . $authorized_user->last_name . ' (' . $authorized_user->email . ')</a></td>';
+                    $data['content'] .= '<tr><td><a href="' . route('users') .'">' . $authorized_user->first_name . ' ' . $authorized_user->last_name . ' (' . $authorized_user->email . ')</a>';
+                    if (in_array($authorized_user->sub, $proxy_arr)) {
+                        $data['content'] .= '<span class="label label-info" style="margin:10px;">PROXY</span>';
+                    }
+                    $data['content'] .= '</td>';
                     $data['content'] .= '<td style="text-align:center;">' . $notify . '</td>';
                     $data['content'] .= '<td><select id="' . $authorized_user->username . '" class="form-control input-sm hie_user_role" hie_type="authorized">' . $this->roles_build($role) . '</select></td>';
                     $claim_id = DB::table('claim')->where('claim_value', '=', $authorized_user->email)->first();
