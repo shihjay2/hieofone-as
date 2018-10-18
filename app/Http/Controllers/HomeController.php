@@ -1196,7 +1196,9 @@ class HomeController extends Controller
                         if (Session::has('directory_policies')) {
                             $directory_policies = Session::get('directory_policies');
                             foreach ($directory_policies as $directory_policy_k => $directory_policy_v) {
-                                $rs_to_directory['consent_' . $directory_policy_k] = $directory_policy_v;
+                                if ($directory_policy_k !== 'login_direct') {
+                                    $rs_to_directory['consent_' . $directory_policy_k] = $directory_policy_v;
+                                }
                             }
                         }
                         DB::table('rs_to_directory')->insert($rs_to_directory);
