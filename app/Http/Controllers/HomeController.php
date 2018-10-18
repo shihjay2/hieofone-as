@@ -1271,7 +1271,7 @@ class HomeController extends Controller
         }
         $url = rtrim($directory->uri, '/');
         $response = $this->directory_api($url, $params, 'directory_remove', $directory->directory_id);
-        if ($response['arr']['message'] == 'Directory removed') {
+        if ($response['arr']['message'] == 'Directory removed' || $response['arr']['message'] == 'Error: Authorization Server not registered') {
             DB::table('directories')->where('id', '=', $id)->delete();
             $rs_to_directory = DB::table('rs_to_directory')->where('directory_id', '=', $directory->directory_id)->first();
             if ($rs_to_directory) {
