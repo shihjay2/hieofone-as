@@ -1193,7 +1193,16 @@ class HomeController extends Controller
                             'consent_private_publish_directory' => $rs_row1->consent_private_publish_directory,
                             'consent_last_activity' => $rs_row1->consent_last_activity
                         ];
+                        if (Session::has('directory_policies')) {
+                            $directory_policies = Session::get('directory_policies');
+                            foreach ($directory_policies as $directory_policy_k => $directory_policy_v) {
+                                $rs_to_directory['consent_' . $directory_policy_k] = $directory_policy_v;
+                            }
+                        }
                         DB::table('rs_to_directory')->insert($rs_to_directory);
+                    }
+                    if (Session::has('directory_policies')) {
+                        Session::forget('directory_policies');
                     }
                 }
                 Session::forget('directory_uri');
@@ -1234,6 +1243,10 @@ class HomeController extends Controller
             if ($response['status'] == 'error') {
                 return redirect()->back()->withErrors(['uri' => 'The URL provided is not valid.']);
             } else {
+                // set Directory policies to each resource
+                if (isset($response['arr']['policies'])) {
+                    Session::put('directory_policies', $response['arr']['policies']);
+                }
                 return redirect($response['arr']['uri']);
             }
         } else {

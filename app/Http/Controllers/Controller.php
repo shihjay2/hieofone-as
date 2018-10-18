@@ -515,7 +515,7 @@ class Controller extends BaseController
 			// ],
 			'last_activity' => [
 				'label' => 'Publish the most recent date and time when this Trustee was active to a Directory',
-				'description' => '<p>Activty of an authorization server refers to when a client attempts to view/edit a resource, adding/updating/removing a resource server, or registering new clients.</p>'
+				'description' => '<p>Activity of a Trustee refers to when a client attempts to view/edit a resource, adding/updating/removing a resource server, or registering new clients.</p>'
 			]
 		];
 		if ($key == true) {
