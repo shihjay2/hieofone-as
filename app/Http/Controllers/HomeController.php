@@ -1372,7 +1372,8 @@ class HomeController extends Controller
         $directories = DB::table('directories')->get();
         $data['title'] = 'Consent Table';
         $data['content'] = '<div class="alert alert-success alert-dismissible"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>';
-        $data['content'] .= 'Click on a <i class="fa fa-check fa-lg" style="color:green;"></i> or <i class="fa fa-times fa-lg" style="color:red;"></i> to change the policy.  Click on a <strong>policy name</strong> for for information about the policy.';
+        $data['content'] .= '<p>Click on a <i class="fa fa-check fa-lg" style="color:green;"></i> or <i class="fa fa-times fa-lg" style="color:red;"></i> to change the policy.  Click on a <strong>policy name</strong> for for information about the policy.</p>';
+        $data['content'] .= '<p>If you are using a smartphone or narrow screen, scroll to the left to see the entire consent table</p>';
         // $data['content'] .= '<br><img src="https://avatars3.githubusercontent.com/u/7401080?v=4&s=200" style="max-height: 30px;width: auto;"> designates a SMART-on-FHIR resource which has the following limitations:<ul>';
         // $data['content'] .= '<li><strong>No Refresh Tokens</strong></li><li><strong>No Dynamic Client Registration</strong></li><li><strong>and No User-Managed Access - therefore you cannot change access polices for this type of resource</strong></li>,';
         $data['content'] .= '</div>';
@@ -1695,7 +1696,7 @@ class HomeController extends Controller
         $data['content'] .= '<tr><th style="color:blue;"><strong>Directory</strong> <a href="' . route('directory_add') . '" class="btn btn-success btn-xs" style="margin-left:10px;">Connect to a Directory</a></th><th></th><th></th>' . $header_empty . '</tr>';
         if ($directories) {
             foreach ($directories as $directory1) {
-                $data['content'] .= '<tr><td><div class="row"><div class="col-xs-9" style="display:inline-block;float:none;">' . $directory->name . '</div><div class="col-xs-3" style="display:inline-block;float:none;"><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 50px;width: auto;"></img><div style="display:inline-block;float:none;"><a href="' . route('directory_remove', [$directory->id, true]) . '" data-toggle="tooltip" title="Remove from Directory"><i class="fa fa-btn fa-lg fa-times" style="margin:10px;"></i></a></div></div></div></td><td></td><td>Directory</td>' . $column_empty . '</tr>';
+                $data['content'] .= '<tr><td><div class="row"><div class="col-xs-9" style="display:inline-block;float:none;">' . $directory->name . '</div><div class="col-xs-3" style="display:inline-block;float:none;"><div style="display:inline-block;float:none;"><img src="' . asset('assets/UMA2-logo.png') . '" style="max-height: 50px;width: auto;"></img></div><div style="display:inline-block;float:none;"><a href="' . route('directory_remove', [$directory->id, true]) . '" data-toggle="tooltip" title="Remove from Directory"><i class="fa fa-btn fa-lg fa-times" style="margin:10px;"></i></a></div></div></div></td><td></td><td>Directory</td>' . $column_empty . '</tr>';
             }
         }
         $data['content'] .= '</tbody></table></div>';

@@ -236,7 +236,12 @@
 			toastr.info(info);
 		});
 		$('.searchlist').btsListFilter('#searchinput', {initial: false});
-		$('.table-fixed').floatThead();
+		$('.table-fixed').floatThead({
+			responsiveContainer: function($table){
+	            return $table.closest(".table-responsive");
+	        },
+			zIndex: 0
+		});
 	});
 </script>
 @endsection
