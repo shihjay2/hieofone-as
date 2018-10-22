@@ -1960,6 +1960,5 @@ class OauthController extends Controller
 
     public function test1(Request $request)
     {
-        
     }
 }
