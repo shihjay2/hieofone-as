@@ -41,7 +41,7 @@ then
     exit 1
 fi
 
-USERNAME=$(echo "$EMAIL" | cut -d@ -f1)
+USERNAME=$(echo "$EMAIL" | sed 's/[^a-zA-Z0-9]//g')
 USERNAME=${USERNAME//./}
 if [ -f  $HIE/.email ]; then
 	rm -rf  $HIE/.email
