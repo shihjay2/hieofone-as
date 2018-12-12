@@ -302,14 +302,16 @@ class Controller extends BaseController
 
 	protected function notify($user)
 	{
-		if ($user->notify == 1) {
-			$owner = DB::table('owner')->first();
-			$data['message_data'] = 'This is a notification that ' . $user->first_name . ' ' . $user->last_name . '(' . $user->email . ') just accessed your Trustee Authorization Server.';
-			$title = 'User Notification from your Trustee Authorization Server';
-			$to = $owner->email;
-			$this->send_mail('auth.emails.generic', $data, $title, $to);
-			if ($owner->mobile != '') {
-				$this->textbelt($owner->mobile, $data['message_data']);
+		if (!empty($user->notify)) {
+	 		if ($user->notify == 1) {
+				$owner = DB::table('owner')->first();
+				$data['message_data'] = 'This is a notification that ' . $user->first_name . ' ' . $user->last_name . '(' . $user->email . ') just accessed your Trustee Authorization Server.';
+				$title = 'User Notification from your Trustee Authorization Server';
+				$to = $owner->email;
+				$this->send_mail('auth.emails.generic', $data, $title, $to);
+				if ($owner->mobile != '') {
+					$this->textbelt($owner->mobile, $data['message_data']);
+				}
 			}
 		}
 	}
