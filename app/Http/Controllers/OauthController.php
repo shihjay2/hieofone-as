@@ -902,6 +902,7 @@ class OauthController extends Controller
     public function update_system($type='', $local=false)
     {
         $current_version = File::get(base_path() . "/.version");
+        $composer = false;
         if ($type !== '') {
             if ($type == 'composer_install') {
                 $install = new Process("/usr/local/bin/composer install");
@@ -969,7 +970,6 @@ class OauthController extends Controller
             }
         } else {
             $result = $this->github_all();
-            $composer = false;
             if ($current_version != $result[0]['sha']) {
                 $arr = [];
                 foreach ($result as $row) {
