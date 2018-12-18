@@ -496,6 +496,16 @@ class OauthController extends Controller
                     if ($owner_query->sub == $oauth_user->sub) {
                         Session::put('invite', 'yes');
                     }
+                    $as_url = $request->root();
+                    $as_url = str_replace(array('http://','https://'), '', $as_url);
+                    $root_url = explode('/', $as_url);
+                    $root_url1 = explode('.', $root_url[0]);
+                    if (isset($root_url1[1])) {
+                        $final_root_url = $root_url1[1] . '.' . $root_url1[2];
+                    } else {
+                        $final_root_url = $root_url[0];
+                    }
+                    Session::put('domain_url', $final_root_url);
                     $user1 = DB::table('users')->where('name', '=', $request->username)->first();
                     Auth::loginUsingId($user1->id);
                     $this->activity_log($user1->email, 'Login');
