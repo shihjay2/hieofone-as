@@ -667,8 +667,8 @@ class Controller extends BaseController
 	{
 		$policies = DB::table('policy')->where('name', '=', $name)->get();
 		$policy_id_arr = [];
-		if ($polices->count()) {
-			foreach ($polices as $policy) {
+		if ($policies->count()) {
+			foreach ($policies as $policy) {
 				// Clear all scopes if they exist
 				DB::table('policy_scopes')->where('policy_id', '=', $policy->policy_id)->delete();
 				$policy_id_arr[] = [

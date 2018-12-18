@@ -1936,11 +1936,15 @@ class HomeController extends Controller
                     DB::table('custom_policy')->where('id', '=', $id)->update($data);
                 }
                 $this->custom_policies_edit($data['name'], $data['type'], $parameters);
-            } elseif ($request->input('submit') == 'delete') {
+            }
+            if ($request->input('submit') == 'delete') {
                 $policy_query = DB::table('custom_policy')->where('id', '=', $id)->first();
                 DB::table('custom_policy')->where('id', '=', $id)->delete();
                 $this->custom_policies_edit($policy_query->name, $policy_query->type, [], 'delete');
                 $message_action = 'Custom policy removed';
+            }
+            if ($request->input('submit') == 'cancel') {
+                $message_action = 'Custom policy unchanaged';
             }
             Session::put('message_action', $message_action);
             return redirect()->route('custom_policies');
