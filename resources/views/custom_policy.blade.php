@@ -46,7 +46,7 @@
 							<label for="parameter" class="col-md-4 control-label">Scopes</label>
 
 							<div class="col-md-6">
-								<select class="form-control selectpicker" id="parameter" name="parameter" value="{{ old('parameter') }}" multiple>
+								<select class="form-control selectpicker" id="parameter" name="parameter[]" value="{{ old('parameter') }}" multiple="multiple">
 									{!! $parameter !!}
 								</select>
 
@@ -62,7 +62,7 @@
 							<label for="fhir_scope" class="col-md-4 control-label">FHIR Scopes</label>
 
 							<div class="col-md-6">
-								<select class="form-control selectpicker" id="fhir_scope" name="fhir_scope" value="{{ old('fhir_scope') }}" multiple>
+								<select class="form-control selectpicker" id="fhir_scope" name="fhir_scope[]" value="{{ old('fhir_scope') }}" multiple="multiple">
 									{!! $fhir !!}
 								</select>
 
