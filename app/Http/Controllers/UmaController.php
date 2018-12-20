@@ -315,16 +315,19 @@ class UmaController extends Controller
                                             $this->directory_update_api();
                                             $params['authorization_state'] = 'claims_submitted';
                                         } else {
-                                            // No matching claim, not authorized$params['authorization_state'] = 'not_authorized';
+                                            // No matching claim, not authorized
                                             $params['authorization_state'] = 'not_authorized';
+                                            $params['description'] = 'no_matching_claim';
                                         }
                                     } else {
                                         // No claim to policy, not authorized
                                         $params['authorization_state'] = 'not_authorized';
+                                        $params['description'] = 'no_claim_to_policy';
                                     }
                                 } else {
                                     // No policies, not authorized
                                     $params['authorization_state'] = 'not_authorized';
+                                    $params['description'] = 'no_polices';
                                 }
                             } else {
                                 // Expired ticket
