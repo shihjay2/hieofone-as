@@ -247,82 +247,78 @@ class UmaController extends Controller
                                             }
                                         }
                                     }
+                                    $claim_id = '';
+                                    // Get default group policies and get a match
+                                    $rs_query1 = DB::table('resource_set')->where('resource_set_id', '=', $resource_set->resource_set_id)->first();
+                                    $rs_query2 = DB::table('oauth_clients')->where('client_id', '=', $rs_query1->client_id)->first();
+                                    if ($rs_query2->consent_login_direct == 1) {
+                                        if ($request->session()->get('login_origin') == 'login_direct' && $claim_id == '') {
+                                            $rs_query3 = DB::table('claim')->where('claim_value', '=', 'login_direct')->first();
+                                            $claim_id = $rs_query3->claim_id;
+                                        }
+                                    }
+                                    // if ($rs_query2->consent_login_md_nosh == 1) {
+                                    //     if ($request->session()->get('login_origin') == 'login_md_nosh' && $claim_id == '') {
+                                    //         $rs_query4 = DB::table('claim')->where('claim_value', '=', 'login_md_nosh')->first();
+                                    //         $claim_id = $rs_query4->claim_id;
+                                    //     }
+                                    // }
+                                    if ($rs_query2->consent_any_npi == 1) {
+                                        if ($request->session()->has('npi') && $claim_id == '') {
+                                            if ($request->session()->get('npi') !== '') {
+                                                $rs_query5 = DB::table('claim')->where('claim_value', '=', 'any_npi')->first();
+                                                $claim_id = $rs_query5->claim_id;
+                                            }
+                                        }
+                                    }
+                                    if ($rs_query2->consent_public_publish_directory == 1) {
+                                        if ($request->session()->has('npi') && $claim_id == '') {
+                                            if ($request->session()->get('npi') !== '') {
+                                                $rs_query6 = DB::table('claim')->where('claim_value', '=', 'public_publish_directory')->first();
+                                                $claim_id = $rs_query6->claim_id;
+                                            }
+                                        }
+                                    }
+                                    // if ($rs_query2->consent_login_google == 1) {
+                                    //     if ($request->session()->get('login_origin') == 'login_google' && $claim_id == '') {
+                                    //         $rs_query6 = DB::table('claim')->where('claim_value', '=', 'login_google')->first();
+                                    //         $claim_id = $rs_query6->claim_id;
+                                    //     }
+                                    // }
+                                    // Test if email matches
                                     if (count($valid_claims_array) > 0) {
-                                        $claim_id = '';
-                                        // Get default policies and get a match
-                                        $rs_query1 = DB::table('resource_set')->where('resource_set_id', '=', $resource_set->resource_set_id)->first();
-                                        $rs_query2 = DB::table('oauth_clients')->where('client_id', '=', $rs_query1->client_id)->first();
-                                        if ($rs_query2->consent_login_direct == 1) {
-                                            if ($request->session()->get('login_origin') == 'login_direct' && $claim_id == '') {
-                                                $rs_query3 = DB::table('claim')->where('claim_value', '=', 'login_direct')->first();
-                                                $claim_id = $rs_query3->claim_id;
-                                            }
-                                        }
-                                        // if ($rs_query2->consent_login_md_nosh == 1) {
-                                        //     if ($request->session()->get('login_origin') == 'login_md_nosh' && $claim_id == '') {
-                                        //         $rs_query4 = DB::table('claim')->where('claim_value', '=', 'login_md_nosh')->first();
-                                        //         $claim_id = $rs_query4->claim_id;
-                                        //     }
-                                        // }
-                                        if ($rs_query2->consent_any_npi == 1) {
-                                            if ($request->session()->has('npi') && $claim_id == '') {
-                                                if ($request->session()->get('npi') !== '') {
-                                                    $rs_query5 = DB::table('claim')->where('claim_value', '=', 'any_npi')->first();
-                                                    $claim_id = $rs_query5->claim_id;
-                                                }
-                                            }
-                                        }
-                                        if ($rs_query2->consent_public_publish_directory == 1) {
-                                            if ($request->session()->has('npi') && $claim_id == '') {
-                                                if ($request->session()->get('npi') !== '') {
-                                                    $rs_query6 = DB::table('claim')->where('claim_value', '=', 'public_publish_directory')->first();
-                                                    $claim_id = $rs_query6->claim_id;
-                                                }
-                                            }
-                                        }
-                                        // if ($rs_query2->consent_login_google == 1) {
-                                        //     if ($request->session()->get('login_origin') == 'login_google' && $claim_id == '') {
-                                        //         $rs_query6 = DB::table('claim')->where('claim_value', '=', 'login_google')->first();
-                                        //         $claim_id = $rs_query6->claim_id;
-                                        //     }
-                                        // }
-                                        // Test if email matches
                                         if (in_array($request->session()->get('email'), $valid_claims_array) && $claim_id == '') {
                                             $claim1 = DB::table('claim')->where('claim_value', '=', $request->session()->get('email'))->first();
                                             $claim_id = $claim1->claim_id;
                                         }
-                                        if ($claim_id !== '') {
-                                            // Claims match, attach permission ticket to claim
-                                            $data = [
-                                                'permission_ticket_id' => $query1->permission_ticket_id,
-                                                'claim_id' => $claim_id
-                                            ];
-                                            DB::table('claim_to_permission_ticket')->insert($data);
-                                            // Attach permission ticket to client
-                                            $client_data = [
-                                                'permission_ticket_id' => $query1->permission_ticket_id,
-                                                'client_id' => $client_id
-                                            ];
-                                            DB::table('client_to_permission_ticket')->insert($client_data);
-                                            // Set last_activity data to claim_to_policy
-                                            $data1 = [
-                                                'last_activity' => time()
-                                            ];
-                                            DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->update($data1);
-                                            // Set last access for resource servers
-                                            $rs_data['last_access'] = time();
-                                            DB::table('oauth_clients')->where('client_id', '=', $rs_query2->client_id)->update($rs_data);
-                                            $this->directory_update_api();
-                                            $params['authorization_state'] = 'claims_submitted';
-                                        } else {
-                                            // No matching claim, not authorized
-                                            $params['authorization_state'] = 'not_authorized';
-                                            $params['description'] = 'no_matching_claim';
-                                        }
+                                    }
+                                    if ($claim_id !== '') {
+                                        // Claims match, attach permission ticket to claim
+                                        $data = [
+                                            'permission_ticket_id' => $query1->permission_ticket_id,
+                                            'claim_id' => $claim_id
+                                        ];
+                                        DB::table('claim_to_permission_ticket')->insert($data);
+                                        // Attach permission ticket to client
+                                        $client_data = [
+                                            'permission_ticket_id' => $query1->permission_ticket_id,
+                                            'client_id' => $client_id
+                                        ];
+                                        DB::table('client_to_permission_ticket')->insert($client_data);
+                                        // Set last_activity data to claim_to_policy
+                                        $data1 = [
+                                            'last_activity' => time()
+                                        ];
+                                        DB::table('claim_to_policy')->where('policy_id', '=', $policy->policy_id)->update($data1);
+                                        // Set last access for resource servers
+                                        $rs_data['last_access'] = time();
+                                        DB::table('oauth_clients')->where('client_id', '=', $rs_query2->client_id)->update($rs_data);
+                                        $this->directory_update_api();
+                                        $params['authorization_state'] = 'claims_submitted';
                                     } else {
-                                        // No claim to policy, not authorized
+                                        // No matching claim, not authorized
                                         $params['authorization_state'] = 'not_authorized';
-                                        $params['description'] = 'no_claim_to_policy';
+                                        $params['description'] = 'no_matching_claim';
                                     }
                                 } else {
                                     // No policies, not authorized
