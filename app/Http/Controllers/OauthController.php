@@ -1642,7 +1642,7 @@ class OauthController extends Controller
                 $return['exp'] = $query->expires;
                 $return['iss'] = URL::to('/');
                 $return['permissions'][] = [
-                    'resource_id' => $permission_ticket->resource_set_id,
+                    'resource_id' => $permission->resource_set_id,
                     'resource_scopes' => $resource_scopes,
                     'exp' => $query->expires
                 ];

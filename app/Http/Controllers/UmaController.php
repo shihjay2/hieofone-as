@@ -318,12 +318,10 @@ class UmaController extends Controller
                                     } else {
                                         // No matching claim, not authorized
                                         $params['authorization_state'] = 'not_authorized';
-                                        $params['description'] = 'no_matching_claim';
                                     }
                                 } else {
                                     // No policies, not authorized
                                     $params['authorization_state'] = 'not_authorized';
-                                    $params['description'] = 'no_polices';
                                 }
                             } else {
                                 // Expired ticket
