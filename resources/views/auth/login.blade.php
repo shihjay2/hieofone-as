@@ -47,6 +47,9 @@
 								</div>
 							@endif
 						</div>
+						<div id="uport_indicator" style="text-align: center;display:none;">
+							<i class="fa fa-spinner fa-spin fa-pulse fa-2x fa-fw"></i><span id="modaltext" style="margin:10px">Loading uPort...</span><br><br>
+						</div>
 					</div>
 					<form class="form-horizontal" role="form" method="POST" action="{{ url('/login') }}">
 						{{ csrf_field() }}
@@ -172,6 +175,7 @@
 	// const web3 = connect.getWeb3();
 
 	const loginBtnClick = () => {
+		$('#uport_indicator').show();
 		uport.requestDisclosure({
 			requested: ['name', 'email', 'address', 'NPI'],
 			notifications: true // We want this if we want to recieve credentials
