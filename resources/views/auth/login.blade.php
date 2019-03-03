@@ -162,28 +162,31 @@
 		});
 	});
 	// Setup
-	const Connect = window.uportconnect.Connect;
-	const appName = 'hieofone';
-	const connect = new Connect(appName, {
-		'clientId': '2ohNU4wT7Y7YqJ5kLMw2of1bdCnuFB1tZmr',
-		'signer': window.uportconnect.SimpleSigner('9d3aef4e1e1a80877fe501151f9372de2e34cb2744e875c5e1b1af5a73f4eb7e'),
+	const Connect = window.uportconnect;
+	const appName = 'Trustee for <?php echo $name; ?>';
+	const uport = new Connect(appName, {
+		// 'clientId': '2ohNU4wT7Y7YqJ5kLMw2of1bdCnuFB1tZmr',
+		// 'signer': window.uportconnect.SimpleSigner('9d3aef4e1e1a80877fe501151f9372de2e34cb2744e875c5e1b1af5a73f4eb7e'),
 		'network': 'rinkeby'
 	});
-	const web3 = connect.getWeb3();
+	// const web3 = connect.getWeb3();
 
 	const loginBtnClick = () => {
-		connect.requestCredentials({
-	      requested: ['name', 'email', 'NPI'],
-	      notifications: true // We want this if we want to recieve credentials
-	    }).then((credentials) => {
-			console.log(credentials);
+		uport.requestDisclosure({
+			requested: ['name', 'email', 'address', 'NPI'],
+			notifications: true // We want this if we want to recieve credentials
+	    });
+		uport.onResponse('disclosureReq').then((res) => {
+			var did = res.payload.did;
+			var credentials = res.payload.verified;
+			console.log(res.payload);
 			var uport_url = '<?php echo route("login_uport"); ?>';
-			var uport_data = 'name=' + credentials.name + '&uport=' + credentials.address;
-			if (typeof credentials.NPI !== 'undefined') {
-				uport_data += '&npi=' + credentials.NPI;
+			var uport_data = 'name=' + res.payload.name + '&uport=' + res.payload.did;
+			if (typeof res.payload.NPI !== 'undefined') {
+				uport_data += '&npi=' + res.payload.NPI;
 			}
-			if (typeof credentials.email !== 'undefined') {
-				uport_data += '&email=' + credentials.email;
+			if (typeof res.payload.email !== 'undefined') {
+				uport_data += '&email=' + res.payload.email;
 			}
 			$.ajax({
 				type: "POST",
