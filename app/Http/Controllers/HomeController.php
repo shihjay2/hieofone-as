@@ -1099,7 +1099,17 @@ class HomeController extends Controller
 
     public function directories(Request $request)
     {
+        $directory_update_response = $this->directory_update_api();
+        $directory_update_response1 = '';
+        if (count($directory_update_response) > 0) {
+            $directory_update_response1 = '<ul>';
+            foreach ($directory_update_response as $directory_update_row) {
+                $directory_update_response1 .= '<li>' . $directory_update_row . '</li>';
+            }
+            $directory_update_response1 .= '</ul>';
+        }
         $data['message_action'] = Session::get('message_action');
+        $data['message_action'] .= $directory_update_response1;
         Session::forget('message_action');
         $data['title'] = 'Authorized Directories';
         $root_url = explode('/', $request->root());
@@ -2055,7 +2065,7 @@ class HomeController extends Controller
     public function setup_mail(Request $request)
     {
         $query = DB::table('owner')->first();
-        if (Session::get('is_owner') == 'yes' || $query == false || Session::get('install') == 'yes') {
+        if (Session::get('is_owner') == 'yes' || $query == false || Session::get('install') == 'yes' || env('DOCKER') == '0') {
             if ($request->isMethod('post')) {
                 $this->validate($request, [
                     'mail_type' => 'required'

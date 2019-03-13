@@ -168,16 +168,12 @@
 	const Connect = window.uportconnect;
 	const appName = 'Trustee for <?php echo $name; ?>';
 	const uport = new Connect(appName, {
-		// 'clientId': '2ohNU4wT7Y7YqJ5kLMw2of1bdCnuFB1tZmr',
-		// 'signer': window.uportconnect.SimpleSigner('9d3aef4e1e1a80877fe501151f9372de2e34cb2744e875c5e1b1af5a73f4eb7e'),
-		'network': 'rinkeby'
+		network: 'rinkeby'
 	});
-	// const web3 = connect.getWeb3();
-
 	const loginBtnClick = () => {
 		$('#uport_indicator').show();
 		uport.requestDisclosure({
-			requested: ['name', 'email', 'address', 'NPI'],
+			requested: ['name', 'email', 'NPI'],
 			notifications: true // We want this if we want to recieve credentials
 	    });
 		uport.onResponse('disclosureReq').then((res) => {
@@ -203,48 +199,12 @@
 				success: function(data){
 					if (data.message !== 'OK') {
 						toastr.error(data.message);
-						// console.log(data);
 					} else {
 						window.location = data.url;
 					}
 				}
 			});
 		}, console.err);
-	};
-
-	let globalState = {
-		uportId: "",
-		txHash: "",
-		sendToAddr: "0x687422eea2cb73b5d3e242ba5456b782919afc85",
-		sendToVal: "5"
-	};
-
-	const uportConnect = function () {
-		web3.eth.getCoinbase((error, address) => {
-			if (error) { throw error; }
-			console.log(address);
-			globalState.uportId = address;
-		});
-	};
-
-	const sendEther = () => {
-		const value = parseFloat(globalState.sendToVal) * 1.0e18;
-		const gasPrice = 100000000000;
-		const gas = 500000;
-		web3.eth.sendTransaction(
-			{
-				from: globalState.uportId,
-				to: globalState.sendToAddr,
-				value: value,
-				gasPrice: gasPrice,
-				gas: gas
-			},
-			(error, txHash) => {
-				if (error) { throw error; }
-				globalState.txHash = txHash;
-				console.log(txHash);
-			}
-		);
 	};
 </script>
 @endsection
