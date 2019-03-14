@@ -1010,30 +1010,41 @@ class HomeController extends Controller
                     'mobile' => $request->input('mobile')
                 ];
                 DB::table('owner')->where('id', '=', '1')->update($owner_data);
-                if ($owner_query->email !== $request->input('email') || $owner_query->mobile !== $request->input('mobile')) {
-                    $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
-                    if ($pnosh) {
-                        // Synchronize contact info with pNOSH
-                        $url = $pnosh->client_uri . '/as_sync';
-                        $ch = curl_init();
-                        $sync_data = [
-                            'old_email' => $owner_query->email,
-                            'client_id' => $pnosh->client_id,
-                            'client_secret' => $pnosh->client_secret,
-                            'email' => $request->input('email'),
-                            'sms' => $request->input('mobile')
-                        ];
-                        $post = http_build_query($sync_data);
-                        $ch = curl_init();
-                        curl_setopt($ch, CURLOPT_URL, $url);
-                        curl_setopt($ch, CURLOPT_POST, 1);
-                        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
-                        curl_setopt($ch, CURLOPT_FOLLOWLOCATION,1);
-                        curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
-                        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
-                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT ,0);
-                        $result = curl_exec($ch);
-                        $message = '<br>' . $result;
+                $pnosh = DB::table('oauth_clients')->where('client_name', 'LIKE', "%Patient NOSH for%")->first();
+                if ($pnosh) {
+                    // Synchronize contact info with pNOSH
+                    $url = $pnosh->client_uri . '/as_sync';
+                    $ch = curl_init();
+                    $sync_data = [
+                        'old_email' => $owner_query->email,
+                        'client_id' => $pnosh->client_id,
+                        'client_secret' => $pnosh->client_secret,
+                        'email' => $request->input('email'),
+                        'sms' => $request->input('mobile'),
+                        'lastname' => $request->input('last_name'),
+                        'firstname' => $request->input('first_name'),
+                        'DOB' => date('Y-m-d H:i:s', strtotime($request->input('date_of_birth')))
+                    ];
+                    $post = http_build_query($sync_data);
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $url);
+                    curl_setopt($ch, CURLOPT_POST, 1);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+                    curl_setopt($ch, CURLOPT_FOLLOWLOCATION,1);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT ,0);
+                    $result = curl_exec($ch);
+                    $message = '<br>' . $result;
+                    $pnosh_update['client_name'] = 'Patient NOSH for ' .  $request->input('first_name') . ' ' . $request->input('last_name');
+                    DB::table('oauth_clients')->where('client_id', '=', $pnosh->client_id)->update($pnosh_update);
+                    $response = $this->directory_update_api();
+                    if (count($response) > 0) {
+                        $message .= '<ul>';
+                        foreach ($response as $row) {
+                            $message .= '<li>' . $row . '</li>';
+                        }
+                        $message .= '</ul>';
                     }
                 }
             }

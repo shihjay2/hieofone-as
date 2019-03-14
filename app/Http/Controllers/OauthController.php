@@ -1870,12 +1870,18 @@ class OauthController extends Controller
                     if ($owner) {
                         $owner_data = [
                             'email' => $request->input('email'),
-                            'mobile' => $request->input('sms')
+                            'mobile' => $request->input('sms'),
+                            'lastname' => $request->input('lastname'),
+                            'firstname' => $request->input('firstname'),
+                            'DOB' => $request->input('DOB')
                         ];
                         DB::table('owner')->where('id', '=', $owner->id)->update($owner_data);
                         $data['email'] = $request->input('email');
                         DB::table('users')->where('email', '=', $request->input('old_email'))->update($data);
                         DB::table('oauth_users')->where('email', '=', $request->input('old_email'))->update($data);
+                        $pnosh_update['client_name'] = 'Patient NOSH for ' .  $request->input('firstname') . ' ' . $request->input('lastname');
+                        DB::table('oauth_clients')->where('client_id', '=', $query->client_id)->update($pnosh_update);
+                        $response = $this->directory_update_api();
                         $return = 'Contact data synchronized';
                     }
                 }
