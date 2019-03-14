@@ -1877,11 +1877,19 @@ class OauthController extends Controller
                         ];
                         DB::table('owner')->where('id', '=', $owner->id)->update($owner_data);
                         $data['email'] = $request->input('email');
-                        DB::table('users')->where('email', '=', $request->input('old_email'))->update($data);
+                        $data['last_name'] = $request->input('lastname');
+                        $data['first_name'] = $request->input('firstname');
                         DB::table('oauth_users')->where('email', '=', $request->input('old_email'))->update($data);
+                        $data1['email'] = $request->input('email');
+                        DB::table('users')->where('email', '=', $request->input('old_email'))->update($data1);
                         $pnosh_update['client_name'] = 'Patient NOSH for ' .  $request->input('firstname') . ' ' . $request->input('lastname');
                         DB::table('oauth_clients')->where('client_id', '=', $query->client_id)->update($pnosh_update);
                         $response = $this->directory_update_api();
+                        if (Session::has('full_name')) {
+                            Session::put('full_name', $request->input('first_name') . ' ' . $request->input('last_name'));
+                            Session::put('owner', $request->input('first_name') . ' ' . $request->input('last_name'));
+                            Session::put('email', $request->input('email'));
+                        }
                         $return = 'Contact data synchronized';
                     }
                 }
