@@ -1890,7 +1890,7 @@ class OauthController extends Controller
                             Session::put('owner', $request->input('firstname') . ' ' . $request->input('lastname'));
                             Session::put('email', $request->input('email'));
                         }
-                        $return = 'Contact data synchronized, ' . $request->input('firstname') . ' ' . $request->input('lastname');
+                        $return = 'Contact data synchronized';
                     }
                 }
             }
