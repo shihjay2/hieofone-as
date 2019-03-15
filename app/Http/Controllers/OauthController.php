@@ -1886,11 +1886,11 @@ class OauthController extends Controller
                         DB::table('oauth_clients')->where('client_id', '=', $query->client_id)->update($pnosh_update);
                         $response = $this->directory_update_api();
                         if (Session::has('full_name')) {
-                            Session::put('full_name', $request->input('first_name') . ' ' . $request->input('last_name'));
-                            Session::put('owner', $request->input('first_name') . ' ' . $request->input('last_name'));
+                            Session::put('full_name', $request->input('firstname') . ' ' . $request->input('lastname'));
+                            Session::put('owner', $request->input('firstname') . ' ' . $request->input('lastname'));
                             Session::put('email', $request->input('email'));
                         }
-                        $return = 'Contact data synchronized';
+                        $return = 'Contact data synchronized, ' . $request->input('firstname') . ' ' . $request->input('lastname');
                     }
                 }
             }
