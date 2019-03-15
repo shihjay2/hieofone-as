@@ -27,6 +27,7 @@ class Authenticate
             }
         }
         $oauth_user = DB::table('oauth_users')->where('username', '=', Session::get('username'))->first();
+        $owner_query = DB::table('owner')->first();
         Session::put('full_name', $oauth_user->first_name . ' ' . $oauth_user->last_name);
         Session::put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
         Session::put('email', $oauth_user->email);

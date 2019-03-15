@@ -1047,10 +1047,10 @@ class HomeController extends Controller
                         $message .= '</ul>';
                     }
                 }
+                Session::put('owner', $request->input('first_name') . ' ' . $request->input('last_name'));
             }
             Session::put('message_action', 'Information Updated.' . $message);
             Session::put('full_name', $request->input('first_name') . ' ' . $request->input('last_name'));
-            Session::put('owner', $request->input('first_name') . ' ' . $request->input('last_name'));
             Session::put('email', $request->input('email'));
             return redirect()->route('my_info');
         } else {
