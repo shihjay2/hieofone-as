@@ -56,7 +56,7 @@ Client makes a call to the <code>dynamic_client_endpoint</code> to [register its
 		"claims_redirect_uri":[
 			"https://client.example.org/callback3"
 		],
-		"scope": "openid email offline uma_authorization"
+		"scope": "openid email offline_access uma_authorization"
 	}
 
 ### Step 5: Authorize client and retrieve refresh token
@@ -96,7 +96,7 @@ Resource server makes a call to the <code>dynamic_client_endpoint</code> to [reg
 		"claims_redirect_uri":[
 			"https://rs.example.org/callback3"
 		],
-		"scope": "openid email offline uma_authorization uma_protection"
+		"scope": "openid email offline_access uma_authorization uma_protection"
 	}
 
 ### Step 5: Authorize client and retrieve refresh token
@@ -120,7 +120,7 @@ The patient is then directed to the login page of HIE of One Authorization Serve
 2.  The **registered client** knows the [FHIR](http://wiki.hl7.org/index.php?title=FHIR) **resource endpoints** such as medication list, problem list, allergy list, encounters, immunizations, binaries) to access/edit these resources.
 3.  The patient has created policies via the policy API that define which **requesting party** (identified by his/her e-mail address) has permissions to  access/edit his/her resources.
 
-### Step 1: Physician uses the registered client to access the resource server
+### Step 1a: Physician uses the registered client to access the resource server
 The client makes an initial call to the **resource endpoint**.
 
 	GET /fhir/Patient/1 HTTP/1.1
@@ -128,7 +128,7 @@ The client makes an initial call to the **resource endpoint**.
 
 The **resource server** sends a response back with the URI of the **authorization server** (<code>as_uri</code> parameter in the <code>WWW-Authenticate</code> portion of the return header) and a **permission ticket** (<code>ticket</code> in JSON return).
 
-### Step 2: Client obtains an authorization API token (AAT) from the authorization server
+### Step 2a: Client obtains an authorization API token (AAT) from the authorization server
 The client makes a call to the <code>token_endpoint</code> of the **authorizaion server** as such (line breaks below are just for display convenience):
 
 	GET /token?grant_type=client_credentials
@@ -139,7 +139,7 @@ The client makes a call to the <code>token_endpoint</code> of the **authorizaion
 
 The **authorization API token** is <code>access_token</code> in the JSON return which will be used in the <code>rpt_endpoint</code>.
 
-### Step 3: Client makes a call to the authorization server with the permission ticket given by the resource server
+### Step 3a: Client makes a call to the authorization server with the permission ticket given by the resource server
 The client makes a call to the <code>requesting_party_claims_endpoint</code> of the **authorization server** and presents the **permission ticket** as such (line breaks below are just for display convenience):
 
 	GET /rqp_claims?client_id=some_client_id
@@ -159,7 +159,7 @@ After login, the authorization server checks the login identity email address to
 	&authorization_state=claims_submitted HTTP/1.1
 	Host: client.example.com
 
-### Step 4: Client makes a call to the authorization server to get a requesting party token
+### Step 4a: Client makes a call to the authorization server to get a requesting party token
 Client makes a call to the <code>rpt_endpoint</code> of the **authorization server** supplying the **authorization API token** and the **permission ticket** as such (line breaks below are just for display convenience):
 
 	POST /authz_request HTTP/1.1
@@ -172,7 +172,7 @@ Client makes a call to the <code>rpt_endpoint</code> of the **authorization serv
 
 The **requesting party token** is <code>rpt</code> in the JSON return.
 
-### Step 5: Client re-accesses resource server
+### Step 5a: Client re-accesses resource server
 The client redirects back to the **resource server** with the **requesting party token** attached to the original FHIR **resource endpoint**.
 
 	GET /fhir/Patient/1 HTTP/1.1
