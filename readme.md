@@ -37,7 +37,7 @@ Client submits email address to the following address per [Webfinger protocol](h
 	&rel=http://openid.net/specs/connect/1.0/issuer
 
 ### Step 3: Client learns authorization server endpoints
-Client takes  the JSON return (specifically the <code>href subkey</code> under <code>links</code>) and when appending <code>.well-known/uma-configuration</code> to the URL, like this: https://domain.xyz/uma/.well-known/uma-configuration, client will see in JSON format all the valid UMA endpoints where client makes calls to initiate a token request, start authorization, request a permission ticket, and make requesting party claims.
+Client takes  the JSON return (specifically the <code>href subkey</code> under <code>links</code>) and when appending <code>.well-known/uma2-configuration</code> to the URL, like this: https://domain.xyz/.well-known/uma2-configuration, client will see in JSON format all the valid UMA endpoints where client makes calls to initiate a token request, start authorization, request a permission ticket, and make requesting party claims.
 
 ### Step 4: Client dynamically registers to the authorization server
 Client makes a call to the <code>dynamic_client_endpoint</code> to [register itself](https://tools.ietf.org/html/draft-ietf-oauth-dyn-reg-30).  Client will need to store the <code>client_id</code> and <code>client_secret</code> (such as in a database) going forward.  It is important for the client to consider which redirect URIs to use as one of them will need to handle the <code>claims_redirect_uri</code> parameter listed [here](#step-3:-client-makes-a-call-to-the-authorization-server-with-the-permission-ticket-given-by-the-resource-server).  Being a client only requires that you declare a scope of <code>uma_authorization</code>.  Here is an example call (line breaks below are just for display convenience):
@@ -131,11 +131,14 @@ The **resource server** sends a response back with the URI of the **authorizatio
 ### Step 2a: Client obtains an authorization API token (AAT) from the authorization server
 The client makes a call to the <code>token_endpoint</code> of the **authorizaion server** as such (line breaks below are just for display convenience):
 
-	GET /token?grant_type=client_credentials
+	POST /token HTTP/1.1
+	Host: as.example.com
+	Authorization: Basic jwfLG53^sad$#f ...
+	Content-Type: application/x-www-form-urlencoded
+	grant_type=client_credentials
 	&client_id=some_client_id
 	&client_secret=some_client_secret
-	&scope=uma_authorization HTTP/1.1
-	Host: as.example.com
+	&scope=uma_authorization
 
 The **authorization API token** is <code>access_token</code> in the JSON return which will be used in the <code>rpt_endpoint</code>.
 
