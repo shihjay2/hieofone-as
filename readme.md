@@ -133,7 +133,6 @@ The client makes a call to the <code>token_endpoint</code> of the **authorizaion
 
 	POST /token HTTP/1.1
 	Host: as.example.com
-	Authorization: Basic jwfLG53^sad$#f ...
 	Content-Type: application/x-www-form-urlencoded
 	grant_type=client_credentials
 	&client_id=some_client_id
