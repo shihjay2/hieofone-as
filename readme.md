@@ -53,7 +53,7 @@ Client makes a call to the <code>dynamic_client_endpoint</code> to [register its
 			"https://client.example.org/callback2"]
 		"client_name":"My Example Client",
 		"logo_uri":"https://client.example.org/logo.png",
-		"claims_redirect_uri":[
+		"claims_redirect_uris":[
 			"https://client.example.org/callback3"
 		],
 		"scope": "openid email offline_access uma_authorization"
