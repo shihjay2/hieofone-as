@@ -21,6 +21,14 @@ class TrustProxies extends Middleware
      */
     protected $headers = Request::HEADER_X_FORWARDED_ALL;
 
+    public function handle(Request $request, \Closure $next) {
+        if (env('TRUSTED_PROXIES') == null) {
+            return $next($request);
+        }
+
+        return parent::handle($request, $next);
+    }
+
     public function __construct()
     {
         if (env('TRUSTED_PROXIES') !== null) {
