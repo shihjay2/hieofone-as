@@ -57,9 +57,11 @@
 @endsection
 
 @section('view.scripts')
+<script src="{{ asset('assets/js/pwstrength-bootstrap.min.js') }}"></script>
 <script type="text/javascript">
 	$(document).ready(function() {
 		$("#password").focus();
+		$(':password').pwstrength();
 	});
 </script>
 @endsection

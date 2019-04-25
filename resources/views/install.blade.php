@@ -380,9 +380,11 @@
 @endsection
 
 @section('view.scripts')
+<script src="{{ asset('assets/js/pwstrength-bootstrap.min.js') }}"></script>
 <script type="text/javascript">
 	$(document).ready(function() {
 		$("#username").focus();
+		$(':password').pwstrength();
 		$("#mobile").mask("(999) 999-9999");
 	});
 </script>
