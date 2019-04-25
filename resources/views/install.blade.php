@@ -384,7 +384,7 @@
 <script type="text/javascript">
 	$(document).ready(function() {
 		$("#username").focus();
-		$(':password').pwstrength();
+		$(":password").pwstrength();
 		$("#mobile").mask("(999) 999-9999");
 	});
 </script>

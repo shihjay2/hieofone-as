@@ -61,7 +61,7 @@
 <script type="text/javascript">
 	$(document).ready(function() {
 		$("#password").focus();
-		$(':password').pwstrength();
+		$(":password").pwstrength();
 	});
 </script>
 @endsection
