@@ -25,8 +25,10 @@ file_env() {
 
 file_env DB_PASSWORD
 file_env APP_KEY
+file_env APP_URL
 file_env MAILGUN_DOMAIN
 file_env MAILGUN_SECRET
+file_env ASSET_URL
 maxTries=60
 while [ "$maxTries" -gt 0 ] && ! /usr/bin/mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" -e "show  databases;"; do
   let maxTries--
