@@ -31,12 +31,10 @@ class TrustProxies extends Middleware
 
     public function __construct()
     {
-        if (env('TRUSTED_PROXIES') !== null) {
-            if (env('TRUSTED_PROXIES') == '*') {
-                $this->proxies = '*';
-            } else {
-                $this->proxies = explode(',', env('TRUSTED_PROXIES'));
-            }
+        if (env('TRUSTED_PROXIES') == '*') {
+            $this->proxies = '*';
+        } else {
+            $this->proxies = explode(',', env('TRUSTED_PROXIES'));
         }
     }
 }
