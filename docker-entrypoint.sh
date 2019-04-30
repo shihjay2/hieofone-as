@@ -47,4 +47,20 @@ else
     php artisan migrate:install
 fi
 php artisan migrate
+if ! [ -z "$SYNCTHING_HOST" ]; then
+	maxTries1=60
+	while [ "$maxTries1" -gt 0 ] && ! [ -f /var/syncthing/config/config.xml ]; do
+	  let maxTries1--
+	  sleep 1
+	done
+	echo
+	if [ "$maxTries1" -le 0 ]; then
+	  echo >&2 "error: unable to contact Syncthing after $maxTries1 tries"
+	  exit 1
+	fi
+	SYNCTHING_APIKEY=$(cat /var/syncthing/config/config.xml | awk -F "[><]" '/apikey/{print $3}')
+	SYNCTHING_DEVICE_ID=$(cat /var/syncthing/config/config.xml | grep device | head -1 | sed -rn 's/.*id="([^"]*)".*/\1/p')
+	export "SYNCTHING_APIKEY"=$SYNCTHING_APIKEY
+	export "SYNCTHING_DEVICE_ID"=$SYNCTHING_DEVICE_ID
+fi
 exec "$@"

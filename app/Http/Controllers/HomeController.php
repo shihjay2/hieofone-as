@@ -2227,4 +2227,91 @@ class HomeController extends Controller
         }
         return view('home', $data);
     }
+
+    public function syncthing(Request $request)
+    {
+        if (!empty(env('SYNCTHING_HOST'))) {
+            $data['name'] = Session::get('owner');
+            $data['title'] = 'Add Trustee Mouse';
+            if ($request->isMethod('post')) {
+                $this->validate($request, [
+                    'deviceID' => 'required'
+                ]);
+                $url = 'http://' . env('SYNCTHING_HOST') . ":8384/rest/system/config";
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    "X-API-Key: " . env('SYNCTHING_APIKEY')
+                ]);
+                curl_setopt($ch, CURLOPT_HEADER, 0);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+                curl_setopt($ch, CURLOPT_FAILONERROR,1);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION,1);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT ,0);
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close ($ch);
+                if ($httpCode !== 404 && $httpCode !== 0) {
+                    $arr = json_decode($response, true);
+                    $new_device = [
+                        'deviceID' => $request->input('deviceID'),
+                        'name' => $request->input('name'),
+                        'addresses' => [
+                            'dynamic'
+                        ],
+                        'compression' => 'metadata',
+                        'certName' => '',
+                        'introducer' => false,
+                        'skipIntroductionRemovals' => false,
+                        'introducedBy' => '',
+                        'paused' => false,
+                        'allowedNetworks' => [],
+                        'autoAcceptFolders' => false,
+                        'maxSendKbps' => 0,
+                        'maxRecvKbps' => 0,
+                        'ignoredFolders' => [],
+                        'pendingFolders' => [],
+                        'maxRequestKiB' => 0
+                    ];
+                    $arr['devices'][] = $new_device;
+                    $new_device_folder = [
+                        'deviceID' => $request->input('deviceID'),
+                        'introducedBy' => ''
+                    ];
+                    $arr['folders'][0]['devices'][] = $new_device_folder;
+                    $post_body = json_encode($arr);
+                    $content_type = 'application/json';
+                    $ch1 = curl_init();
+                    curl_setopt($ch1, CURLOPT_URL, $url);
+                    curl_setopt($ch, CURLOPT_POST, 1);
+                    curl_setopt($ch1, CURLOPT_POSTFIELDS, $post_body);
+                    curl_setopt($ch1, CURLOPT_HTTPHEADER, [
+                        "X-API-Key: " . env('SYNCTHING_APIKEY'),
+                        "Content-Type: {$content_type}",
+                        'Content-Length: ' . strlen($post_body)
+                    ]);
+                    curl_setopt($ch1, CURLOPT_HEADER, 0);
+                    curl_setopt($ch1, CURLOPT_SSL_VERIFYPEER, FALSE);
+                    curl_setopt($ch1, CURLOPT_FAILONERROR,1);
+                    curl_setopt($ch1, CURLOPT_FOLLOWLOCATION,1);
+                    curl_setopt($ch1, CURLOPT_RETURNTRANSFER,1);
+                    curl_setopt($ch1, CURLOPT_TIMEOUT, 60);
+                    curl_setopt($ch1, CURLOPT_CONNECTTIMEOUT ,0);
+                    $response1 = curl_exec($ch1);
+                    $httpCode1 = curl_getinfo($ch1, CURLINFO_HTTP_CODE);
+                    curl_close ($ch1);
+                    if ($httpCode1 !== 404 && $httpCode1 !== 0) {
+                    }
+                }
+            } else {
+                $data['deviceID'] = $request->input('deviceID');
+                $data['name'] = $request->input('name');
+                return view('syncthing', $data);
+            }
+        } else {
+            return redirect()->route('welcome');
+        }
+    }
 }

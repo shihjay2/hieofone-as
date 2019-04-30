@@ -109,6 +109,7 @@ Route::get('default_policies', ['as' => 'default_policies', 'uses' => 'HomeContr
 Route::post('change_policy', ['as' => 'change_policy', 'uses' => 'HomeController@change_policy']);
 Route::post('fhir_edit', ['as' => 'fhir_edit', 'middleware' => 'csrf', 'uses' => 'HomeController@fhir_edit']);
 Route::get('activity_logs', ['as' => 'activity_logs', 'uses' => 'HomeController@activity_logs']);
+Route::any('syncthing', ['as' => 'syncthing', 'uses' => 'HomeController@syncthing']);
 
 // Demo pages
 Route::post('pnosh_sync', ['as' => 'pnosh_sync', 'uses' => 'OauthController@pnosh_sync']);

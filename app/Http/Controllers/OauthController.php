@@ -2054,20 +2054,22 @@ class OauthController extends Controller
 
     public function test1(Request $request)
     {
-        $final_root_url = 'shihjay.xyz';
-        $search_url = 'https://dir.' . $final_root_url . '/check_as';
-        $ch2 = curl_init($search_url);
-        curl_setopt($ch2, CURLOPT_TIMEOUT, 10);
-        curl_setopt($ch2, CURLOPT_CONNECTTIMEOUT, 10);
-        curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
-        $search_arr = curl_exec($ch2);
-        $httpcode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
-        curl_close($ch2);
-        if($httpcode==200){
-            return '?';
-            return $search_arr;
-        } else {
-            return 'None';
-        }
+        $url = 'http://' . env('SYNCTHING_HOST') . ":8384/rest/system/config";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "X-API-Key: " . env('SYNCTHING_APIKEY')
+        ]);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_FAILONERROR,1);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION,1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT ,0);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close ($ch);
+        return $response;
     }
 }
