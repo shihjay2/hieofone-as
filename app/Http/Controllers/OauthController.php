@@ -1625,7 +1625,11 @@ class OauthController extends Controller
     public function jwks_uri(Request $request)
     {
         $rsa = new RSA();
-        $publicKey = File::get(base_path() . "/.pubkey.pem");
+        if (env('DOCKER') == '1') {
+            $publicKey = env('PUBKEY');
+        } else {
+            $publicKey  = File::get(base_path() . "/.pubkey.pem");
+        }
         $rsa->loadKey($publicKey);
         $parts = $rsa->getPublicKey(RSA::PUBLIC_FORMAT_XML);
         $values = new SimpleXMLElement($parts);
