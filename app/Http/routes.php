@@ -28,8 +28,8 @@ App::singleton('oauth2', function () {
     // create server
     $server = new OAuth2\Server($storage, $config);
     if (env('DOCKER') == '1') {
-        $publicKey = File::get(env('PUBKEY'));
-        $privateKey = File::get(env('PRIVKEY'));
+        $publicKey = env('PUBKEY');
+        $privateKey = env('PRIVKEY');
     } else {
         $publicKey  = File::get(base_path() . "/.pubkey.pem");
         $privateKey = File::get(base_path() . "/.privkey.pem");

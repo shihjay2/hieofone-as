@@ -292,6 +292,25 @@ class OauthController extends Controller
                         }
                     }
                 }
+                Session::put('install_redirect', 'yes');
+                if ($pnosh_exists == true) {
+                    $params1 = [
+                        'username' => 'admin',
+                        'password' => $request->input('password'),
+                        'firstname' => $request->input('first_name'),
+                        'lastname' => $request->input('last_name'),
+                        'address' => $request->input('address'),
+                        'city' => $request->input('city'),
+                        'state' => $request->input('state'),
+                        'zip' => $request->input('zip'),
+                        'DOB' => $request->input('date_of_birth'),
+                        'gender' => $request->input('gender'),
+                        'pt_username' => $request->input('username'),
+                        'email' => $request->input('email'),
+                        'mailgun_secret' => $mailgun_secret
+                    ];
+                    Session::put('pnosh_params', $params1);
+                }
                 if ($dir_exists == true) {
                     // Add to directory
                     $as_url1 = $request->root();
@@ -319,25 +338,6 @@ class OauthController extends Controller
                         'email' => $new_user->email,
                         'password' => $request->input('password')
                     ];
-                    Session::put('install_redirect', 'yes');
-                    if ($pnosh_exists == true) {
-                        $params1 = [
-                            'username' => 'admin',
-                            'password' => $request->input('password'),
-                            'firstname' => $request->input('first_name'),
-                            'lastname' => $request->input('last_name'),
-                            'address' => $request->input('address'),
-                            'city' => $request->input('city'),
-                            'state' => $request->input('state'),
-                            'zip' => $request->input('zip'),
-                            'DOB' => $request->input('date_of_birth'),
-                            'gender' => $request->input('gender'),
-                            'pt_username' => $request->input('username'),
-                            'email' => $request->input('email'),
-                            'mailgun_secret' => $mailgun_secret
-                        ];
-                        Session::put('pnosh_params', $params1);
-                    }
                     $root_domain = 'https://dir.' . $final_root_url;
                     Session::put('directory_uri', $root_domain);
                     $response = $this->directory_api($root_domain, $params);
@@ -351,6 +351,8 @@ class OauthController extends Controller
                         DB::table('owner')->where('id', '=', $owner->id)->update($dir_data);
                         return redirect($response['arr']['uri']);
                     }
+                } else {
+                    return redirect()->route('install');
                 }
                 // Register oauth for Google and Twitter
                 // $google_data = [
