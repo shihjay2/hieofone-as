@@ -51,11 +51,11 @@ App::singleton('oauth2', function () {
 
 // Core pages
 Route::get('/', ['as' => 'welcome', 'uses' => 'OauthController@welcome']);
-Route::any('accept_invitation/{id}', ['as' => 'accept_invitation', 'uses' => 'OauthController@accept_invitation']);
+Route::any('accept_invitation/{id}', ['as' => 'accept_invitation', 'middleware' => 'csrf', 'uses' => 'OauthController@accept_invitation']);
 Route::post('as_push_notification', ['as' => 'as_push_notification', 'uses' => 'OauthController@as_push_notification']);
 Route::any('client_register', ['as' => 'client_register', 'uses' => 'OauthController@client_register']);
-Route::any('install', ['as' => 'install', 'uses' => 'OauthController@install']);
-Route::any('picture', ['as' => 'picture', 'uses' => 'OauthController@picture']);
+Route::any('install', ['as' => 'install',  'middleware' => 'csrf', 'uses' => 'OauthController@install']);
+Route::any('picture', ['as' => 'picture', 'middleware' => 'csrf', 'uses' => 'OauthController@picture']);
 Route::any('picture_cancel', ['as' => 'picture_cancel', 'uses' => 'OauthController@picture_cancel']);
 
 // Login pages
@@ -63,8 +63,8 @@ Route::any('login', ['as' => 'login', 'uses' => 'OauthController@login']);
 Route::any('logout', ['as' => 'logout', 'uses' => 'OauthController@logout']);
 Route::post('login_uport', ['as' => 'login_uport', 'middleware' => 'csrf', 'uses' => 'OauthController@login_uport']);
 Route::any('oauth_login', ['as' => 'oauth_login', 'uses' => 'OauthController@oauth_login']);
-Route::any('password_email', ['as' => 'password_email', 'uses' => 'OauthController@password_email']);
-Route::any('password_reset/{id}', ['as' => 'password_reset', 'uses' => 'OauthController@password_reset']);
+Route::any('password_email', ['as' => 'password_email', 'middleware' => 'csrf', 'uses' => 'OauthController@password_email']);
+Route::any('password_reset/{id}', ['as' => 'password_reset', 'middleware' => 'csrf', 'uses' => 'OauthController@password_reset']);
 Route::any('remote_logout', ['as' => 'remote_logout', 'uses' => 'OauthController@remote_logout']);
 Route::any('uport_user_add', ['as' => 'uport_user_add', 'uses' => 'OauthController@uport_user_add']);
 

@@ -34,10 +34,6 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class OauthController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('csrf');
-    }
     /**
     * Base funtions
     */
