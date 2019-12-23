@@ -7,7 +7,9 @@
 	<div class="row">
 		<div class="col-md-8 col-md-offset-2">
 			<div class="panel panel-default">
-				<div class="panel-heading">Invite a user to access your resources</div>
+				<div class="panel-heading">
+					<h4 class="panel-title" style="height:35px;display:table-cell !important;vertical-align:middle;">Invite a user to access your resources</h4>
+				</div>
 				<div class="panel-body">
 
 					<div style="text-align: center;">

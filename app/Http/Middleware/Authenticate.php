@@ -31,6 +31,9 @@ class Authenticate
         Session::put('full_name', $oauth_user->first_name . ' ' . $oauth_user->last_name);
         Session::put('owner', $owner_query->firstname . ' ' . $owner_query->lastname);
         Session::put('email', $oauth_user->email);
+        if (Session::has('temp_image')) {
+            Session::forget('temp_image');
+        }
         return $next($request);
     }
 }

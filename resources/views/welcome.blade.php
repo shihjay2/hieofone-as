@@ -5,7 +5,9 @@
 	<div class="row">
 		<div class="col-md-10 col-md-offset-1">
 			<div class="panel panel-default">
-				<div class="panel-heading">Welcome</div>
+				<div class="panel-heading">
+					<h4 class="panel-title" style="height:35px;display:table-cell !important;vertical-align:middle;">Welcome</h4>
+				</div>
 
 				<div class="panel-body">
 					@if (isset($message_action))

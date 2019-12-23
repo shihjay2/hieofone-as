@@ -55,6 +55,8 @@ Route::any('accept_invitation/{id}', ['as' => 'accept_invitation', 'uses' => 'Oa
 Route::post('as_push_notification', ['as' => 'as_push_notification', 'uses' => 'OauthController@as_push_notification']);
 Route::any('client_register', ['as' => 'client_register', 'uses' => 'OauthController@client_register']);
 Route::any('install', ['as' => 'install', 'uses' => 'OauthController@install']);
+Route::any('picture', ['as' => 'picture', 'uses' => 'OauthController@picture']);
+Route::any('picture_cancel', ['as' => 'picture_cancel', 'uses' => 'OauthController@picture_cancel']);
 
 // Login pages
 Route::any('login', ['as' => 'login', 'uses' => 'OauthController@login']);
@@ -68,53 +70,58 @@ Route::any('uport_user_add', ['as' => 'uport_user_add', 'uses' => 'OauthControll
 
 // Home pages
 Route::get('home', ['as' => 'home', 'uses' => 'HomeController@index']);
-Route::get('resources/{id}', ['as' => 'resources', 'uses' => 'HomeController@resources']);
-Route::get('login_authorize', ['as' => 'login_authorize', 'uses' => 'HomeController@login_authorize']);
-Route::get('login_authorize_action/{type}', ['as' => 'login_authorize_action', 'uses' => 'HomeController@login_authorize_action']);
-Route::get('clients', ['as' => 'clients', 'uses' => 'HomeController@clients']);
-Route::get('users', ['as' => 'users', 'uses' => 'HomeController@users']);
-Route::get('resource_view/{id}', ['as' => 'resource_view', 'uses' => 'HomeController@resource_view']);
-Route::get('change_permission/{id}', ['as' => 'change_permission', 'uses' => 'HomeController@change_permission']);
-Route::get('change_permission_add_edit/{id}', ['as' => 'change_permission_add_edit', 'uses' => 'HomeController@change_permission_add_edit']);
-Route::get('change_permission_remove_edit/{id}', ['as' => 'change_permission_remove_edit', 'uses' => 'HomeController@change_permission_remove_edit']);
-Route::get('change_permission_delete/{id}', ['as' => 'change_permission_delete', 'uses' => 'HomeController@change_permission_delete']);
-Route::get('consents_resource_server', ['as' => 'consents_resource_server', 'uses' => 'HomeController@consents_resource_server']);
-Route::get('authorize_resource_server', ['as' => 'authorize_resource_server', 'uses' => 'HomeController@authorize_resource_server']);
-Route::post('rs_authorize_action/{type?}', ['as' => 'rs_authorize_action', 'uses' => 'HomeController@rs_authorize_action']);
+Route::get('activity_logs', ['as' => 'activity_logs', 'uses' => 'HomeController@activity_logs']);
+Route::post('ajax_change_user_policy', ['as' => 'ajax_change_user_policy', 'middleware' => 'csrf', 'uses' => 'HomeController@ajax_change_user_policy']);
 Route::get('authorize_client', ['as' => 'authorize_client', 'uses' => 'HomeController@authorize_client']);
 Route::get('authorize_client_action/{id}', ['as' => 'authorize_client_action', 'uses' => 'HomeController@authorize_client_action']);
 Route::get('authorize_client_disable/{id}', ['as' => 'authorize_client_disable', 'uses' => 'HomeController@authorize_client_disable']);
+Route::get('authorize_resource_server', ['as' => 'authorize_resource_server', 'uses' => 'HomeController@authorize_resource_server']);
 Route::get('authorize_user', ['as' => 'authorize_user', 'uses' => 'HomeController@authorize_user']);
 Route::get('authorize_user_action/{id}', ['as' => 'authorize_user_action', 'uses' => 'HomeController@authorize_user_action']);
 Route::get('authorize_user_disable/{id}', ['as' => 'authorize_user_disable', 'uses' => 'HomeController@authorize_user_disable']);
-Route::get('consent_table', ['as' => 'consent_table', 'uses' => 'HomeController@consent_table']);
-Route::get('consent_edit/{id}/{toggle?}/{policy?}/{directory?}', ['as' => 'consent_edit', 'uses' => 'HomeController@consent_edit']);
-Route::post('change_role', ['as' => 'change_role', 'middleware' => 'csrf', 'uses' => 'HomeController@change_role']);
+Route::any('certifier_add', ['as' => 'certifier_add', 'uses' => 'HomeController@certifier_add']);
+Route::get('certifiers', ['as' => 'certifiers', 'uses' => 'HomeController@certifiers']);
 Route::get('change_notify/{id}/{value}/{type}', ['as' => 'change_notify', 'uses' => 'HomeController@change_notify']);
+Route::any('change_password', ['as' => 'change_password', 'uses' => 'HomeController@change_password']);
+Route::post('change_policy', ['as' => 'change_policy', 'uses' => 'HomeController@change_policy']);
+Route::post('change_role', ['as' => 'change_role', 'middleware' => 'csrf', 'uses' => 'HomeController@change_role']);
 Route::get('change_user_policy/{name}/{claim_id}/{setting}/{type}', ['as' => 'change_user_policy', 'uses' => 'HomeController@change_user_policy']);
-Route::post('ajax_change_user_policy', ['as' => 'ajax_change_user_policy', 'middleware' => 'csrf', 'uses' => 'HomeController@ajax_change_user_policy']);
+Route::get('clients', ['as' => 'clients', 'uses' => 'HomeController@clients']);
+Route::get('consents_resource_server', ['as' => 'consents_resource_server', 'uses' => 'HomeController@consents_resource_server']);
 Route::get('custom_policies', ['as' => 'custom_policies', 'uses' => 'HomeController@custom_policies']);
 Route::any('custom_policy_edit/{id?}', ['as' => 'custom_policy_edit', 'uses' => 'HomeController@custom_policy_edit']);
-Route::any('certifier_add', ['as' => 'certifier_add', 'uses' => 'HomeController@certifier_add']);
-Route::get('proxy_add/{sub}', ['as' => 'proxy_add', 'uses' => 'HomeController@proxy_add']);
-Route::get('proxy_remove/{sub}', ['as' => 'proxy_remove', 'uses' => 'HomeController@proxy_remove']);
-Route::any('make_invitation', ['as' => 'make_invitation', 'uses' => 'HomeController@make_invitation']);
-Route::get('resend_invitation/{id}', ['as' => 'resend_invitation', 'uses' => 'HomeController@resend_invitation']);
-Route::get('invite_cancel/{code}/{redirect?}', ['as' => 'invite_cancel', 'uses' => 'HomeController@invite_cancel']);
-Route::any('process_invitation', ['as' => 'process_invitation', 'uses' => 'HomeController@process_invitation']);
-Route::any('change_password', ['as' => 'change_password', 'uses' => 'HomeController@change_password']);
-Route::get('my_info', ['as' => 'my_info', 'uses' => 'HomeController@my_info']);
-Route::any('my_info_edit', ['as' => 'my_info_edit', 'uses' => 'HomeController@my_info_edit']);
-Route::any('setup_mail', ['as' => 'setup_mail', 'uses' => 'HomeController@setup_mail']);
-Route::get('setup_mail_test', ['as' => 'setup_mail_test', 'uses' => 'HomeController@setup_mail_test']);
+Route::get('default_policies', ['as' => 'default_policies', 'uses' => 'HomeController@default_policies']);
 Route::get('directories', ['as' => 'directories', 'uses' => 'HomeController@directories']);
 Route::any('directory_add/{type?}', ['as' => 'directory_add', 'uses' => 'HomeController@directory_add']);
 Route::get('directory_remove/{id}/{consent?}', ['as' => 'directory_remove', 'uses' => 'HomeController@directory_remove']);
-Route::get('default_policies', ['as' => 'default_policies', 'uses' => 'HomeController@default_policies']);
-Route::post('change_policy', ['as' => 'change_policy', 'uses' => 'HomeController@change_policy']);
 Route::post('fhir_edit', ['as' => 'fhir_edit', 'middleware' => 'csrf', 'uses' => 'HomeController@fhir_edit']);
-Route::get('activity_logs', ['as' => 'activity_logs', 'uses' => 'HomeController@activity_logs']);
+Route::get('invite_cancel/{code}/{redirect?}', ['as' => 'invite_cancel', 'uses' => 'HomeController@invite_cancel']);
+Route::get('login_authorize', ['as' => 'login_authorize', 'uses' => 'HomeController@login_authorize']);
+Route::get('login_authorize_action/{type}', ['as' => 'login_authorize_action', 'uses' => 'HomeController@login_authorize_action']);
+Route::any('make_invitation', ['as' => 'make_invitation', 'uses' => 'HomeController@make_invitation']);
+Route::get('my_info', ['as' => 'my_info', 'uses' => 'HomeController@my_info']);
+Route::any('my_info_edit', ['as' => 'my_info_edit', 'uses' => 'HomeController@my_info_edit']);
+Route::post('policy_user_add/{policy_id}', ['as' => 'policy_user_add', 'uses' => 'HomeController@policy_user_add']);
+Route::get('policy_user_remove/{claim_id}/{policy_id}', ['as' => 'policy_user_remove', 'uses' => 'HomeController@policy_user_remove']);
+Route::get('proxy_add/{sub}', ['as' => 'proxy_add', 'uses' => 'HomeController@proxy_add']);
+Route::get('proxy_remove/{sub}', ['as' => 'proxy_remove', 'uses' => 'HomeController@proxy_remove']);
+Route::get('resend_invitation/{id}', ['as' => 'resend_invitation', 'uses' => 'HomeController@resend_invitation']);
+Route::get('resources/{id}', ['as' => 'resources', 'uses' => 'HomeController@resources']);
+Route::get('resource_servers', ['as' => 'resource_servers', 'uses' => 'HomeController@resource_servers']);
+Route::get('resource_view/{id}', ['as' => 'resource_view', 'uses' => 'HomeController@resource_view']);
+Route::any('setup_mail', ['as' => 'setup_mail', 'uses' => 'HomeController@setup_mail']);
+Route::get('setup_mail_test', ['as' => 'setup_mail_test', 'uses' => 'HomeController@setup_mail_test']);
 Route::any('syncthing', ['as' => 'syncthing', 'uses' => 'HomeController@syncthing']);
+Route::get('users', ['as' => 'users', 'uses' => 'HomeController@users']);
+
+// Depreciating
+Route::get('change_permission/{id}/{action}/{scope}', ['as' => 'change_permission', 'uses' => 'HomeController@change_permission']);
+Route::get('change_permission_add_edit/{id}', ['as' => 'change_permission_add_edit', 'uses' => 'HomeController@change_permission_add_edit']);
+Route::get('change_permission_remove_edit/{id}', ['as' => 'change_permission_remove_edit', 'uses' => 'HomeController@change_permission_remove_edit']);
+Route::get('change_permission_delete/{id}', ['as' => 'change_permission_delete', 'uses' => 'HomeController@change_permission_delete']);
+Route::post('rs_authorize_action/{type?}', ['as' => 'rs_authorize_action', 'uses' => 'HomeController@rs_authorize_action']);
+Route::get('consent_table', ['as' => 'consent_table', 'uses' => 'HomeController@consent_table']);
+Route::get('consent_edit/{id}/{toggle?}/{policy?}/{directory?}', ['as' => 'consent_edit', 'uses' => 'HomeController@consent_edit']);
 
 // Demo pages
 Route::post('pnosh_sync', ['as' => 'pnosh_sync', 'uses' => 'OauthController@pnosh_sync']);

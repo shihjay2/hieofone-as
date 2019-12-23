@@ -11,15 +11,96 @@
 	<!-- Styles -->
 	<link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
 	<link rel="stylesheet" href="{{ asset('assets/css/font-awesome.min.css') }}">
-	<link rel="stylesheet" href="{{ asset('assets/css/main.css') }}">
+	<!-- <link rel="stylesheet" href="{{ asset('assets/css/main.css') }}"> -->
 	{{-- <link href="{{ elixir('css/app.css') }}" rel="stylesheet"> --}}
 	@yield('view.stylesheet')
 	<style>
+		@import url(https://fonts.googleapis.com/css?family=Nunito);
 		body {
-			font-family: 'Lato';
+			font-family: 'Nunito';
 		}
 		.fa-btn {
 			margin-right: 6px;
+		}
+
+		/* Custom, iPhone Retina */
+		@media only screen and (min-width : 320px) {
+			.as_h2_1 {
+				margin-left: 5px;
+			}
+			.as_h2_2 {
+				margin-left: 10px;
+			}
+			.as_h2_3 {
+				margin-left: 15px;
+			}
+			.as_h2_4 {
+				margin-left: 20px;
+			}
+		}
+
+		/* Extra Small Devices, Phones */
+		@media only screen and (min-width : 480px) {
+			.as_h2_1 {
+				margin-left: 5px;
+			}
+			.as_h2_2 {
+				margin-left: 10px;
+			}
+			.as_h2_3 {
+				margin-left: 15px;
+			}
+			.as_h2_4 {
+				margin-left: 20px;
+			}
+		}
+
+		/* Small Devices, Tablets */
+		@media only screen and (min-width : 768px) {
+			.as_h2_1 {
+				margin-left: 50px;
+			}
+			.as_h2_2 {
+				margin-left: 100px;
+			}
+			.as_h2_3 {
+				margin-left: 150px;
+			}
+			.as_h2_4 {
+				margin-left: 200px;
+			}
+		}
+
+		/* Medium Devices, Desktops */
+		@media only screen and (min-width : 992px) {
+			.as_h2_1 {
+				margin-left: 50px;
+			}
+			.as_h2_2 {
+				margin-left: 100px;
+			}
+			.as_h2_3 {
+				margin-left: 150px;
+			}
+			.as_h2_4 {
+				margin-left: 200px;
+			}
+		}
+
+		/* Large Devices, Wide Screens */
+		@media only screen and (min-width : 1200px) {
+			.as_h2_1 {
+				margin-left: 50px;
+			}
+			.as_h2_2 {
+				margin-left: 100px;
+			}
+			.as_h2_3 {
+				margin-left: 150px;
+			}
+			.as_h2_4 {
+				margin-left: 200px;
+			}
 		}
 	</style>
 </head>
@@ -50,25 +131,25 @@
 				<ul class="nav navbar-nav">
 					@if (!Auth::guest())
 						@if (Session::get('is_owner') == 'yes')
-							<li><a href="{{ url('/consent_table') }}">Consent Table</a></li>
-							<li><a href="{{ url('/home') }}">My Resources</a></li>
-							<li><a href="{{ url('/default_policies') }}">Default Policies</a></li>
-							<li><a href="{{ url('/custom_policies') }}">Custom Policies</a></li>
-							<li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">My Clients <span class="caret"></span></a>
+							<!-- <li><a href="{{ url('/consent_table') }}">Consent Table</a></li> -->
+							<li><a href="{{ url('/resource_servers') }}">My Resources</a></li>
+							<li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">My Policies <span class="caret"></span></a>
 								<ul class="dropdown-menu" role="menu">
-									<li><a href="{{ url('/clients') }}">Authorized</a></li>
-									<li><a href="{{ url('/authorize_client') }}">Pending Authorization</a></li>
+									<li><a href="{{ url('/default_policies') }}">Default Policies</a></li>
+									<li><a href="{{ url('/custom_policies') }}">Custom Policies</a></li>
 								</ul>
 							</li>
 							<li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">My Users <span class="caret"></span></a>
 								<ul class="dropdown-menu" role="menu">
-									<li><a href="{{ url('/users') }}">Authorized</a></li>
-									<li><a href="{{ url('/authorize_user') }}">Pending Authorization</a></li>
+									<li><a href="{{ url('/users') }}">Users Authorized</a></li>
+									<li><a href="{{ url('/authorize_user') }}">Users Pending Authorization</a></li>
+									@if (Session::get('invite') == 'yes')
+										<li><a href="{{ url('/make_invitation') }}">Invite a User</a></li>
+									@endif
+									<li><a href="{{ url('/clients') }}">Clients Authorized</a></li>
+									<li><a href="{{ url('/authorize_client') }}">Clients Pending Authorization</a></li>
 								</ul>
 							</li>
-							@if (Session::get('invite') == 'yes')
-								<li><a href="{{ url('/make_invitation') }}">Invite</a></li>
-							@endif
 						@endif
 					@endif
 				</ul>
@@ -91,6 +172,7 @@
 								<li><a href="{{ url('/change_password') }}"><i class="fa fa-btn fa-cog"></i>Change Password</a></li>
 								@if (Session::get('is_owner') == 'yes')
 									<li><a href="{{ url('/directories') }}"><i class="fa fa-btn fa-sitemap"></i>Directories</a></li>
+									<li><a href="{{ url('/certifiers') }}"><i class="fa fa-btn fa-thumbs-o-up"></i>Certifiers</a></li>
 									@if (Session::get('domain_url') !== 'hieofone.org' || env('DOCKER') == '0')
 										<li><a href="{{ url('/setup_mail') }}"><i class="fa fa-btn fa-envelope"></i>E-mail Service</a></li>
 									@endif

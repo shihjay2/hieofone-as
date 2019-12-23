@@ -99,7 +99,8 @@ class UmaController extends Controller
             $root_url = explode('/', $as_url);
             $root_url1 = explode('.', $root_url[0]);
             if (isset($root_url1[1])) {
-                $final_root_url = $root_url1[1] . '.' . $root_url1[2];
+                $root_url1 = array_slice($root_url1, -2, 2, false);
+                $final_root_url = implode('.', $root_url1);
             } else {
                 $final_root_url = $root_url[0];
             }
@@ -108,7 +109,8 @@ class UmaController extends Controller
             $root_url2 = explode('/', $target_url);
             $root_url3 = explode('.', $root_url2[0]);
             if (isset($root_url3[1])) {
-                $final_root_url1 = $root_url3[1] . '.' . $root_url3[2];
+                $root_url3 = array_slice($root_url3, -2, 2, false);
+                $final_root_url1 = implode('.', $root_url3);
             } else {
                 $final_root_url1 = $root_url2[0];
             }
@@ -271,14 +273,14 @@ class UmaController extends Controller
                                             }
                                         }
                                     }
-                                    if ($rs_query2->consent_public_publish_directory == 1) {
-                                        if ($request->session()->has('npi') && $claim_id == '') {
-                                            if ($request->session()->get('npi') !== '') {
-                                                $rs_query6 = DB::table('claim')->where('claim_value', '=', 'public_publish_directory')->first();
-                                                $claim_id = $rs_query6->claim_id;
-                                            }
-                                        }
-                                    }
+                                    // if ($rs_query2->consent_public_publish_directory == 1) {
+                                    //     if ($request->session()->has('npi') && $claim_id == '') {
+                                    //         if ($request->session()->get('npi') !== '') {
+                                    //             $rs_query6 = DB::table('claim')->where('claim_value', '=', 'public_publish_directory')->first();
+                                    //             $claim_id = $rs_query6->claim_id;
+                                    //         }
+                                    //     }
+                                    // }
                                     // if ($rs_query2->consent_login_google == 1) {
                                     //     if ($request->session()->get('login_origin') == 'login_google' && $claim_id == '') {
                                     //         $rs_query6 = DB::table('claim')->where('claim_value', '=', 'login_google')->first();

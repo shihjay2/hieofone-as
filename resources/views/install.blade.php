@@ -6,9 +6,13 @@
 		<div class="col-md-8 col-md-offset-2">
 			<div class="panel panel-default">
 				@if (isset($pnosh))
-					<div class="panel-heading">Set up your Trustee Authorization Server and Patient Centered EHR (NOSH)</div>
+					<div class="panel-heading">
+						<h4 class="panel-title" style="height:35px;display:table-cell !important;vertical-align:middle;">Set up your Trustee Authorization Server and Patient Centered EHR (NOSH)</h4>
+					</div>
 				@else
-					<div class="panel-heading">Set up your Trustee Authorization Server</div>
+					<div class="panel-heading">
+						<h4 class="panel-title" style="height:35px;display:table-cell !important;vertical-align:middle;">Set up your Trustee Authorization Server</h4>
+					</div>
 				@endif
 				<div class="panel-body">
 					<div style="text-align: center;">

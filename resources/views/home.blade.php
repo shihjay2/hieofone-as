@@ -2,6 +2,7 @@
 
 @section('view.stylesheet')
 	<link rel="stylesheet" href="{{ asset('assets/css/toastr.min.css') }}">
+	<link rel="stylesheet" href="{{ asset('assets/css/bootstrap-select.min.css') }}">
 	<style>
 
 	</style>
@@ -111,6 +112,7 @@
 <script src="{{ asset('assets/js/toastr.min.js') }}"></script>
 <script src="{{ asset('assets/js/bootstrap-list-filter.min.js') }}"></script>
 <script src="{{ asset('assets/js/jquery.floatThead.js') }}"></script>
+<script src="{{ asset('assets/js/bootstrap-select.min.js') }}"></script>
 <script type="text/javascript">
 	$(document).ready(function() {
 		toastr.options = {

@@ -4,14 +4,19 @@ namespace App\Http\Controllers;
 use App;
 use App\Http\Controllers\Controller;
 use App\User;
+use ADCI\FullNameParser\Parser;
 use Artisan;
 use Auth;
+use Cache\Adapter\Filesystem\FilesystemCachePool;
 use DB;
 use File;
 use Google_Client;
+use GuzzleHttp;
 use Hash;
 use Illuminate\Http\Request;
-use NaviOcean\Laravel\NameParser;
+use Illuminate\Support\Arr;
+use League\Flysystem\Adapter\Local;
+use League\Flysystem\Filesystem;
 use OAuth2\HttpFoundationBridge\Request as BridgeRequest;
 use OAuth2\Response as OAuthResponse;
 // use OAuth2\HttpFoundationBridge\Response as BridgeResponse;
@@ -24,55 +29,55 @@ use URL;
 use phpseclib\Crypt\RSA;
 use Session;
 use SimpleXMLElement;
-use GuzzleHttp;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class OauthController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('csrf');
+    }
     /**
     * Base funtions
     */
 
     public function github_all()
     {
-        $client = new \Github\Client(
-            new \Github\HttpClient\CachedHttpClient(array('cache_dir' => '/tmp/github-api-cache'))
-        );
-        $client = new \Github\HttpClient\CachedHttpClient();
-        $client->setCache(
-            new \Github\HttpClient\Cache\FilesystemCache('/tmp/github-api-cache')
-        );
-        $client = new \Github\Client($client);
+        $filesystemAdapter = new Local(storage_path('app/public/'));
+        $filesystem = new Filesystem($filesystemAdapter);
+        $pool = new FilesystemCachePool($filesystem);
+        $pool->setFolder('/tmp/github-api-cache');
+        $client = new \Github\Client();
+        $client->addCache($pool);
         $result = $client->api('repo')->commits()->all('shihjay2', 'hieofone-as', array('sha' => 'master'));
+        $client->removeCache();
         return $result;
     }
 
     public function github_release()
     {
-        $client = new \Github\Client(
-            new \Github\HttpClient\CachedHttpClient(array('cache_dir' => '/tmp/github-api-cache'))
-        );
-        $client = new \Github\HttpClient\CachedHttpClient();
-        $client->setCache(
-            new \Github\HttpClient\Cache\FilesystemCache('/tmp/github-api-cache')
-        );
-        $client = new \Github\Client($client);
+        $filesystemAdapter = new Local(storage_path('app/public/'));
+        $filesystem = new Filesystem($filesystemAdapter);
+        $pool = new FilesystemCachePool($filesystem);
+        $pool->setFolder('/tmp/github-api-cache');
+        $client = new \Github\Client();
+        $client->addCache($pool);
         $result = $client->api('repo')->releases()->latest('shihjay2', 'hieofone-as');
+        $client->removeCache();
         return $result;
     }
 
     public function github_single($sha)
     {
-        $client = new \Github\Client(
-            new \Github\HttpClient\CachedHttpClient(array('cache_dir' => '/tmp/github-api-cache'))
-        );
-        $client = new \Github\HttpClient\CachedHttpClient();
-        $client->setCache(
-            new \Github\HttpClient\Cache\FilesystemCache('/tmp/github-api-cache')
-        );
-        $client = new \Github\Client($client);
+        $filesystemAdapter = new Local(storage_path('app/public/'));
+        $filesystem = new Filesystem($filesystemAdapter);
+        $pool = new FilesystemCachePool($filesystem);
+        $pool->setFolder('/tmp/github-api-cache');
+        $client = new \Github\Client();
+        $client->addCache($pool);
         $result = $client->api('repo')->commits()->show('shihjay2', 'hieofone-as', $sha);
+        $client->removeCache();
         return $result;
     }
 
@@ -81,7 +86,7 @@ class OauthController extends Controller
         $query = DB::table('owner')->first();
         if ($query) {
             if (Auth::check() && Session::get('is_owner') == 'yes') {
-                return redirect()->route('consent_table');
+                return redirect()->route('home');
             }
             $data['name'] = $query->firstname . ' ' . $query->lastname;
             $data['message_action'] = Session::get('message_action');
@@ -96,7 +101,7 @@ class OauthController extends Controller
     * Installation
     */
 
-    public function install(Request $request)
+        public function install(Request $request)
     {
         // Check if already installed, if so, go back to home page
         $query = DB::table('owner')->first();
@@ -116,7 +121,8 @@ class OauthController extends Controller
             $root_url = explode('/', $as_url);
             $root_url1 = explode('.', $root_url[0]);
             if (isset($root_url1[1])) {
-                $final_root_url = $root_url1[1] . '.' . $root_url1[2];
+                $root_url1 = array_slice($root_url1, -2, 2, false);
+                $final_root_url = implode('.', $root_url1);
             } else {
                 $final_root_url = $root_url[0];
             }
@@ -292,7 +298,7 @@ class OauthController extends Controller
                         }
                     }
                 }
-                Session::put('install_redirect', 'yes');
+                Session::put('install_picture', 'yes');
                 if ($pnosh_exists == true) {
                     $params1 = [
                         'username' => 'admin',
@@ -400,12 +406,28 @@ class OauthController extends Controller
                 return view('install', $data2);
             }
         } else {
+            if (Session::has('install_picture')) {
+                return redirect()->route('picture');
+            }
             if (Session::has('install_redirect')) {
                 Session::forget('install_redirect');
                 if ($pnosh_exists == true) {
                     $url0 = URL::to('/') . '/nosh';
                     $params1 = Session::get('pnosh_params');
                     Session::forget('pnosh_params');
+                    $user = DB::table('oauth_users')->where('sub', '=', $query->sub)->first();
+                    if ($user) {
+                        if (!empty($user->picture)) {
+                            $ch3 = curl_init();
+                            $pnosh_url3 = $url0 . '/pnosh_install_photo';
+                            $img = file_get_contents($user->picture);
+                            $type = pathinfo($user->picture, PATHINFO_EXTENSION);
+                            $data_img = 'data:image/' . $type . ';base64,' . base64_encode($img);
+                            $filename = str_replace(storage_path('app/public/'), '', $user->picture);
+                            $params1['photo_data'] = $data_img;
+                            $params1['photo_filename'] = $filename;
+                        }
+                    }
                     $post_body1 = json_encode($params1);
                     $content_type1 = 'application/json';
                     $ch1 = curl_init();
@@ -431,14 +453,14 @@ class OauthController extends Controller
                         return redirect($url0);
                     } else {
                         Session::put('message_action', $pnosh_result);
-                        return redirect()->route('consent_table');
+                        return redirect()->route('home');
                     }
                 } else {
-                    return redirect()->route('consent_table');
+                    return redirect()->route('home');
                 }
             }
         }
-        return redirect()->route('consent_table');
+        return redirect()->route('home');
     }
 
     /**
@@ -519,7 +541,8 @@ class OauthController extends Controller
                     $root_url = explode('/', $as_url);
                     $root_url1 = explode('.', $root_url[0]);
                     if (isset($root_url1[1])) {
-                        $final_root_url = $root_url1[1] . '.' . $root_url1[2];
+                        $root_url1 = array_slice($root_url1, -2, 2, false);
+                        $final_root_url = implode('.', $root_url1);
                     } else {
                         $final_root_url = $root_url[0];
                     }
@@ -562,7 +585,7 @@ class OauthController extends Controller
                         }
                     } else {
                         //  This call is directly from the home route.
-                        return redirect()->intended('consent_table');
+                        return redirect()->intended('home');
                     }
                 } else {
                     //  Incorrect login information
@@ -621,7 +644,7 @@ class OauthController extends Controller
                 // If generated from rqp_claims endpoint, do this
                 return redirect()->route('rqp_claims');
             }
-            return redirect()->route('consent_table');
+            return redirect()->route('home');
         }
     }
 
@@ -662,19 +685,19 @@ class OauthController extends Controller
                 if ($request->has('email') && $request->input('email') !== '') {
                     // Start searching for users by checking name - will need to be more specific with e-mail address, verifiable claims, once in production etc
                     $name = $request->input('name');
-                    $parser = new NameParser();
-                    $name_arr = $parser->parse_name($name);
+                    $parser = new Parser();
+                    $nameObject = $parser->parse($name);
                     if ($request->has('npi')) {
                         $uport_user = DB::table('oauth_users')
-                            ->where('first_name', '=', $name_arr['fname'])
-                            ->where('last_name', '=', $name_arr['lname'])
+                            ->where('first_name', '=', $nameObject->getFirstName())
+                            ->where('last_name', '=', $nameObject->getLastName())
                             ->where('npi', '=', $request->input('npi'))
                             ->where('email', '=', $request->input('email'))
                             ->where('password', '!=', 'Pending')->first();
                     } else {
                         $uport_user_query = DB::table('oauth_users')
-                            ->where('first_name', '=', $name_arr['fname'])
-                            ->where('last_name', '=', $name_arr['lname'])
+                            ->where('first_name', '=', $nameObject->getFirstName())
+                            ->where('last_name', '=', $nameObject->getLastName())
                             ->where('email', '=', $request->input('email'))
                             ->where('password', '!=', 'Pending');
                         $uport_user_query->where(function($query_array) {
@@ -697,47 +720,51 @@ class OauthController extends Controller
                                         // Obtain NPI information
                                         $npi_arr = $this->npi_lookup($npi1);
                                         $name = '';
-                                        if ($npi_arr['result_count'] > 0) {
-                                            $name = $npi_arr['results'][0]['basic']['first_name'];
-                                            if (isset($npi_arr['results'][0]['basic']['middle_name'])) {
-                                                $name .= ' ' . $npi_arr['results'][0]['basic']['middle_name'];
-                                            }
-                                            $name .= ' ' . $npi_arr['results'][0]['basic']['last_name'] . ', ' . $npi_arr['results'][0]['basic']['credential'];
-                                        }
-                                        if ($name !== '') {
-                                            if ($owner_query->any_npi == 1) {
-                                                // Automatically add user if NPI is valid
-                                                if (Session::get('oauth_response_type') == 'code') {
-                                                    $client_id = Session::get('oauth_client_id');
-                                                } else {
-                                                    $client_id = $owner_query->client_id;
+                                        if (! $npi_arr) {
+                                            $return['message'] = 'NPI lookup API is temporarily not working; try again later';
+                                        } else {
+                                            if ($npi_arr['result_count'] > 0) {
+                                                $npi_name = $npi_arr['results'][0]['basic']['first_name'];
+                                                if (isset($npi_arr['results'][0]['basic']['middle_name'])) {
+                                                    $npi_name .= ' ' . $npi_arr['results'][0]['basic']['middle_name'];
                                                 }
-                                                $authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
-                                                if ($authorized) {
-                                                    // Make sure email is unique
-                                                    $email_check = DB::table('users')->where('email', '=', $request->input('email'))->first();
-                                                    if ($email_check) {
-                                                        $return['message'] = 'You are not authorized to access this authorization server.  Email address already exists for another user.';
+                                                $npi_name .= ' ' . $npi_arr['results'][0]['basic']['last_name'] . ', ' . $npi_arr['results'][0]['basic']['credential'];
+                                            }
+                                            if ($npi_name !== '') {
+                                                if ($owner_query->any_npi == 1) {
+                                                    // Automatically add user if NPI is valid
+                                                    if (Session::get('oauth_response_type') == 'code') {
+                                                        $client_id = Session::get('oauth_client_id');
                                                     } else {
-                                                        // Add new user
-                                                        Session::put('uport_first_name', $name_arr['fname']);
-                                                        Session::put('uport_last_name', $name_arr['lname']);
-                                                        Session::put('uport_id', $request->input('uport'));
-                                                        Session::put('uport_email', $request->input('email'));
-                                                        Session::put('uport_npi', $npi1);
-                                                        Session::save();
-                                                        $return['message'] = 'OK';
-                                                        $return['url'] = route('uport_user_add');
+                                                        $client_id = $owner_query->client_id;
+                                                    }
+                                                    $authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
+                                                    if ($authorized) {
+                                                        // Make sure email is unique
+                                                        $email_check = DB::table('users')->where('email', '=', $request->input('email'))->first();
+                                                        if ($email_check) {
+                                                            $return['message'] = 'You are not authorized to access this authorization server.  Email address already exists for another user.';
+                                                        } else {
+                                                            // Add new user
+                                                            Session::put('uport_first_name', $nameObject->getFirstName());
+                                                            Session::put('uport_last_name', $nameObject->getLastName());
+                                                            Session::put('uport_id', $request->input('uport'));
+                                                            Session::put('uport_email', $request->input('email'));
+                                                            Session::put('uport_npi', $npi1);
+                                                            Session::save();
+                                                            $return['message'] = 'OK';
+                                                            $return['url'] = route('uport_user_add');
+                                                        }
+                                                    } else {
+                                                        $return['message'] = 'Unauthorized client.  Please contact the owner of this authorization server for assistance.';
                                                     }
                                                 } else {
-                                                    $return['message'] = 'Unauthorized client.  Please contact the owner of this authorization server for assistance.';
+                                                    $uport_notify = true;
+                                                    $valid_npi = $npi1;
                                                 }
                                             } else {
-                                                $uport_notify = true;
-                                                $valid_npi = $npi1;
+                                                $return['message'] = 'You are not authorized to access this authorization server.  NPI not found in database.';
                                             }
-                                        } else {
-                                            $return['message'] = 'You are not authorized to access this authorization server.  NPI not found in database.';
                                         }
                                     } else {
                                         if ($owner_query->login_uport == 1) {
@@ -781,8 +808,8 @@ class OauthController extends Controller
                     // Email notification to owner that someone is trying to login via uPort
                     $uport_data = [
                         'username' => $request->input('uport'),
-                        'first_name' => $name_arr['fname'],
-                        'last_name' => $name_arr['lname'],
+                        'first_name' => $nameObject->getFirstName(),
+                        'last_name' => $nameObject->getLastName(),
                         'uport_id' => $request->input('uport'),
                         'password' => 'Pending',
                         'email' => $request->input('email'),
@@ -857,7 +884,7 @@ class OauthController extends Controller
             return redirect()->route('authorize');
         } else {
             Session::save();
-            return redirect()->route('consent_table');
+            return redirect()->route('home');
         }
     }
 
@@ -911,7 +938,7 @@ class OauthController extends Controller
                 $data['password'] = sha1($request->input('password'));
                 DB::table('oauth_users')->where('password', '=', $id)->update($data);
             }
-            return redirect()->route('consent_table');
+            return redirect()->route('home');
         } else {
             $query1 = DB::table('oauth_users')->where('password', '=', $id)->first();
             if ($query1) {
@@ -921,6 +948,84 @@ class OauthController extends Controller
                 return redirect()->route('welcome');
             }
         }
+    }
+
+    public function picture(Request $request)
+    {
+        ini_set('memory_limit','196M');
+        ini_set('max_execution_time', '300');
+        $owner = DB::table('owner')->first();
+        if (Session::get('is_owner') == 'yes' || Session::has('install_picture')) {
+            if ($request->isMethod('post')) {
+                $postData = $request->post();
+                $img = Arr::has($postData, 'img');
+                if ($img) {
+                    $img_data = substr($request->input('img'), strpos($request->input('img'), ',') + 1);
+                    $img_data = base64_decode($img_data);
+                    $filename = uniqid() . '.png';
+                    Storage::disk('public')->put($filename, $img_data);
+                    $data['picture'] = storage_path('app/public/') . $filename;
+                } else {
+                    $file = $request->file('file_input');
+                    $filename = uniqid() . '.' . $file->getClientOriginalExtension();
+                    $file->move(storage_path('app/public/'), $filename);
+                    $data['picture'] = storage_path('app/public/') . $filename;
+                }
+                DB::table('oauth_users')->where('sub', '=', $owner->sub)->update($data);
+                if (Session::has('install_picture')) {
+                    Session::forget('install_picture');
+                    Session::put('install_redirect', 'yes');
+                }
+                if (Session::has('my_info')) {
+                    Session::forget('my_info');
+                    return redirect()->route('my_info');
+                } else {
+                    return redirect()->route('install');
+                }
+            } else {
+                $data['title'] = 'Your Photo';
+                $data['content'] = '<div class="alert alert-success alert-dismissible"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>';
+                $data['content'] .= '<p>It is recommended to associate your photograph to this Trustee so that other clinicians can verify that they are accessing the correct health records.</p>';
+                $data['content'] .= '<p>You can choose to upload a picture or take a snapshot if you have a camera attached to your device.</p>';
+                $data['content'] .= '</div>';
+                $user = DB::table('oauth_users')->where('sub', '=', $owner->sub)->first();
+                if ($user) {
+                    if (!empty($user->picture)) {
+                        $img_src = asset(str_replace(storage_path('app/public'), 'storage', $user->picture));
+                        $data['content'] .= '<br><div style="margin:auto;"><b>My Current Picture:</b><br><img src="'. $img_src . '" ></img>';
+                    }
+                }
+                $data['content'] .= '<div><b>Take a Snapshot</b></div>';
+                $data['content'] .= '<form action="' . route('picture') . '" method="POST">' . csrf_field() . '<div style="margin:auto;" id="screenshot"><video autoplay style="display:none;width: 100% !important;height: auto !important;"></video><img src="" style="width: 100% !important;height: auto !important;"><canvas style="display:none;"></canvas><input type="hidden" name="img" id="img"></div>';
+                $data['content'] .= '<div style="margin:auto;"><button type="button" id="start_video" class="btn btn-primary" style="margin:5px;">Start</button><button type="button" id="stop_video" class="btn btn-danger" style="margin:5px;">Stop</button><button type="submit" id="save_picture" class="btn btn-success" style="margin:5px;display:none;">Save</button></form></div>';
+                $data['content'] .= '<br><div><b>or Upload a Picture</b></div>';
+                if (Session::has('install_picture')) {
+                    $back_text = 'No photo';
+                    $data['back'] = '<a href="' . route('picture_cancel') . '" class="btn btn-danger" role="button"><i class="fa fa-btn fa-times"></i> No photo</a>';
+                }
+                if (Session::has('my_info')) {
+                    $back_text = 'Back';
+                }
+                $data['back'] = '<a href="' . route('picture_cancel') . '" class="btn btn-danger" role="button"><i class="fa fa-btn fa-chevron-left"></i> Back</a>';
+                $data['document_upload'] = route('picture');
+                $type_arr = ['png', 'jpg'];
+                $data['document_type'] = json_encode($type_arr);
+                return view('document_upload', $data);
+            }
+        }
+    }
+
+    public function picture_cancel(Request $request)
+    {
+        if (Session::has('install_picture')) {
+            Session::forget('install_picture');
+            Session::put('install_redirect', 'yes');
+            return redirect()->route('install');
+        }
+        if (Session::has('my_info')) {
+            return redirect()->route('my_info');
+        }
+
     }
 
     /**
@@ -939,69 +1044,84 @@ class OauthController extends Controller
             $current_version = File::get(base_path() . "/.version");
             $composer = false;
             if ($type !== '') {
-                if ($type == 'composer_install') {
-                    $install = new Process("/usr/local/bin/composer install");
-                    $install->setWorkingDirectory(base_path());
-                    $install->setEnv(['COMPOSER_HOME' => '/usr/local/bin/composer']);
-                    $install->setTimeout(null);
-                    $install->run();
-                    $return = nl2br($install->getOutput());
-                }
-                if ($type == 'migrate') {
-                    $migrate = new Process("php artisan migrate --force");
-                    $migrate->setWorkingDirectory(base_path());
-                    $migrate->setTimeout(null);
-                    $migrate->run();
-                    $return = nl2br($migrate->getOutput());
-                }
-                $result1 = $this->github_single($type);
-                if (isset($result1['files'])) {
-                    foreach ($result1['files'] as $row1) {
-                        $filename = base_path() . "/" . $row1['filename'];
-                        if ($row1['status'] == 'added' || $row1['status'] == 'modified' || $row1['status'] == 'renamed') {
-                            $github_url = str_replace(' ', '%20', $row1['raw_url']);
-                            if ($github_url !== '') {
-                                $file = file_get_contents($github_url);
-                                $parts = explode('/', $row1['filename']);
-                                array_pop($parts);
-                                $dir = implode('/', $parts);
-                                if (!is_dir(base_path() . "/" . $dir)) {
-                                    if ($parts[0] == 'public') {
-                                        mkdir(base_path() . "/" . $dir, 0777, true);
-                                    } else {
-                                        mkdir(base_path() . "/" . $dir, 0755, true);
-                                    }
-                                }
-                                file_put_contents($filename, $file);
-                                if ($row1['filename'] == 'composer.json' || $row1['filename'] == 'composer.lock') {
-                                    $composer = true;
-                                }
-                            }
-                        }
-                        if ($row1['status'] == 'removed') {
-                            if (file_exists($filename)) {
-                                unlink($filename);
-                            }
-                        }
-                    }
-                    define('STDIN',fopen("php://stdin","r"));
-                    File::put(base_path() . "/.version", $type);
-                    $return = "System Updated with version " . $type . " from " . $current_version;
-                    $migrate = new Process("php artisan migrate --force");
-                    $migrate->setWorkingDirectory(base_path());
-                    $migrate->setTimeout(null);
-                    $migrate->run();
-                    $return .= '<br>' . nl2br($migrate->getOutput());
-                    if ($composer == true) {
+                if ($type == 'composer_install' || $type == 'migrate' || $type == 'clear_cache') {
+                    if ($type == 'composer_install') {
                         $install = new Process("/usr/local/bin/composer install");
                         $install->setWorkingDirectory(base_path());
                         $install->setEnv(['COMPOSER_HOME' => '/usr/local/bin/composer']);
                         $install->setTimeout(null);
                         $install->run();
-                        $return .= '<br>' .nl2br($install->getOutput());
+                        $return = nl2br($install->getOutput());
+                    }
+                    if ($type == 'migrate') {
+                        $migrate = new Process("php artisan migrate --force");
+                        $migrate->setWorkingDirectory(base_path());
+                        $migrate->setTimeout(null);
+                        $migrate->run();
+                        $return = nl2br($migrate->getOutput());
+                    }
+                    if ($type == 'clear_cache') {
+                        $clear_cache = new Process("php artisan cache:clear");
+                        $clear_cache->setWorkingDirectory(base_path());
+                        $clear_cache->setTimeout(null);
+                        $clear_cache->run();
+                        $return = nl2br($clear_cache->getOutput());
+                        $clear_view = new Process("php artisan view:clear");
+                        $clear_view->setWorkingDirectory(base_path());
+                        $clear_view->setTimeout(null);
+                        $clear_view->run();
+                        $return .= '<br>' . nl2br($clear_view->getOutput());
                     }
                 } else {
-                    $return = "Wrong version number";
+                    $result1 = $this->github_single($type);
+                    if (isset($result1['files'])) {
+                        foreach ($result1['files'] as $row1) {
+                            $filename = base_path() . "/" . $row1['filename'];
+                            if ($row1['status'] == 'added' || $row1['status'] == 'modified' || $row1['status'] == 'renamed') {
+                                $github_url = str_replace(' ', '%20', $row1['raw_url']);
+                                if ($github_url !== '') {
+                                    $file = file_get_contents($github_url);
+                                    $parts = explode('/', $row1['filename']);
+                                    array_pop($parts);
+                                    $dir = implode('/', $parts);
+                                    if (!is_dir(base_path() . "/" . $dir)) {
+                                        if ($parts[0] == 'public') {
+                                            mkdir(base_path() . "/" . $dir, 0777, true);
+                                        } else {
+                                            mkdir(base_path() . "/" . $dir, 0755, true);
+                                        }
+                                    }
+                                    file_put_contents($filename, $file);
+                                    if ($row1['filename'] == 'composer.json' || $row1['filename'] == 'composer.lock') {
+                                        $composer = true;
+                                    }
+                                }
+                            }
+                            if ($row1['status'] == 'removed') {
+                                if (file_exists($filename)) {
+                                    unlink($filename);
+                                }
+                            }
+                        }
+                        define('STDIN',fopen("php://stdin","r"));
+                        File::put(base_path() . "/.version", $type);
+                        $return = "System Updated with version " . $type . " from " . $current_version;
+                        $migrate = new Process("php artisan migrate --force");
+                        $migrate->setWorkingDirectory(base_path());
+                        $migrate->setTimeout(null);
+                        $migrate->run();
+                        $return .= '<br>' . nl2br($migrate->getOutput());
+                        if ($composer == true) {
+                            $install = new Process("/usr/local/bin/composer install");
+                            $install->setWorkingDirectory(base_path());
+                            $install->setEnv(['COMPOSER_HOME' => '/usr/local/bin/composer']);
+                            $install->setTimeout(null);
+                            $install->run();
+                            $return .= '<br>' .nl2br($install->getOutput());
+                        }
+                    } else {
+                        $return = "Wrong version number";
+                    }
                 }
             } else {
                 $result = $this->github_all();
@@ -1063,6 +1183,16 @@ class OauthController extends Controller
                         $install->run();
                         $return .= '<br>' .nl2br($install->getOutput());
                     }
+                    $clear_cache = new Process("php artisan cache:clear");
+                    $clear_cache->setWorkingDirectory(base_path());
+                    $clear_cache->setTimeout(null);
+                    $clear_cache->run();
+                    $return .= '<br>' . nl2br($clear_cache->getOutput());
+                    $clear_view = new Process("php artisan view:clear");
+                    $clear_view->setWorkingDirectory(base_path());
+                    $clear_view->setTimeout(null);
+                    $clear_view->run();
+                    $return .= '<br>' . nl2br($clear_view->getOutput());
                 } else {
                     $return = "No update needed";
                 }
@@ -1194,7 +1324,7 @@ class OauthController extends Controller
                 Auth::loginUsingId($local_user->id);
                 $this->activity_log($local_user->email, 'Login - oAuth2, Google');
                 Session::save();
-                return redirect()->route('consent_table');
+                return redirect()->route('home');
             }
         } else {
             if ($owner_query->any_npi == 1 || $owner_query->login_google == 1) {
@@ -1304,7 +1434,7 @@ class OauthController extends Controller
                         Auth::loginUsingId($local_user->id);
                         $this->activity_log($local_user->email, 'Login - oAuth2, Google');
                         Session::save();
-                        return redirect()->route('consent_table');
+                        return redirect()->route('home');
                     }
                 } else {
                     if ($owner_query->any_npi == 1 || $owner_query->login_google == 1) {
@@ -1373,7 +1503,7 @@ class OauthController extends Controller
             return redirect()->route('authorize');
         } else {
             Session::save();
-            return redirect()->route('consent_table');
+            return redirect()->route('home');
         }
     }
 
@@ -1424,7 +1554,7 @@ class OauthController extends Controller
                 return redirect()->route('authorize');
             } else {
                 Session::save();
-                return redirect()->route('consent_table');
+                return redirect()->route('home');
             }
         } else {
             $data['noheader'] = true;
@@ -1777,7 +1907,7 @@ class OauthController extends Controller
                     if ($pnosh) {
                         return redirect($pnosh->client_uri);
                     }
-                    return redirect()->route('consent_table');
+                    return redirect()->route('home');
                 } else {
                     $data['noheader'] = true;
                     $owner = DB::table('owner')->first();
@@ -2060,22 +2190,62 @@ class OauthController extends Controller
 
     public function test1(Request $request)
     {
-        $url = 'http://' . env('SYNCTHING_HOST') . ":8384/rest/system/config";
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "X-API-Key: " . env('SYNCTHING_APIKEY')
-        ]);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-        curl_setopt($ch, CURLOPT_FAILONERROR,1);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION,1);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT ,0);
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close ($ch);
-        return $response;
+        // $url = 'http://' . env('SYNCTHING_HOST') . ":8384/rest/system/config";
+        // $ch = curl_init();
+        // curl_setopt($ch, CURLOPT_URL, $url);
+        // curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        //     "X-API-Key: " . env('SYNCTHING_APIKEY')
+        // ]);
+        // curl_setopt($ch, CURLOPT_HEADER, 0);
+        // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        // curl_setopt($ch, CURLOPT_FAILONERROR,1);
+        // curl_setopt($ch, CURLOPT_FOLLOWLOCATION,1);
+        // curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+        // curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        // curl_setopt($ch, CURLOPT_CONNECTTIMEOUT ,0);
+        // $response = curl_exec($ch);
+        // $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        // curl_close ($ch);
+        // return $response;
+        $owner = DB::table('owner')->first();
+        $user = DB::table('oauth_users')->where('sub', '=', $owner->sub)->first();
+        $url0 = 'http://localhost/nosh5';
+        if ($user) {
+            if (!empty($user->picture)) {
+                $ch3 = curl_init();
+                $pnosh_url3 = $url0 . '/pnosh_install_photo';
+                $img = file_get_contents($user->picture);
+                $type = pathinfo($user->picture, PATHINFO_EXTENSION);
+                $data_img = 'data:image/' . $type . ';base64,' . base64_encode($img);
+                $filename = str_replace(storage_path('app/public/'), '', $user->picture);
+                $params3 = [
+                    'data' => $data_img,
+                    'photo_filename' => $filename
+                ];
+                $post_body3 = json_encode($params3);
+                $content_type3 = 'application/json';
+                curl_setopt($ch3,CURLOPT_URL, $pnosh_url3);
+                curl_setopt($ch3, CURLOPT_POST, 1);
+                curl_setopt($ch3, CURLOPT_POSTFIELDS, $post_body3);
+                curl_setopt($ch3, CURLOPT_HTTPHEADER, [
+                    "Content-Type: {$content_type3}",
+                    'Content-Length: ' . strlen($post_body3)
+                ]);
+                curl_setopt($ch3, CURLOPT_HEADER, 0);
+                curl_setopt($ch3, CURLOPT_SSL_VERIFYPEER, FALSE);
+                curl_setopt($ch3,CURLOPT_FAILONERROR,1);
+                curl_setopt($ch3,CURLOPT_FOLLOWLOCATION,1);
+                curl_setopt($ch3,CURLOPT_RETURNTRANSFER,1);
+                curl_setopt($ch3,CURLOPT_TIMEOUT, 60);
+                curl_setopt($ch3,CURLOPT_CONNECTTIMEOUT ,0);
+                $pnosh_result3 = curl_exec($ch3);
+                if(curl_exec($ch3) === false) {
+                    return 'Curl error: ' . curl_error($ch3);
+                } else {
+                    return $pnosh_result3;;
+                }
+            }
+        }
+        return 'No';
     }
 }

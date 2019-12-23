@@ -5,7 +5,9 @@
 	<div class="row">
 		<div class="col-md-8 col-md-offset-2">
 			<div class="panel panel-default">
-				<div class="panel-heading">Add a directory</div>
+				<div class="panel-heading">
+					<h4 class="panel-title" style="height:35px;display:table-cell !important;vertical-align:middle;">Add a directory</h4>
+				</div>
 				<div class="panel-body">
 					<div style="text-align: center;">
 						<i class="fa fa-sitemap fa-5x" aria-hidden="true" style="margin:20px;text-align: center;"></i>

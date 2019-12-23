@@ -49,6 +49,7 @@ else
     php artisan migrate:install
 fi
 php artisan migrate
+php artisan storage:link
 if ! [ -z "$SYNCTHING_HOST" ]; then
 	maxTries1=60
 	while [ "$maxTries1" -gt 0 ] && ! [ -f /var/syncthing/config/config.xml ]; do

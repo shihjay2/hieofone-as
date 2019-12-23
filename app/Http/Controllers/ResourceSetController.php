@@ -109,6 +109,7 @@ class ResourceSetController extends Controller
                     $types[] = $default_policy_type;
                 }
             }
+            $this->default_user_policies_create();
             $this->group_policy($client->client_id, $types, 'update');
             $this->directory_update_api();
             $statusCode = 200;
@@ -217,6 +218,7 @@ class ResourceSetController extends Controller
                         $types[] = $default_policy_type;
                     }
                 }
+                $this->default_user_policies_create();
                 $this->group_policy($client->client_id, $types, 'update');
                 $this->directory_update_api();
                 $return = '';
@@ -263,6 +265,7 @@ class ResourceSetController extends Controller
                         $types[] = $default_policy_type;
                     }
                 }
+                $this->default_user_policies_create();
                 $this->group_policy($client->client_id, $types, 'update');
                 $this->directory_update_api();
                 $return = '';
