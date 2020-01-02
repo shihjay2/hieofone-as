@@ -193,7 +193,7 @@
 	@yield('content')
 
 	<!-- JavaScripts -->
-	<script src="{{ asset('assets/js/jquery-3.1.1.min.js') }}"></script>
+	<script src="{{ asset('assets/js/jquery-3.4.1.min.js') }}"></script>
 	<script src="{{ asset('assets/js/bootstrap.min.js') }}"></script>
 	<script src="{{ asset('assets/js/jquery.maskedinput.min.js') }}"></script>
 	{{-- <script src="{{ elixir('js/app.js') }}"></script> --}}

@@ -379,6 +379,9 @@ class OauthController extends Controller
                 // Check if pNOSH associated in same domain as this authorization server and begin installation there
             } else {
                 // if ($final_root_url == 'hieofone.org') {
+                // if ($final_root_url == 'trustee.ai') {
+                //     $final_root_url = 'hieofone.org';
+                // }
                     $search_url = 'https://dir.' . $final_root_url . '/check_as';
                     $ch2 = curl_init($search_url);
                     curl_setopt($ch2, CURLOPT_TIMEOUT, 10);
@@ -2203,45 +2206,46 @@ class OauthController extends Controller
         // $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         // curl_close ($ch);
         // return $response;
-        $owner = DB::table('owner')->first();
-        $user = DB::table('oauth_users')->where('sub', '=', $owner->sub)->first();
-        $url0 = 'http://localhost/nosh5';
-        if ($user) {
-            if (!empty($user->picture)) {
-                $ch3 = curl_init();
-                $pnosh_url3 = $url0 . '/pnosh_install_photo';
-                $img = file_get_contents($user->picture);
-                $type = pathinfo($user->picture, PATHINFO_EXTENSION);
-                $data_img = 'data:image/' . $type . ';base64,' . base64_encode($img);
-                $filename = str_replace(storage_path('app/public/'), '', $user->picture);
-                $params3 = [
-                    'data' => $data_img,
-                    'photo_filename' => $filename
-                ];
-                $post_body3 = json_encode($params3);
-                $content_type3 = 'application/json';
-                curl_setopt($ch3,CURLOPT_URL, $pnosh_url3);
-                curl_setopt($ch3, CURLOPT_POST, 1);
-                curl_setopt($ch3, CURLOPT_POSTFIELDS, $post_body3);
-                curl_setopt($ch3, CURLOPT_HTTPHEADER, [
-                    "Content-Type: {$content_type3}",
-                    'Content-Length: ' . strlen($post_body3)
-                ]);
-                curl_setopt($ch3, CURLOPT_HEADER, 0);
-                curl_setopt($ch3, CURLOPT_SSL_VERIFYPEER, FALSE);
-                curl_setopt($ch3,CURLOPT_FAILONERROR,1);
-                curl_setopt($ch3,CURLOPT_FOLLOWLOCATION,1);
-                curl_setopt($ch3,CURLOPT_RETURNTRANSFER,1);
-                curl_setopt($ch3,CURLOPT_TIMEOUT, 60);
-                curl_setopt($ch3,CURLOPT_CONNECTTIMEOUT ,0);
-                $pnosh_result3 = curl_exec($ch3);
-                if(curl_exec($ch3) === false) {
-                    return 'Curl error: ' . curl_error($ch3);
-                } else {
-                    return $pnosh_result3;;
-                }
-            }
-        }
-        return 'No';
+        // $owner = DB::table('owner')->first();
+        // $user = DB::table('oauth_users')->where('sub', '=', $owner->sub)->first();
+        // $url0 = 'http://localhost/nosh5';
+        // if ($user) {
+        //     if (!empty($user->picture)) {
+        //         $ch3 = curl_init();
+        //         $pnosh_url3 = $url0 . '/pnosh_install_photo';
+        //         $img = file_get_contents($user->picture);
+        //         $type = pathinfo($user->picture, PATHINFO_EXTENSION);
+        //         $data_img = 'data:image/' . $type . ';base64,' . base64_encode($img);
+        //         $filename = str_replace(storage_path('app/public/'), '', $user->picture);
+        //         $params3 = [
+        //             'data' => $data_img,
+        //             'photo_filename' => $filename
+        //         ];
+        //         $post_body3 = json_encode($params3);
+        //         $content_type3 = 'application/json';
+        //         curl_setopt($ch3,CURLOPT_URL, $pnosh_url3);
+        //         curl_setopt($ch3, CURLOPT_POST, 1);
+        //         curl_setopt($ch3, CURLOPT_POSTFIELDS, $post_body3);
+        //         curl_setopt($ch3, CURLOPT_HTTPHEADER, [
+        //             "Content-Type: {$content_type3}",
+        //             'Content-Length: ' . strlen($post_body3)
+        //         ]);
+        //         curl_setopt($ch3, CURLOPT_HEADER, 0);
+        //         curl_setopt($ch3, CURLOPT_SSL_VERIFYPEER, FALSE);
+        //         curl_setopt($ch3,CURLOPT_FAILONERROR,1);
+        //         curl_setopt($ch3,CURLOPT_FOLLOWLOCATION,1);
+        //         curl_setopt($ch3,CURLOPT_RETURNTRANSFER,1);
+        //         curl_setopt($ch3,CURLOPT_TIMEOUT, 60);
+        //         curl_setopt($ch3,CURLOPT_CONNECTTIMEOUT ,0);
+        //         $pnosh_result3 = curl_exec($ch3);
+        //         if(curl_exec($ch3) === false) {
+        //             return 'Curl error: ' . curl_error($ch3);
+        //         } else {
+        //             return $pnosh_result3;;
+        //         }
+        //     }
+        // }
+        // return 'No';
+
     }
 }
