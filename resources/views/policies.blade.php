@@ -10,6 +10,7 @@
 				</div>
 				<div class="panel-body">
 					<form class="form-horizontal" role="form" method="POST" action="{{ URL::to('change_policy') }}">
+						{{ csrf_field() }}
 						<div style="text-align: center;">
 							{!! $content !!}
 						</div>
