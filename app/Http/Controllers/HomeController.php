@@ -891,8 +891,8 @@ class HomeController extends Controller
                     }
                 }
                 Session::forget('directory_uri');
-                if (Session::has('install_redirect')) {
-                    return redirect()->route('install');
+                if (Session::has('install_picture')) {
+                    return redirect()->route('picture');
                 }
                 Session::put('message_action', $request->input('name') . ' added');
                 return redirect()->route('directories');
