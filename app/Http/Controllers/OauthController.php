@@ -347,10 +347,12 @@ class OauthController extends Controller
                         return $response['message'];
                     } else {
                         $default_policy_types = $this->default_policy_type();
-                        foreach ($response['arr']['policies'] as $default_policy_type_k => $default_policy_type_v) {
-                            $dir_data[$default_policy_type_k] = $default_policy_type_v;
+                        if (isset($response['arr']['policies'])) {
+                            foreach ($response['arr']['policies'] as $default_policy_type_k => $default_policy_type_v) {
+                                $dir_data[$default_policy_type_k] = $default_policy_type_v;
+                            }
+                            DB::table('owner')->where('id', '=', $owner->id)->update($dir_data);
                         }
-                        DB::table('owner')->where('id', '=', $owner->id)->update($dir_data);
                         return redirect($response['arr']['uri']);
                     }
                 } else {
