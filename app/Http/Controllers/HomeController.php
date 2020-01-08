@@ -436,12 +436,14 @@ class HomeController extends Controller
         if ($request->input('submit') == 'save') {
             $default_policy_types = $this->default_policy_type();
             foreach ($default_policy_types as $default_policy_type) {
-                if ($request->has($default_policy_type)) {
+                if ($request->has('consent_' . $default_policy_type)) {
                     if ($request->input('consent_' . $default_policy_type) == 'on') {
                         $data[$default_policy_type] = 1;
                     } else {
                         $data[$default_policy_type] = 0;
                     }
+                } else {
+                    $data[$default_policy_type] = 0;
                 }
             }
             $query = DB::table('owner')->first();
