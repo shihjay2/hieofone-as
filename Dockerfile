@@ -89,11 +89,11 @@ RUN chmod 777 /var/www/as/storage
 RUN chmod 777 /var/www/as/public
 RUN chmod 777 /var/www/as/vendor
 
-USER www-data
-
 # Syncthing directory create
 RUN mkdir -p /var/syncthing/config
 RUN chmod 0444 /var/syncthing/config
+
+USER www-data
 
 # Install all PHP dependencies
 RUN composer install --no-interaction
