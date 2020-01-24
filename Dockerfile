@@ -90,8 +90,7 @@ RUN chmod 777 /var/www/as/public
 RUN chmod 777 /var/www/as/vendor
 
 # Syncthing directory create
-RUN mkdir -p /var/syncthing/config
-RUN chmod 0444 /var/syncthing/config
+RUN mkdir -p /var/syncthing/config && chown -R www-data:www-data /var/syncthing
 
 USER www-data
 
