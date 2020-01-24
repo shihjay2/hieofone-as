@@ -1178,6 +1178,9 @@ class HomeController extends Controller
         if ($owner_query->sub == $query->sub) {
             $data['content'] .= '<li class="list-group-item"><b>Date of Birth:</b> ' . date('m/d/Y', strtotime($owner_query->DOB)) . '</li>';
             $data['content'] .= '<li class="list-group-item"><b>Mobile Number:</b> ' . $owner_query->mobile . '</li>';
+            if (!empty(env('SYNCTHING_HOST'))) {
+                $data['content'] .= '<li class="list-group-item"><b>Syncthing Device ID:</b> ' . env('SYNCTHING_DEVICE_ID') . '</li>';
+            }
         }
         if (!empty($query->npi)) {
             $data['content'] .= '<li class="list-group-item"><b>NPI:</b> ' . $query->npi . '</li>';
@@ -1647,16 +1650,11 @@ class HomeController extends Controller
                 $this->validate($request, [
                     'deviceID' => 'required'
                 ]);
-                $file = '/var/syncthing/config/config.xml';
-                $xml = File::get($file);
-                $xml=simplexml_load_string($xml);
-                $syncthing['api'] = $xml->gui->apikey;
-                $syncthing['id'] = $xml->device['id'];
                 $url = 'http://' . env('SYNCTHING_HOST') . ":8384/rest/system/config";
                 $ch = curl_init();
                 curl_setopt($ch, CURLOPT_URL, $url);
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    "X-API-Key: " . $syncthing['api']
+                    "X-API-Key: " . env('SYNCTHING_APIKEY')
                 ]);
                 curl_setopt($ch, CURLOPT_HEADER, 0);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
@@ -1732,16 +1730,11 @@ class HomeController extends Controller
 
     public function syncthing_test(Request $request)
     {
-        $file = '/var/syncthing/config/config.xml';
-        $xml = File::get($file);
-        $xml=simplexml_load_string($xml);
-        $syncthing['api'] = $xml->gui->apikey;
-        $syncthing['id'] = $xml->device['id'];
         $url = 'http://' . env('SYNCTHING_HOST') . ":8384/rest/system/config";
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "X-API-Key: " . $syncthing['api']
+            "X-API-Key: " . env('SYNCTHING_APIKEY')
         ]);
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
