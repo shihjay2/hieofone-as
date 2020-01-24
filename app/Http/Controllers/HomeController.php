@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App;
 use App\Http\Requests;
 use DB;
+use File;
 use Form;
 use Illuminate\Http\Request;
 use QrCode;
@@ -1646,11 +1647,16 @@ class HomeController extends Controller
                 $this->validate($request, [
                     'deviceID' => 'required'
                 ]);
+                $file = '/var/syncthing/config/config.xml';
+                $xml = File::get($file);
+                $xml=simplexml_load_string($xml);
+                $syncthing['api'] = $xml->gui->apikey;
+                $syncthing['id'] = $xml->device['id'];
                 $url = 'http://' . env('SYNCTHING_HOST') . ":8384/rest/system/config";
                 $ch = curl_init();
                 curl_setopt($ch, CURLOPT_URL, $url);
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    "X-API-Key: " . env('SYNCTHING_APIKEY')
+                    "X-API-Key: " . $syncthing['api']
                 ]);
                 curl_setopt($ch, CURLOPT_HEADER, 0);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
@@ -1694,10 +1700,10 @@ class HomeController extends Controller
                     $content_type = 'application/json';
                     $ch1 = curl_init();
                     curl_setopt($ch1, CURLOPT_URL, $url);
-                    curl_setopt($ch, CURLOPT_POST, 1);
+                    curl_setopt($ch1, CURLOPT_POST, 1);
                     curl_setopt($ch1, CURLOPT_POSTFIELDS, $post_body);
                     curl_setopt($ch1, CURLOPT_HTTPHEADER, [
-                        "X-API-Key: " . env('SYNCTHING_APIKEY'),
+                        "X-API-Key: " . $syncthing['api'],
                         "Content-Type: {$content_type}",
                         'Content-Length: ' . strlen($post_body)
                     ]);
@@ -1722,6 +1728,37 @@ class HomeController extends Controller
         } else {
             return redirect()->route('welcome');
         }
+    }
+
+    public function syncthing_test(Request $request)
+    {
+        $file = '/var/syncthing/config/config.xml';
+        $xml = File::get($file);
+        $xml=simplexml_load_string($xml);
+        $syncthing['api'] = $xml->gui->apikey;
+        $syncthing['id'] = $xml->device['id'];
+        $url = 'http://' . env('SYNCTHING_HOST') . ":8384/rest/system/config";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "X-API-Key: " . $syncthing['api']
+        ]);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_FAILONERROR,1);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION,1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT ,0);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close ($ch);
+        if ($httpCode !== 404 && $httpCode !== 0) {
+            $arr = json_decode($response, true);
+        } else {
+            $arr['error'] = 'Connection problem';
+        }
+        return $arr;
     }
 
     public function users(Request $request)

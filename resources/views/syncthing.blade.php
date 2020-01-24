@@ -16,10 +16,10 @@
 						{{ csrf_field() }}
 
 						<div class="form-group{{ $errors->has('deviceID') ? ' has-error' : '' }}">
-							<label for="deviceID" class="col-md-4 control-label">DeviceID of Trustee Mouse</label>
+							<label for="deviceID" class="col-md-4 control-label">DeviceID of Trustee Mouse or Syncthing Node</label>
 
 							<div class="col-md-6">
-								<input id="deviceID" class="form-control" name="deviceID" value="{{ old('deviceID', $deviceID) }}" readonly required>
+								<input id="deviceID" class="form-control" name="deviceID" value="{{ old('deviceID', $deviceID) }}" required>
 
 								@if ($errors->has('deviceID'))
 									<span class="help-block">
@@ -30,7 +30,7 @@
 						</div>
 
 						<div class="form-group{{ $errors->has('name') ? ' has-error' : '' }}">
-							<label for="name" class="col-md-4 control-label">Name of Trustee Mouse</label>
+							<label for="name" class="col-md-4 control-label">Name of Trustee Mouse of Syncthing Node</label>
 
 							<div class="col-md-6">
 								<input id="name" class="form-control" name="name" value="{{ old('name', $name) }}">

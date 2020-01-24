@@ -112,6 +112,7 @@ Route::get('resource_view/{id}', ['as' => 'resource_view', 'uses' => 'HomeContro
 Route::any('setup_mail', ['as' => 'setup_mail', 'uses' => 'HomeController@setup_mail']);
 Route::get('setup_mail_test', ['as' => 'setup_mail_test', 'uses' => 'HomeController@setup_mail_test']);
 Route::any('syncthing', ['as' => 'syncthing', 'uses' => 'HomeController@syncthing']);
+Route::any('syncthing_test', ['as' => 'syncthing_test', 'uses' => 'HomeController@syncthing_test']);
 Route::get('users', ['as' => 'users', 'uses' => 'HomeController@users']);
 
 // Depreciating
