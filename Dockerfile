@@ -92,7 +92,7 @@ RUN chmod 777 /var/www/as/vendor
 USER www-data
 
 # Syncthing directory create
-RUN mkdir /var/syncthing/config
+RUN mkdir -p /var/syncthing/config
 RUN chmod 0444 /var/syncthing/config
 
 # Install all PHP dependencies
