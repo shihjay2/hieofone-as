@@ -1179,7 +1179,8 @@ class HomeController extends Controller
             $data['content'] .= '<li class="list-group-item"><b>Date of Birth:</b> ' . date('m/d/Y', strtotime($owner_query->DOB)) . '</li>';
             $data['content'] .= '<li class="list-group-item"><b>Mobile Number:</b> ' . $owner_query->mobile . '</li>';
             if (!empty(env('SYNCTHING_HOST'))) {
-                $data['content'] .= '<li class="list-group-item"><b>Syncthing Device ID:</b> ' . env('SYNCTHING_DEVICE_ID') . '</li>';
+                $data['content'] .= '<li class="list-group-item"><b>Syncthing Device ID:</b> ' . env('SYNCTHING_DEVICE_ID');
+                $data['content'] .= '<span style="margin:10px"></span><i class="fa fa-clone fa-lg pnosh_copy my_info" hie-val="' . env('SYNCTHING_DEVICE_ID') . '" title="Copy" style="cursor:pointer;"></i></li>';
             }
         }
         if (!empty($query->npi)) {
