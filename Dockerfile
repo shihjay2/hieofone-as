@@ -56,9 +56,6 @@ RUN rm -f /etc/apk/repositories &&\
     mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" &&\
     apk del .build-deps
 
-# Copy composer.lock and composer.json
-COPY composer.lock composer.json /var/www/as/
-
 WORKDIR "/var/www/as"
 
 # Install composer
@@ -66,13 +63,10 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV PATH="./vendor/bin:$PATH"
 
-# Copy source files and run composer
-COPY . /var/www/as
-RUN mkdir /var/www/as/vendor
-
 # Copy existing application directory permissions
 COPY --chown=www-data:www-data . /var/www/as
-RUN chmod 777 /var/www/as/storage &&\
+RUN mkdir /var/www/as/vendor &&\
+    chmod 777 /var/www/as/storage &&\
     chmod 777 /var/www/as/public &&\
     chmod 777 /var/www/as/vendor
 
