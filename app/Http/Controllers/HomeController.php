@@ -1644,6 +1644,57 @@ class HomeController extends Controller
 
     public function syncthing(Request $request)
     {
+        $url = 'http://' . env('SYNCTHING_HOST') . ":8384/rest/system/config";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "X-API-Key: " . env('SYNCTHING_APIKEY')
+        ]);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_FAILONERROR,1);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION,1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT ,0);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close ($ch);
+        if ($httpCode !== 404 && $httpCode !== 0) {
+            $arr = json_decode($response, true);
+        } else {
+            $arr['error'] = 'Connection problem';
+        }
+        $data['name'] = Session::get('owner');
+        $data['title'] = 'Connected Backups';
+        $data['content'] = '<div class="alert alert-success alert-dismissible"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>';
+        $data['content'] .= '<p>Below are the list of servers that hold your backups for the authorization server and NOSH</p>';
+        $data['content'] .= '</div>';
+        $data['message_action'] = Session::get('message_action');
+        Session::forget('message_action');
+        $data['content'] .= '<ul class="list-group">';
+        $i = 0;
+        foreach ($arr['devices'] as $device) {
+            if ($device['deviceID'] !== env('SYNCTHING_DEVICE_ID')) {
+                // Label
+                $logo = '<div style="display:inline-block;float:none;margin-right:10px;"><i class="fa fa-fw fa-lg fa-exchange" style="height:30px;width:30px;color#000000;"></i></div>';
+                $data['content'] .= '<li class="list-group-item container-fluid"><span>' . $logo . '<b>' . $device['name'] . '</b>';
+                // Info
+                $data['content'] .= '<br><span style="margin-left:30px;"><b>ID:</b>' . $device['deviceID'] . '</span>';
+                // Actions
+                $data['content'] .= '<span class="pull-right">';
+                $data['content'] .= '<a href="' . route('syncthing_remove', [$i]) . '" class="btn fa-btn uma-delete" data-toggle="tooltip" title="Remove"><i class="fa fa-times fa-lg" style="color:red"></i></a>';
+                $data['content'] .= '</span></li>';
+            }
+            $i++;
+        }
+        $data['content'] .= '</ul>';
+        $data['back'] = '<a href="' . route('syncthing_add') . '" class="btn btn-default" role="button"><i class="fa fa-btn fa-plus"></i> Add Backup</a>';
+        return view('home', $data);
+    }
+
+    public function syncthing_add(Request $request)
+    {
         if (!empty(env('SYNCTHING_HOST'))) {
             $data['name'] = Session::get('owner');
             $data['title'] = 'Add Trustee Mouse';
@@ -1695,6 +1746,7 @@ class HomeController extends Controller
                         'introducedBy' => ''
                     ];
                     $arr['folders'][0]['devices'][] = $new_device_folder;
+                    $arr['folders'][0]['versioning']['params'] = (object) null;
                     $post_body = json_encode($arr);
                     $content_type = 'application/json';
                     $ch1 = curl_init();
@@ -1702,7 +1754,7 @@ class HomeController extends Controller
                     curl_setopt($ch1, CURLOPT_POST, 1);
                     curl_setopt($ch1, CURLOPT_POSTFIELDS, $post_body);
                     curl_setopt($ch1, CURLOPT_HTTPHEADER, [
-                        "X-API-Key: " . $syncthing['api'],
+                        "X-API-Key: " . env('SYNCTHING_APIKEY'),
                         "Content-Type: {$content_type}",
                         'Content-Length: ' . strlen($post_body)
                     ]);
@@ -1716,9 +1768,8 @@ class HomeController extends Controller
                     $response1 = curl_exec($ch1);
                     $httpCode1 = curl_getinfo($ch1, CURLINFO_HTTP_CODE);
                     curl_close ($ch1);
-                    if ($httpCode1 !== 404 && $httpCode1 !== 0) {
-                    }
                 }
+                return redirect()->route('syncthing');
             } else {
                 $data['deviceID'] = $request->input('deviceID');
                 $data['name'] = $request->input('name');
@@ -1729,30 +1780,61 @@ class HomeController extends Controller
         }
     }
 
-    public function syncthing_test(Request $request)
+    public function syncthing_remove(Request $request, $id)
     {
-        $url = 'http://' . env('SYNCTHING_HOST') . ":8384/rest/system/config";
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "X-API-Key: " . env('SYNCTHING_APIKEY')
-        ]);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-        curl_setopt($ch, CURLOPT_FAILONERROR,1);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION,1);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT ,0);
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close ($ch);
-        if ($httpCode !== 404 && $httpCode !== 0) {
-            $arr = json_decode($response, true);
+        if (!empty(env('SYNCTHING_HOST'))) {
+            $url = 'http://' . env('SYNCTHING_HOST') . ":8384/rest/system/config";
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                "X-API-Key: " . env('SYNCTHING_APIKEY')
+            ]);
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+            curl_setopt($ch, CURLOPT_FAILONERROR,1);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION,1);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT ,0);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close ($ch);
+            if ($httpCode !== 404 && $httpCode !== 0) {
+                $arr = json_decode($response, true);
+                $deviceID = $arr['devices'][$id]['deviceID'];
+                foreach ($arr['folders']['devices'] as $row_k => $row_v) {
+                    if ($row_v['deviceID'] == $deviceID) {
+                        unset($arr['folders']['devices'][$row_k]);
+                    }
+                }
+                unset($arr['devices'][$id]);
+                $arr['folders'][0]['versioning']['params'] = (object) null;
+                $post_body = json_encode($arr);
+                $content_type = 'application/json';
+                $ch1 = curl_init();
+                curl_setopt($ch1, CURLOPT_URL, $url);
+                curl_setopt($ch1, CURLOPT_POST, 1);
+                curl_setopt($ch1, CURLOPT_POSTFIELDS, $post_body);
+                curl_setopt($ch1, CURLOPT_HTTPHEADER, [
+                    "X-API-Key: " . env('SYNCTHING_APIKEY'),
+                    "Content-Type: {$content_type}",
+                    'Content-Length: ' . strlen($post_body)
+                ]);
+                curl_setopt($ch1, CURLOPT_HEADER, 0);
+                curl_setopt($ch1, CURLOPT_SSL_VERIFYPEER, FALSE);
+                curl_setopt($ch1, CURLOPT_FAILONERROR,1);
+                curl_setopt($ch1, CURLOPT_FOLLOWLOCATION,1);
+                curl_setopt($ch1, CURLOPT_RETURNTRANSFER,1);
+                curl_setopt($ch1, CURLOPT_TIMEOUT, 60);
+                curl_setopt($ch1, CURLOPT_CONNECTTIMEOUT ,0);
+                $response1 = curl_exec($ch1);
+                $httpCode1 = curl_getinfo($ch1, CURLINFO_HTTP_CODE);
+                curl_close ($ch1);
+            }
+            return redirect()->route('syncthing');
         } else {
-            $arr['error'] = 'Connection problem';
+            return redirect()->route('welcome');
         }
-        return $arr;
     }
 
     public function users(Request $request)

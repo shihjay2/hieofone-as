@@ -312,7 +312,7 @@ class Controller extends BaseController
 				$data['content'] .= '</span>';
 				// Actions
 				$data['content'] .= '<span class="pull-right">';
-				$data['content'] .= '<a href="' . route('directory_remove', [$directory->id]) . '" class="btn fa-btn" data-toggle="tooltip" title="Remove"><i class="fa fa-times fa-lg" style="color:red;"></i></a>';
+				$data['content'] .= '<a href="' . route('directory_remove', [$directory->id]) . '" class="btn fa-btn uma-delete" data-toggle="tooltip" title="Remove"><i class="fa fa-times fa-lg" style="color:red;"></i></a>';
 				$data['content'] .= '</span></li>';
 				if ($directory->uri == $root_domain) {
                     $root_domain_registered = true;
@@ -1579,7 +1579,7 @@ class Controller extends BaseController
 				// Actions
 				$data['content'] .= '<span class="pull-right">';
 				$data['content'] .= '<a href="' . route('resend_invitation', [$invited_user->id]) . '" class="btn fa-btn" data-toggle="tooltip" title="Resend Invite"><i class="fa fa-refresh fa-lg" style="color:green;"></i></a>';
-				$data['content'] .= '<a href="' . route('invite_cancel', [$invited_user->code, false]) . '" class="btn fa-btn" data-toggle="tooltip" title="Cancel Invite"><i class="fa fa-times fa-lg" style="color:red;"></i></a>';
+				$data['content'] .= '<a href="' . route('invite_cancel', [$invited_user->code, false]) . '" class="btn fa-btn uma-delete" data-toggle="tooltip" title="Cancel Invite"><i class="fa fa-times fa-lg" style="color:red;"></i></a>';
 				$data['content'] .= '</span></li>';
             }
 		}

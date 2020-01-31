@@ -244,6 +244,14 @@
 	        },
 			zIndex: 0
 		});
+		$('.uma-delete').css('cursor', 'pointer').click(function() {
+            var r = confirm("Confirm deletion?");
+            if (r === true) {
+                return true;
+            } else {
+                return false;
+            }
+        });
 	});
 </script>
 @endsection

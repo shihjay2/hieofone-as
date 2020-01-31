@@ -173,12 +173,14 @@
 								@if (Session::get('is_owner') == 'yes')
 									<li><a href="{{ url('/directories') }}"><i class="fa fa-btn fa-sitemap"></i>Directories</a></li>
 									<li><a href="{{ url('/certifiers') }}"><i class="fa fa-btn fa-thumbs-o-up"></i>Certifiers</a></li>
-									@if (Session::get('domain_url') !== 'hieofone.org' || env('DOCKER') == '0')
+									@if (Session::get('domain_url') !== 'hieofone.org' || Session::get('domain_url') !== 'trustee.ai' || env('DOCKER') == '0')
 										<li><a href="{{ url('/setup_mail') }}"><i class="fa fa-btn fa-envelope"></i>E-mail Service</a></li>
 									@endif
 									<li><a href="{{ url('/activity_logs') }}"><i class="fa fa-btn fa-list-alt"></i>Activity Logs</a></li>
 									@if (env('DOCKER') !== '1')
 										<li><a href="{{ url('/update_system') }}"><i class="fa fa-btn fa-download"></i>Update System</a></li>
+									@else
+									    <li><a href="{{ url('/syncthing') }}"><i class="fa fa-btn fa-exchange"></i>Backups</a></li>
 									@endif
 								@endif
 								<li><a href="{{ url('/logout') }}"><i class="fa fa-btn fa-sign-out"></i>Logout</a></li>
