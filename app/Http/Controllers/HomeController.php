@@ -1663,7 +1663,7 @@ class HomeController extends Controller
         $data['content'] .= '</div>';
         $data['message_action'] = Session::get('message_action');
         Session::forget('message_action');
-        if (isset($arr['error'])) {
+        if (!isset($arr['error'])) {
             $data['content'] .= '<ul class="list-group">';
             $i = 0;
             foreach ($arr['devices'] as $device) {
