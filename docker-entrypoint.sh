@@ -62,8 +62,6 @@ if ! [ -z "$SYNCTHING_HOST" ]; then
 	  exit 1
 	fi
 	SYNCTHING_APIKEY=$(cat /var/syncthing/config/config.xml | awk -F "[><]" '/apikey/{print $3}')
-	SYNCTHING_DEVICE_ID=$(cat /var/syncthing/config/config.xml | grep device | head -1 | sed -rn 's/.*id="([^"]*)".*/\1/p')
 	export "SYNCTHING_APIKEY"=$SYNCTHING_APIKEY
-	export "SYNCTHING_DEVICE_ID"=$SYNCTHING_DEVICE_ID
 fi
 exec "$@"
