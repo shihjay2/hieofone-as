@@ -780,6 +780,26 @@ class Controller extends BaseController
 		return $return;
 	}
 
+	protected function nexmo($number, $message)
+	{
+		$url = "https://rest.nexmo.com/sms/json";
+		$post = http_build_query([
+			'api_key' => env('NEXMO_API'),
+			'api_secret' => env('NEXMO_SECRET'),
+			'to' => '1' . $number,
+			'from' => '15709315960',
+			'text' => $message
+		]);
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$output = curl_exec($ch);
+		curl_close($ch);
+		return $output;
+	}
+
 	protected function notify($user)
 	{
 		if (!empty($user->notify)) {
@@ -790,7 +810,11 @@ class Controller extends BaseController
 				$to = $owner->email;
 				$this->send_mail('auth.emails.generic', $data, $title, $to);
 				if ($owner->mobile != '') {
-					$this->textbelt($owner->mobile, $data['message_data']);
+					if (env('NEXMO_API') == null) {
+						$this->textbelt($owner->mobile, $data['message_data']);
+					} else {
+						$this->nexmo($owner->mobile, $data['message_data']);
+					}
 				}
 			}
 		}

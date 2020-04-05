@@ -21,7 +21,23 @@
 					<form class="form-horizontal" role="form" method="POST" action="{{ url('/install') }}">
 						{{ csrf_field() }}
 						<div class="alert alert-success">
+							You can choose any username you want as long as nobody else is using it already in the Directory.<br>
+							Your email address will not be shown in the Directory.
 						</div>
+						<div class="form-group{{ $errors->has('username') ? ' has-error' : '' }}">
+							<label for="username" class="col-md-4 control-label">Username</label>
+
+							<div class="col-md-6">
+								<input id="username" type="username" class="form-control" name="username" value="{{ old('username') }}">
+
+								@if ($errors->has('username'))
+									<span class="help-block">
+										<strong>{{ $errors->first('username') }}</strong>
+									</span>
+								@endif
+							</div>
+						</div>
+
 						<div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">
 							<label for="email" class="col-md-4 control-label">E-Mail Address</label>
 
@@ -43,6 +59,34 @@
 								It is only used to initialize your Patient Centered EHR (NOSH).<br>
 							@endif
 							<a href="https://dir.hieofone.org/privacy_policy" target="_blank">Click here to view the Privacy Policy for the Directory</a>
+						</div>
+
+						<div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
+							<label for="password" class="col-md-4 control-label">Password</label>
+
+							<div class="col-md-6">
+								<input id="password" type="password" class="form-control" name="password">
+
+								@if ($errors->has('password'))
+									<span class="help-block">
+										<strong>{{ $errors->first('password') }}</strong>
+									</span>
+								@endif
+							</div>
+						</div>
+
+						<div class="form-group{{ $errors->has('confirm_password') ? ' has-error' : '' }}">
+							<label for="confirm_password" class="col-md-4 control-label">Confirm Password</label>
+
+							<div class="col-md-6">
+								<input id="confirm_password" type="password" class="form-control" name="confirm_password">
+
+								@if ($errors->has('confirm_password'))
+									<span class="help-block">
+										<strong>{{ $errors->first('confirm_password') }}</strong>
+									</span>
+								@endif
+							</div>
 						</div>
 
 						<div class="form-group{{ $errors->has('first_name') ? ' has-error' : '' }}">
@@ -236,6 +280,85 @@
 								</div>
 							</div>
 						@endif
+
+
+
+						<!-- <div class="panel panel-default">
+							<div class="panel-heading">Google Account (for email and authetication)</div>
+							<div class="panel-body">
+								<div class="form-group{{ $errors->has('google_client_id') ? ' has-error' : '' }}">
+									<label for="google_client_id" class="col-md-4 control-label">Client ID</label>
+
+									<div class="col-md-6">
+										<input id="google_client_id" class="form-control" name="google_client_id" value="{{ old('google_client_id') }}">
+
+										@if ($errors->has('google_client_id'))
+											<span class="help-block">
+												<strong>{{ $errors->first('google_client_id') }}</strong>
+											</span>
+										@endif
+									</div>
+								</div>
+								<div class="form-group{{ $errors->has('google_client_secret') ? ' has-error' : '' }}">
+									<label for="google_client_secret" class="col-md-4 control-label">Client Secret</label>
+
+									<div class="col-md-6">
+										<input id="google_client_secret" class="form-control" name="google_client_secret" value="{{ old('google_client_secret') }}">
+
+										@if ($errors->has('google_client_secret'))
+											<span class="help-block">
+												<strong>{{ $errors->first('google_client_secret') }}</strong>
+											</span>
+										@endif
+									</div>
+								</div>
+								<div class="form-group{{ $errors->has('smtp_username') ? ' has-error' : '' }}">
+									<label for="smtp_username" class="col-md-4 control-label">E-mail Address for Google</label>
+
+									<div class="col-md-6">
+										<input id="smtp_username" type="email" class="form-control" name="smtp_username" value="{{ old('smtp_username') }}">
+
+										@if ($errors->has('smtp_username'))
+											<span class="help-block">
+												<strong>{{ $errors->first('smtp_username') }}</strong>
+											</span>
+										@endif
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="panel panel-default">
+							<div class="panel-heading">Twitter Account (for authentication)</div>
+							<div class="panel-body">
+								<div class="form-group{{ $errors->has('twitter_client_id') ? ' has-error' : '' }}">
+									<label for="twitter_client_id" class="col-md-4 control-label">Client ID</label>
+
+									<div class="col-md-6">
+										<input id="twitter_client_id" class="form-control" name="twitter_client_id" value="{{ old('twitter_client_id') }}">
+
+										@if ($errors->has('twitter_client_id'))
+											<span class="help-block">
+												<strong>{{ $errors->first('twitter_client_id') }}</strong>
+											</span>
+										@endif
+									</div>
+								</div>
+								<div class="form-group{{ $errors->has('twitter_client_secret') ? ' has-error' : '' }}">
+									<label for="twitter_client_secret" class="col-md-4 control-label">Client Secret</label>
+
+									<div class="col-md-6">
+										<input id="twitter_client_secret" class="form-control" name="twitter_client_secret" value="{{ old('twitter_client_secret') }}">
+
+										@if ($errors->has('twitter_client_secret'))
+											<span class="help-block">
+												<strong>{{ $errors->first('twitter_client_secret') }}</strong>
+											</span>
+										@endif
+									</div>
+								</div>
+							</div>
+						</div> -->
 						<div class="alert alert-success">
 							When you click Setup, you will then be registering your Patient Centered EHR and then to the Directory.
 						</div>
@@ -261,9 +384,11 @@
 @endsection
 
 @section('view.scripts')
+<script src="{{ asset('assets/js/pwstrength-bootstrap.min.js') }}"></script>
 <script type="text/javascript">
 	$(document).ready(function() {
-		$("#email").focus();
+		$("#username").focus();
+		$(":password").pwstrength();
 		$("#mobile").mask("(999) 999-9999");
 	});
 </script>

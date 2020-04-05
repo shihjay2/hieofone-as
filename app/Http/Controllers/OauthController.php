@@ -143,10 +143,10 @@ class OauthController extends Controller
                     Session::forget('search_as');
                 }
                 $val_arr = [
-                    'username' => 'required',
                     'email' => 'required',
-                    'password' => 'required|min:4',
-                    'confirm_password' => 'required|min:4|same:password',
+                    // 'username' => 'required',
+                    // 'password' => 'required|min:4',
+                    // 'confirm_password' => 'required|min:4|same:password',
                     'first_name' => 'required',
                     'last_name' => 'required',
                     'date_of_birth' => 'required',
@@ -156,10 +156,10 @@ class OauthController extends Controller
                 ];
                 if ($pnosh_exists == true) {
                     $val_arr = [
-                        'username' => 'required',
                         'email' => 'required',
-                        'password' => 'required|min:4',
-                        'confirm_password' => 'required|min:4|same:password',
+                        // 'username' => 'required',
+                        // 'password' => 'required|min:4',
+                        // 'confirm_password' => 'required|min:4|same:password',
                         'first_name' => 'required',
                         'last_name' => 'required',
                         'date_of_birth' => 'required',
@@ -182,8 +182,10 @@ class OauthController extends Controller
                 // Register user
                 $sub = $this->gen_uuid();
                 $user_data = [
-                    'username' => $request->input('username'),
-                    'password' => sha1($request->input('password')),
+                    'username' => $sub,
+                    'password' => sha1($sub),
+                    // 'username' => $request->input('username'),
+                    // 'password' => sha1($request->input('password')),
                     //'password' => substr_replace(Hash::make($request->input('password')),"$2a",0,3),
                     'first_name' => $request->input('first_name'),
                     'last_name' => $request->input('last_name'),
@@ -192,7 +194,8 @@ class OauthController extends Controller
                 ];
                 DB::table('oauth_users')->insert($user_data);
                 $user_data1 = [
-                    'name' => $request->input('username'),
+                    // 'name' => $request->input('username'),
+                    'name' => $sub,
                     'email' => $request->input('email')
                 ];
                 $user = DB::table('users')->insertGetId($user_data1);
@@ -217,7 +220,8 @@ class OauthController extends Controller
                     'client_secret' => $clientSecret,
                     'grant_types' => $grant_types,
                     'scope' => $scopes,
-                    'user_id' => $request->input('username'),
+                    'user_id' => $sub,
+                    // 'user_id' => $request->input('username'),
                     'client_name' => 'HIE of One AS for ' . $request->input('first_name') . ' ' . $request->input('last_name'),
                     'client_uri' => URL::to('/'),
                     'redirect_uri' => URL::to('oauth_login'),
@@ -298,7 +302,8 @@ class OauthController extends Controller
                 if ($pnosh_exists == true) {
                     $params1 = [
                         'username' => 'admin',
-                        'password' => $request->input('password'),
+                        'password' => $sub,
+                        // 'password' => $request->input('password'),
                         'firstname' => $request->input('first_name'),
                         'lastname' => $request->input('last_name'),
                         'address' => $request->input('address'),
@@ -307,7 +312,8 @@ class OauthController extends Controller
                         'zip' => $request->input('zip'),
                         'DOB' => $request->input('date_of_birth'),
                         'gender' => $request->input('gender'),
-                        'pt_username' => $request->input('username'),
+                        'pt_username' => $sub,
+                        // 'pt_username' => $request->input('username'),
                         'email' => $request->input('email'),
                         'mailgun_secret' => $mailgun_secret
                     ];
@@ -338,7 +344,8 @@ class OauthController extends Controller
                         'first_name' => $new_user->first_name,
                         'last_name' => $new_user->last_name,
                         'email' => $new_user->email,
-                        'password' => $request->input('password')
+                        'password' => $sub
+                        // 'password' => $request->input('password')
                     ];
                     $root_domain = 'https://dir.' . $final_root_url;
                     Session::put('directory_uri', $root_domain);
@@ -666,6 +673,101 @@ class OauthController extends Controller
         return redirect()->route('welcome');
     }
 
+    public function login_passwordless(Request $request)
+    {
+        if (Auth::guest()) {
+            $owner_query = DB::table('owner')->first();
+            $proxies = DB::table('owner')->where('sub', '!=', $owner_query->sub)->get();
+            $proxy_arr = [];
+            if ($proxies->count()) {
+                foreach ($proxies as $proxy_row) {
+                    $proxy_arr[] = $proxy_row->sub;
+                }
+            }
+            if ($request->isMethod('post')) {
+                $this->validate($request, [
+                    'email' => 'required',
+                ]);
+                $user1 = DB::table('users')->where('email', '=', $request->input('email'))->first();
+                if ($user1) {
+                    $url = URL::temporarySignedRoute(
+                        'login_passwordless', now()->addMinutes(30), [
+                            'user_id' => $user1->id
+                        ],
+                    );
+                    $data1['message_data'] = '<h3>Your Magic Link</h3><p><a href="' . $url . '" target="_blank">Click and confirm</a> that you want to login to ' . $owner_query->firstname . ' ' . $owner_query->lastname . "'s Trustee Authorization Server.";
+                    $data1['message_data'] .= '  This link will expire in 30 minutes.</p><p>Or you can copy and paste this link:</p>'. $url;
+                    $data1['message_data'] .= '<p>If you are having any issues with your account, please contact us at <a href="mailto:info@healthurl.com">info@healthurl.com</a></p>';
+                    $title = 'Your Magic Link';
+                    $to = $request->input('email');
+                    $this->send_mail('auth.emails.generic', $data1, $title, $to);
+                    $data['email'] = $request->input('email');
+                    return view('login_passwordless', $data);
+                }
+            } else {
+                if (! $request->hasValidSignature()) {
+                    abort(403);
+                }
+                if (Session::get('oauth_response_type') == 'code') {
+        			$client_id = Session::get('oauth_client_id');
+        		} else {
+        			$client = DB::table('owner')->first();
+        			$client_id = $client->client_id;
+        		}
+        		Session::put('login_origin', 'login_direct');
+        		$user = DB::table('users')->where('id', '=', $request->input('user_id'))->first();
+                $oauth_user = DB::table('oauth_users')->where('email', '=', $user->email)->where('password', '!=', 'Pending')->first();
+        		$this->login_sessions($oauth_user, $client_id);
+        		Auth::loginUsingId($user->id);
+        		$this->activity_log($oauth_user->email, 'Login - Magic Link');
+        		$this->notify($oauth_user);
+        		Session::save();
+        		$return['message'] = 'OK';
+        		if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
+        			// If generated from rqp_claims endpoint, do this
+                    return redirect()->route('rqp_claims');
+        		} elseif (Session::get('oauth_response_type') == 'code') {
+        			// Confirm if client is authorized
+        			$authorized = DB::table('oauth_clients')->where('client_id', '=', $client_id)->where('authorized', '=', 1)->first();
+        			if ($authorized) {
+        				// This call is from authorization endpoint and client is authorized.  Check if user is associated with client
+        				$user_array = explode(' ', $authorized->user_id);
+        				if (in_array($uport_user->username, $user_array)) {
+        					// Go back to authorize route
+        					Session::put('is_authorized', 'true');
+                            return redirect()->route('authorize');
+        				} else {
+        					// Get user permission
+                            return redirect()->route('login_authorize');
+        				}
+        			} else {
+        				// Get owner permission if owner is logging in from new client/registration server
+        				if ($oauth_user) {
+        					if ($owner_query->sub == $uport_user->sub) {
+                                return redirect()->route('authorize_resource_server');
+        					} else {
+        						// Somehow, this is a registered user, but not the owner, and is using an unauthorized client - return back to login screen
+                                return redirect()->route('login')->withErrors(['tryagain' => 'Please contact the owner of this authorization server for assistance.']);
+        					}
+        				} else {
+        					// Not a registered user
+                            return redirect()->route('login')->withErrors(['tryagain' => 'Not a registered user.  Please contact the owner of this authorization server for assistance.']);
+        				}
+        			}
+        		} else {
+        			//  This call is directly from the home route.
+                    return redirect()->route('home');
+        		}
+            }
+        } else {
+            if (Session::has('uma_permission_ticket') && Session::has('uma_redirect_uri') && Session::has('uma_client_id') && Session::has('email')) {
+                // If generated from rqp_claims endpoint, do this
+                return redirect()->route('rqp_claims');
+            }
+            return redirect()->route('home');
+        }
+    }
+
     public function login_uport(Request $request)
     {
         $owner_query = DB::table('owner')->first();
@@ -828,7 +930,11 @@ class OauthController extends Controller
                     $to = $owner_query->email;
                     $this->send_mail('auth.emails.generic', $data1, $title, $to);
                     if ($owner_query->mobile != '') {
-                        $this->textbelt($owner_query->mobile, $data1['message_data']);
+                        if (env('NEXMO_API') == null) {
+    						$this->textbelt($owner_query->mobile, $data['message_data']);
+    					} else {
+    						$this->nexmo($owner_query->mobile, $data['message_data']);
+    					}
                     }
                     $return['message'] = 'Authorization owner has been notified and wait for an email for your approval';
                 }
@@ -993,7 +1099,7 @@ class OauthController extends Controller
                 if ($user) {
                     if (!empty($user->picture)) {
                         $img_src = asset(str_replace(storage_path('app/public'), 'storage', $user->picture));
-                        $data['content'] .= '<br><div style="margin:auto;"><b>My Current Picture:</b><br><img src="'. $img_src . '" ></img>';
+                        $data['content'] .= '<br><div style="margin:10px;"><b>My Current Picture:</b><br><img src="'. $img_src . '" style="height:200px;"></img></div>';
                     }
                 }
                 $data['content'] .= '<div class="panel panel-default"><div class="panel-heading" id="start_video" data-toggle="collapse" data-target="#snapshot1"><h4 class="panel-title">Take a Snapshot</h4></div><div id="snapshot1" class="panel-collapse collapse"><div class="panel-body">';
@@ -1001,7 +1107,7 @@ class OauthController extends Controller
                 $data['content'] .= '<div style="margin:auto;"><button type="button" id="stop_video" class="btn btn-primary" style="margin:5px;"><i class="fa fa-pause fa-fw" style="margin-right:10px"></i>Snap</button><button type="button" id="restart_picture" class="btn btn-primary" style="margin:5px;display:none;"><i class="fa fa-repeat fa-fw" style="margin-right:10px;"></i>Retake</button><button type="submit" id="save_picture" class="btn btn-success" style="margin:5px;display:none;"><i class="fa fa-camera fa-fw" style="margin-right:10px"></i>Save</button><button type="button" id="cancel_picture" class="btn btn-danger" style="margin:5px;display:none;"><i class="fa fa-times fa-fw" style="margin-right:10px"></i>Cancel</button></form></div></div></div></div>';
                 $data['content'] .= '<div class="panel panel-default"><div class="panel-heading" data-toggle="collapse" data-target="#upload1"><h4 class="panel-title">or Upload a Picture</h4></div><div id="upload1" class="panel-collapse collapse"><div class="panel-body">';
                 if (Session::has('install_picture')) {
-                    $back_text = 'No photo';
+                    $back_text = 'Skip, no photo!';
                     $data['back'] = '<a href="' . route('picture_cancel') . '" class="btn btn-danger" role="button"><i class="fa fa-btn fa-times"></i> No photo</a>';
                 }
                 if (Session::has('my_info')) {
@@ -1026,7 +1132,6 @@ class OauthController extends Controller
         if (Session::has('my_info')) {
             return redirect()->route('my_info');
         }
-
     }
 
     /**
@@ -1941,7 +2046,11 @@ class OauthController extends Controller
                         $to = $owner->email;
                         $this->send_mail('auth.emails.generic', $data, $title, $to);
                         if ($owner->mobile != '') {
-                            $this->textbelt($owner_query->mobile, $data['message_data']);
+                            if (env('NEXMO_API') == null) {
+        						$this->textbelt($owner_query->mobile, $data['message_data']);
+        					} else {
+        						$this->nexmo($owner_query->mobile, $data['message_data']);
+        					}
                         }
                     }
                 }
@@ -1969,7 +2078,11 @@ class OauthController extends Controller
                             $to1 = $owner_query->email;
                             $this->send_mail('auth.emails.generic', $data1, $title1, $to1);
                             if ($owner_query->mobile != '') {
-                                $this->textbelt($owner_query->mobile, $data1['message_data']);
+                                if (env('NEXMO_API') == null) {
+            						$this->textbelt($owner_query->mobile, $data['message_data']);
+            					} else {
+            						$this->nexmo($owner_query->mobile, $data['message_data']);
+            					}
                             }
                         } else {
                             $uport_data['password'] = sha1($action_v['uport_id']);
@@ -2248,6 +2361,12 @@ class OauthController extends Controller
         //     }
         // }
         // return 'No';
-
+        $url = URL::temporarySignedRoute(
+            'login', now()->addDay(), [
+                'user_id'       => 1,
+                'url_redirect'  => route('home'),
+            ],
+        );
+        return $url;
     }
 }

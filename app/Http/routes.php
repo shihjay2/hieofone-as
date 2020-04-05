@@ -61,6 +61,7 @@ Route::any('picture_cancel', ['as' => 'picture_cancel', 'uses' => 'OauthControll
 // Login pages
 Route::any('login', ['as' => 'login', 'uses' => 'OauthController@login']);
 Route::any('logout', ['as' => 'logout', 'uses' => 'OauthController@logout']);
+Route::any('login_passwordless', ['as' => 'login_passwordless', 'uses' => 'OauthController@login_passwordless']);
 Route::post('login_uport', ['as' => 'login_uport', 'middleware' => 'csrf', 'uses' => 'OauthController@login_uport']);
 Route::any('oauth_login', ['as' => 'oauth_login', 'uses' => 'OauthController@oauth_login']);
 Route::any('password_email', ['as' => 'password_email', 'middleware' => 'csrf', 'uses' => 'OauthController@password_email']);
