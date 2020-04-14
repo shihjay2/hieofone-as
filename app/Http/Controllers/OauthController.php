@@ -315,6 +315,7 @@ class OauthController extends Controller
                         'pt_username' => $sub,
                         // 'pt_username' => $request->input('username'),
                         'email' => $request->input('email'),
+                        'mobile' => $request->input('mobile'),
                         'mailgun_secret' => $mailgun_secret
                     ];
                     Session::put('pnosh_params', $params1);
@@ -440,7 +441,7 @@ class OauthController extends Controller
                     $content_type1 = 'application/json';
                     $ch1 = curl_init();
                     $pnosh_url = $url0 . '/pnosh_install';
-                    curl_setopt($ch1,CURLOPT_URL, $pnosh_url);
+                    curl_setopt($ch1, CURLOPT_URL, $pnosh_url);
                     curl_setopt($ch1, CURLOPT_POST, 1);
                     curl_setopt($ch1, CURLOPT_POSTFIELDS, $post_body1);
                     curl_setopt($ch1, CURLOPT_HTTPHEADER, [
@@ -449,11 +450,11 @@ class OauthController extends Controller
                     ]);
                     curl_setopt($ch1, CURLOPT_HEADER, 0);
                     curl_setopt($ch1, CURLOPT_SSL_VERIFYPEER, FALSE);
-                    curl_setopt($ch1,CURLOPT_FAILONERROR,1);
-                    curl_setopt($ch1,CURLOPT_FOLLOWLOCATION,1);
-                    curl_setopt($ch1,CURLOPT_RETURNTRANSFER,1);
-                    curl_setopt($ch1,CURLOPT_TIMEOUT, 60);
-                    curl_setopt($ch1,CURLOPT_CONNECTTIMEOUT ,0);
+                    curl_setopt($ch1, CURLOPT_FAILONERROR,1);
+                    curl_setopt($ch1, CURLOPT_FOLLOWLOCATION,1);
+                    curl_setopt($ch1, CURLOPT_RETURNTRANSFER,1);
+                    curl_setopt($ch1, CURLOPT_TIMEOUT, 60);
+                    curl_setopt($ch1, CURLOPT_CONNECTTIMEOUT ,0);
                     $pnosh_result = curl_exec($ch1);
                     curl_close ($ch1);
                     if ($pnosh_result == 'Success') {

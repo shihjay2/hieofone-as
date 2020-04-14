@@ -783,6 +783,7 @@ class Controller extends BaseController
 	protected function nexmo($number, $message)
 	{
 		$url = "https://rest.nexmo.com/sms/json";
+		$number = preg_replace("/[^0-9]/", "", $number);
 		$post = http_build_query([
 			'api_key' => env('NEXMO_API'),
 			'api_secret' => env('NEXMO_SECRET'),
@@ -1410,9 +1411,16 @@ class Controller extends BaseController
 		// }
 		// Mail::setSwiftMailer(new Swift_Mailer($transport));
 		$owner = DB::table('owner')->first();
+		$from_email = $owner->email;
+		$from_name = $owner->firstname . ' ' . $owner->lastname;
+		$root = DB::table('practiceinfo')->first();
+		if (env('MAILGUN_DOMAIN') !== null) {
+			$from_email = 'donotreply@mg.hieofone.org';
+			$from_name = 'Trustee for ' . $owner->firstname . ' ' . $owner->lastname;
+		}
 		Mail::send($template, $data_message, function ($message) use ($to, $subject, $owner) {
 			$message->to($to)
-				->from($owner->email, $owner->firstname . ' ' . $owner->lastname)
+				->from($from_email, $from_name)
 				->subject($subject);
 		});
 		return "E-mail sent.";
