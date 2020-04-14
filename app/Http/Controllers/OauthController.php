@@ -733,7 +733,7 @@ class OauthController extends Controller
         			if ($authorized) {
         				// This call is from authorization endpoint and client is authorized.  Check if user is associated with client
         				$user_array = explode(' ', $authorized->user_id);
-        				if (in_array($uport_user->username, $user_array)) {
+        				if (in_array($oauth_user->username, $user_array)) {
         					// Go back to authorize route
         					Session::put('is_authorized', 'true');
                             return redirect()->route('authorize');
@@ -744,7 +744,7 @@ class OauthController extends Controller
         			} else {
         				// Get owner permission if owner is logging in from new client/registration server
         				if ($oauth_user) {
-        					if ($owner_query->sub == $uport_user->sub) {
+        					if ($owner_query->sub == $oauth_user->sub) {
                                 return redirect()->route('authorize_resource_server');
         					} else {
         						// Somehow, this is a registered user, but not the owner, and is using an unauthorized client - return back to login screen
