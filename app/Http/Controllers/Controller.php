@@ -1417,7 +1417,7 @@ class Controller extends BaseController
 			$from_email = 'donotreply@mg.hieofone.org';
 			$from_name = 'Trustee for ' . $owner->firstname . ' ' . $owner->lastname;
 		}
-		Mail::send($template, $data_message, function ($message) use ($to, $subject, $owner) {
+		Mail::send($template, $data_message, function ($message) use ($to, $from_email, $from_name, $subject) {
 			$message->to($to)
 				->from($from_email, $from_name)
 				->subject($subject);
