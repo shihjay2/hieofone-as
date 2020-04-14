@@ -1413,7 +1413,6 @@ class Controller extends BaseController
 		$owner = DB::table('owner')->first();
 		$from_email = $owner->email;
 		$from_name = $owner->firstname . ' ' . $owner->lastname;
-		$root = DB::table('practiceinfo')->first();
 		if (env('MAILGUN_DOMAIN') !== null) {
 			$from_email = 'donotreply@mg.hieofone.org';
 			$from_name = 'Trustee for ' . $owner->firstname . ' ' . $owner->lastname;
