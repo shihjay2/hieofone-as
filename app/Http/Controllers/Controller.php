@@ -1530,7 +1530,7 @@ class Controller extends BaseController
 		}
 		$data['content'] .= '<p>Click on a <i class="fa fa-check fa-lg" style="color:green;"></i>, <i class="fa fa-times fa-lg" style="color:red;"></i>, or <i class="fa fa-bell fa-lg" style="color:blue;"></i> to change the policy or setting.  Click on a <strong>policy name</strong> for for information about the policy.</p>';
         $data['content'] .= '</div>';
-		if ($query->count() || $invted == true) {
+		if ($query->count() || $invited == true) {
 			$data['content'] .= '<ul class="list-group">';
 		}
 		if ($query->count()) {
@@ -1653,10 +1653,10 @@ class Controller extends BaseController
 				$data['content'] .= '</span></li>';
             }
 		}
-		if ($query->count() || $invted == true) {
+		if ($query->count() || $invited == true) {
 			$data['content'] .= '</ul>';
 		}
-		if (! $query->count() && $invted == false) {
+		if (! $query->count() && $invited == false) {
 			$data['content'] .= 'No Users';
 		}
 		return $data;
