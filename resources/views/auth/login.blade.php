@@ -53,26 +53,54 @@
 							<i class="fa fa-spinner fa-spin fa-pulse fa-2x fa-fw"></i><span id="modaltext" style="margin:10px">Loading uPort...</span><br><br>
 						</div>
 					</div>
-					<form class="form-horizontal" role="form" method="POST" action="{{ route('login_passwordless') }}">
+					<form class="form-horizontal" role="form" method="POST" action="{{ url('/login') }}" style="display:none">
 						{{ csrf_field() }}
-						<div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">
-							<label for="email" class="col-md-4 control-label">Email </label>
+
+						<div class="form-group{{ $errors->has('username') ? ' has-error' : '' }}">
+							<label for="username" class="col-md-4 control-label">Username </label>
 
 							<div class="col-md-6">
-								<input id="email" class="form-control" name="email" value="{{ old('email') }}" data-toggle="tooltip">
+								<input id="username" class="form-control" name="username" value="{{ old('username') }}" data-toggle="tooltip" title="{{ $demo_username }}">
 
-								@if ($errors->has('email'))
+								@if ($errors->has('username'))
 									<span class="help-block">
-										<strong>{{ $errors->first('email') }}</strong>
+										<strong>{{ $errors->first('username') }}</strong>
 									</span>
 								@endif
 							</div>
 						</div>
+
+						<div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
+							<label for="password" class="col-md-4 control-label">Password</label>
+
+							<div class="col-md-6">
+								<input id="password" type="password" class="form-control" name="password" data-toggle="tooltip" title="{{ $demo_password }}">
+
+								@if ($errors->has('password'))
+									<span class="help-block">
+										<strong>{{ $errors->first('password') }}</strong>
+									</span>
+								@endif
+							</div>
+						</div>
+
+						<div class="form-group">
+							<div class="col-md-6 col-md-offset-4">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" name="remember"> Remember Me
+									</label>
+								</div>
+							</div>
+						</div>
+
 						<div class="form-group">
 							<div class="col-md-6 col-md-offset-4">
 								<button type="submit" class="btn btn-primary">
-									<i class="fa fa-btn fa-envelope"></i> Send magic link
+									<i class="fa fa-btn fa-sign-in"></i> Login
 								</button>
+
+								<a class="btn btn-link" href="{{ url('/password_email') }}">Forgot Your Password?</a>
 							</div>
 						</div>
 						@if (!isset($nooauth))
@@ -129,7 +157,7 @@
 <script src="{{ asset('assets/js/toastr.min.js') }}"></script>
 <script type="text/javascript">
 	$(document).ready(function() {
-		$("#email").focus();
+		$("#username").focus();
 		$('[data-toggle="tooltip"]').tooltip();
 		$("#connectUportBtn1").click(function(){
             $('#modal1').modal('show');
