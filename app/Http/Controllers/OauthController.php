@@ -2366,7 +2366,7 @@ class OauthController extends Controller
             'login', now()->addDay(), [
                 'user_id'       => 1,
                 'url_redirect'  => route('home'),
-            ],
+            ]
         );
         return $url;
     }
