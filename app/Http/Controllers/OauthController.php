@@ -694,7 +694,7 @@ class OauthController extends Controller
                     $url = URL::temporarySignedRoute(
                         'login_passwordless', now()->addMinutes(30), [
                             'user_id' => $user1->id
-                        ],
+                        ]
                     );
                     $data1['message_data'] = '<h3>Your Magic Link</h3><p><a href="' . $url . '" target="_blank">Click and confirm</a> that you want to login to ' . $owner_query->firstname . ' ' . $owner_query->lastname . "'s Trustee Authorization Server.";
                     $data1['message_data'] .= '  This link will expire in 30 minutes.</p><p>Or you can copy and paste this link:</p>'. $url;
