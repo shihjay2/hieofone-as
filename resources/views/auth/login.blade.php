@@ -53,7 +53,7 @@
 							<i class="fa fa-spinner fa-spin fa-pulse fa-2x fa-fw"></i><span id="modaltext" style="margin:10px">Loading uPort...</span><br><br>
 						</div>
 					</div>
-					<form class="form-horizontal" role="form" method="POST" action="{{ url('/login') }}" style="display:none">
+					<form class="form-horizontal" role="form" method="POST" action="{{ url('/login') }}">
 						{{ csrf_field() }}
 
 						<div class="form-group{{ $errors->has('username') ? ' has-error' : '' }}">
